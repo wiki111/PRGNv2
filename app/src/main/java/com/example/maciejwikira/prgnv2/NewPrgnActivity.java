@@ -14,7 +14,9 @@ import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.text.Text;
 import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
-import com.yashoid.instacropper.InstaCropperActivity;
+import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
+
 
 import java.io.IOException;
 import java.util.regex.Matcher;
@@ -91,7 +93,37 @@ public class NewPrgnActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
+        }else if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+
+            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+
+            if (resultCode == RESULT_OK) {
+
+                Uri resultUri = result.getUri();
+
+                Context context = getApplicationContext();
+
+                TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();
+                try {
+                    Bitmap croppedBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), resultUri);
+                    Frame frame = new Frame.Builder().setBitmap(croppedBitmap).build();
+
+                    SparseArray<TextBlock> items = textRecognizer.detect(frame);
+
+                    txtView.append(" ZNALEZIONA ! ----> Suma PLN : " + searchForTheValue(items) + "\n");
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+
+                Exception error = result.getError();
+
+            }
+
         }
+
     }
 
     private String searchForTheValue(SparseArray<TextBlock> items){
@@ -149,6 +181,18 @@ public class NewPrgnActivity extends AppCompatActivity {
 
         if(valueFound == false){
 
+            // start picker to get image for cropping and then use the image in cropping activity
+            //CropImage.activity()
+              //      .setGuidelines(CropImageView.Guidelines.ON)
+                //    .start(this);
+
+            // start cropping activity for pre-acquired image saved on the device
+            CropImage.activity(activeUri)
+                    .start(this);
+
+            // for fragment (DO NOT use `getActivity()`)
+            //CropImage.activity()
+                   // .start(getContext(), this);
 
         }
 
