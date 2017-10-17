@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.util.SparseArray;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -29,6 +30,7 @@ public class SearchActivity extends AppCompatActivity {
     private EditText searchInputField;
     private Button buttonSearch;
     private String thingToFind;
+    private CheckBox searchParagonContent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +39,7 @@ public class SearchActivity extends AppCompatActivity {
 
         searchInputField = (EditText)findViewById(R.id.searchInputField);
 
+        searchParagonContent = (CheckBox)findViewById(R.id.searchsParagonContent);
 
         buttonSearch = (Button)findViewById(R.id.buttonSearch);
 
@@ -90,12 +93,14 @@ public class SearchActivity extends AppCompatActivity {
         //TextBlock item;
 
         String itemContent;
+        String itemNameContent;
         List<String> indexes = new ArrayList<String>();
 
         Cursor c;
         PrgnDBAdapter pdba;
         //int img_index;
         int text_index;
+        int title_index;
 
         Matcher match;
         Pattern pattern = Pattern.compile(thingToFind.toLowerCase());
@@ -125,14 +130,23 @@ public class SearchActivity extends AppCompatActivity {
                 }
                 */
 
-                text_index = c.getColumnIndex("text");
-                itemContent = c.getString(text_index);
-                itemContent.toLowerCase();
-                match = pattern.matcher(itemContent);
+                title_index = c.getColumnIndex("name");
+                itemNameContent = c.getString(title_index).toLowerCase();
+                match = pattern.matcher(itemNameContent);
                 if(match.find()){
                     indexes.add(c.getString(c.getColumnIndex("_id")));
-                    Toast toast = Toast.makeText(this,"Znaleziono : " + match.group().substring(0), Toast.LENGTH_LONG);
-                    toast.show();
+                }
+
+                if(searchParagonContent.isChecked()) {
+                    text_index = c.getColumnIndex("text");
+                    itemContent = c.getString(text_index);
+                    itemContent.toLowerCase();
+                    match = pattern.matcher(itemContent);
+                    if (match.find()) {
+                        indexes.add(c.getString(c.getColumnIndex("_id")));
+                        Toast toast = Toast.makeText(this, "Znaleziono : " + match.group().substring(0), Toast.LENGTH_LONG);
+                        toast.show();
+                    }
                 }
 
             }
