@@ -95,7 +95,7 @@ public class NewPrgnActivity extends AppCompatActivity {
                             ParagonContract.Categories.CATEGORY_NAME
                     };
 
-                    String selection = ParagonContract.Categories.CATEGORY_NAME + " =?";
+                    String selection = ParagonContract.Categories.CATEGORY_NAME + " = ?";
                     String[] selectionArgs = { categoryField.getText().toString().toLowerCase() };
 
                     Cursor cursor = db.query(
@@ -108,7 +108,9 @@ public class NewPrgnActivity extends AppCompatActivity {
                             null
                     );
 
-                    if(cursor != null){
+                    cursor.moveToFirst();
+
+                    if((cursor != null) && (cursor.getCount() > 0)){
                         db.insert(ParagonContract.Paragon.TABLE_NAME, null, cv); //dodanie rekordu do bazy danych
                     }else{
                         ContentValues newCategoryValue = new ContentValues();

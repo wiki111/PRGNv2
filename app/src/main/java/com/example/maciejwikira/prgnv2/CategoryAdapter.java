@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * Created by Maciej on 2017-10-17.
@@ -40,12 +41,14 @@ public class CategoryAdapter extends SimpleCursorAdapter {
     public void bindView(View view, Context context, Cursor cursor) {
         super.bindView(view, context, cursor);
 
-
         TextView categoryName = (TextView)view.findViewById(R.id.categoryName);
 
-        int category_index = cr.getColumnIndex("category");
+        int category_index = cr.getColumnIndex(ParagonContract.Categories.CATEGORY_NAME);
 
         categoryName.setText(cr.getString(category_index));
+
+        Toast tst = Toast.makeText(context, cr.getString(category_index), Toast.LENGTH_SHORT);
+        tst.show();
 
     }
 }

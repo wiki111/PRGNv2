@@ -46,15 +46,15 @@ public class SearchActivity extends AppCompatActivity {
         categoryList = (ListView)findViewById(R.id.categoryList);
 
         ParagonDbHelper mDbHelper = new ParagonDbHelper(this);
-        db = mDbHelper.getWritableDatabase();
+        db = mDbHelper.getReadableDatabase();
 
         String[] colsToGet = new String[]{
-                "_id",
-                "category"
+                ParagonContract.Categories._ID,
+                ParagonContract.Categories.CATEGORY_NAME
         };
 
         String[] fromCols = new String[]{
-                "category"
+                ParagonContract.Categories.CATEGORY_NAME
         };
 
         int[] toFields = new int[]{
@@ -63,12 +63,17 @@ public class SearchActivity extends AppCompatActivity {
 
         Cursor cursor;
 
-        cursor = db.query(true, ParagonContract.Paragon.TABLE_NAME, colsToGet, null,null,null,null,null,null);
+        cursor = db.query(true, ParagonContract.Categories.TABLE_NAME, colsToGet, null, null, null, null, null, null);
         cursor.moveToFirst();
+
+        Toast tst = Toast.makeText(this, cursor.getString(cursor.getColumnIndex(ParagonContract.Categories.CATEGORY_NAME)), Toast.LENGTH_SHORT);
+        tst.show();
 
         CategoryAdapter ca;
         ca = new CategoryAdapter(this, R.layout.category_list_item, cursor, fromCols, toFields, 0);
         categoryList.setAdapter(ca);
+
+       // cursor.close();
 
         buttonSearch.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -156,20 +161,20 @@ public class SearchActivity extends AppCompatActivity {
                 }
                 */
 
-                title_index = c.getColumnIndex("name");
+                title_index = c.getColumnIndex(ParagonContract.Paragon.NAME);
                 itemNameContent = c.getString(title_index).toLowerCase();
                 match = pattern.matcher(itemNameContent);
                 if(match.find()){
-                    indexes.add(c.getString(c.getColumnIndex("_id")));
+                    indexes.add(c.getString(c.getColumnIndex(ParagonContract.Paragon._ID)));
                 }
 
                 if(searchParagonContent.isChecked()) {
-                    text_index = c.getColumnIndex("text");
+                    text_index = c.getColumnIndex(ParagonContract.Paragon.CONTENT);
                     itemContent = c.getString(text_index);
                     itemContent.toLowerCase();
                     match = pattern.matcher(itemContent);
                     if (match.find()) {
-                        indexes.add(c.getString(c.getColumnIndex("_id")));
+                        indexes.add(c.getString(c.getColumnIndex(ParagonContract.Paragon._ID)));
                         Toast toast = Toast.makeText(this, "Znaleziono : " + match.group().substring(0), Toast.LENGTH_LONG);
                         toast.show();
                     }
@@ -181,7 +186,7 @@ public class SearchActivity extends AppCompatActivity {
         }
 
 
-        c = db.query(true, ParagonContract.Paragon.TABLE_NAME, cols, "_id in ("+makePlaceholders(indexes.size())+") ", indexes.toArray(new String[indexes.size()]), null, null, null, null);
+        c = db.query(true, ParagonContract.Paragon.TABLE_NAME, cols, ParagonContract.Paragon._ID + " in ("+makePlaceholders(indexes.size())+") ", indexes.toArray(new String[indexes.size()]), null, null, null, null);
         c.moveToFirst();
 
         pdba = new PrgnDBAdapter(this, R.layout.list_item_layout, c, from, to, 0);
@@ -191,8 +196,9 @@ public class SearchActivity extends AppCompatActivity {
 
     String makePlaceholders(int len) {
         if (len < 1) {
-            // It will lead to an invalid query anyway ..
-            throw new RuntimeException("No placeholders");
+            Toast error = Toast.makeText(this, "Nie znaleziono", Toast.LENGTH_SHORT);
+            error.show();
+            return "";
         } else {
             StringBuilder sb = new StringBuilder(len * 2 - 1);
             sb.append("?");
