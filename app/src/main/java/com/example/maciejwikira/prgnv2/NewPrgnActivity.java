@@ -55,9 +55,6 @@ public class NewPrgnActivity extends AppCompatActivity {
     //Wzór do wyszukiwania daty :
     private Pattern theDate = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");
 
-    //Deklaracja obiektu bazy danych
-    private SQLiteDatabase prgnDatabase;
-
     String prgnText;
 
     //funkcja onCreate - inicjalizacja obiektów interfejsu użytkownika i wywołanie funkcji aktywności
@@ -67,6 +64,8 @@ public class NewPrgnActivity extends AppCompatActivity {
         setContentView(R.layout.activity_new_prgn);
 
         final Context context = getApplicationContext();    //zapisanie kontekstu do zmiennej
+
+        final ParagonDbHelper mDbHelper = new ParagonDbHelper(context);
 
         //inicjalizacja elementów interfejsu użytkownika
         nameField = (EditText)findViewById(R.id.nameField);
@@ -79,7 +78,6 @@ public class NewPrgnActivity extends AppCompatActivity {
         addToDBBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                databaseInit(); //inicjalizacja bazy danych
                 try{
                     //Stworzenie obiektu przechowującego dane do zapisania w bazie danych aplikacji
                     ContentValues cv = new ContentValues();
@@ -90,7 +88,8 @@ public class NewPrgnActivity extends AppCompatActivity {
                     cv.put("img", imgToSave);   //ścieżka absolutna do zdjęcia paragonu
                     cv.put("text", prgnText);
 
-                    prgnDatabase.insert("prgns", null, cv); //dodanie rekordu do bazy danych
+                    SQLiteDatabase db = mDbHelper.getWritableDatabase();
+                    db.insert(ParagonContract.Paragon.TABLE_NAME, null, cv); //dodanie rekordu do bazy danych
 
                     //Wyświetlenie potwierdzenia pomyślnego wykonania operacji
                     Toast toast = Toast.makeText(context, "Yay, everything went good !!! " , Toast.LENGTH_LONG);
@@ -101,7 +100,6 @@ public class NewPrgnActivity extends AppCompatActivity {
                     toast.show();
                 }
                 //zamknięcie bazy danych
-                prgnDatabase.close();
             }
         });
 
@@ -308,15 +306,6 @@ public class NewPrgnActivity extends AppCompatActivity {
         */
 
        return foundDate;    //zwróć znalezioną datę
-    }
-
-    //Inicjalizacja bazy danych
-    private void databaseInit(){
-
-        prgnDatabase = openOrCreateDatabase("prgnDatabase",MODE_PRIVATE,null);  //stwórz lub otwórz bazę danych
-        //stwórz tabelę z danymi jeśli nie istnieje
-        prgnDatabase.execSQL("CREATE TABLE IF NOT EXISTS prgns( _id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT, category TEXT, date TEXT, value REAL, img TEXT, text TEXT)");
-
     }
 
     //Pozyskaj absolutną ścieżkę obrazu na podstawie uri

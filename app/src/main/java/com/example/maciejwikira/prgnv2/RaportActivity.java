@@ -15,15 +15,13 @@ public class RaportActivity extends AppCompatActivity {
 
     private ListView raportListView;
 
-    //DB declaration
-    private SQLiteDatabase prgnDatabase;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_raport);
 
-        prgnDatabase = openOrCreateDatabase("prgnDatabase",MODE_PRIVATE,null);
+        ParagonDbHelper mDbHelper = new ParagonDbHelper(this);
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
 
         raportListView = (ListView)findViewById(R.id.raportListView);
 
@@ -55,13 +53,11 @@ public class RaportActivity extends AppCompatActivity {
                 R.id.prgnTextView
         };
 
-        Cursor c = prgnDatabase.query(true, "prgns", cols,null, null, null, null, null, null);
+        Cursor c = db.query(true, ParagonContract.Paragon.TABLE_NAME, cols,null, null, null, null, null, null);
         c.moveToFirst();
 
         PrgnDBAdapter pdba = new PrgnDBAdapter(this, R.layout.list_item_layout, c, from, to, 0);
         raportListView.setAdapter(pdba);
-
-        prgnDatabase.close();
 
     }
 

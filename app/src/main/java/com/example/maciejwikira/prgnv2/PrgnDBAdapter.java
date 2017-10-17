@@ -65,9 +65,5 @@ public class PrgnDBAdapter extends SimpleCursorAdapter {
         date.setText(cursor.getString(date_index));
         img.setImageBitmap(imgr);
         text.setText(cursor.getString(text_index));
-
-
-
-
     }
 }

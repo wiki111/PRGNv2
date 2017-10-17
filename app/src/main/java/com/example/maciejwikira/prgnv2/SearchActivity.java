@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.ExpandableListView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -31,6 +32,8 @@ public class SearchActivity extends AppCompatActivity {
     private Button buttonSearch;
     private String thingToFind;
     private CheckBox searchParagonContent;
+    private ListView categoryList;
+    SQLiteDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,10 +41,34 @@ public class SearchActivity extends AppCompatActivity {
         setContentView(R.layout.activity_search);
 
         searchInputField = (EditText)findViewById(R.id.searchInputField);
-
         searchParagonContent = (CheckBox)findViewById(R.id.searchsParagonContent);
-
         buttonSearch = (Button)findViewById(R.id.buttonSearch);
+        categoryList = (ListView)findViewById(R.id.categoryList);
+
+        ParagonDbHelper mDbHelper = new ParagonDbHelper(this);
+        db = mDbHelper.getWritableDatabase();
+
+        String[] colsToGet = new String[]{
+                "_id",
+                "category"
+        };
+
+        String[] fromCols = new String[]{
+                "category"
+        };
+
+        int[] toFields = new int[]{
+            R.id.categoryName
+        };
+
+        Cursor cursor;
+
+        cursor = db.query(true, ParagonContract.Paragon.TABLE_NAME, colsToGet, null,null,null,null,null,null);
+        cursor.moveToFirst();
+
+        CategoryAdapter ca;
+        ca = new CategoryAdapter(this, R.layout.category_list_item, cursor, fromCols, toFields, 0);
+        categoryList.setAdapter(ca);
 
         buttonSearch.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -54,7 +81,6 @@ public class SearchActivity extends AppCompatActivity {
 
     private void searchForItems(String thingToFind){
 
-        prgnDatabase = openOrCreateDatabase("prgnDatabase", MODE_PRIVATE,null);
 
         searchOutputField = (ListView)findViewById(R.id.searchOutputField);
 
@@ -105,7 +131,7 @@ public class SearchActivity extends AppCompatActivity {
         Matcher match;
         Pattern pattern = Pattern.compile(thingToFind.toLowerCase());
 
-        c = prgnDatabase.query(true, "prgns", cols,null, null, null, null, null, null);
+        c = db.query(true, ParagonContract.Paragon.TABLE_NAME, cols,null, null, null, null, null, null);
 
         try {
             while (c.moveToNext()) {
@@ -155,13 +181,11 @@ public class SearchActivity extends AppCompatActivity {
         }
 
 
-        c = prgnDatabase.query(true, "prgns", cols, "_id in ("+makePlaceholders(indexes.size())+") ", indexes.toArray(new String[indexes.size()]), null, null, null, null);
+        c = db.query(true, ParagonContract.Paragon.TABLE_NAME, cols, "_id in ("+makePlaceholders(indexes.size())+") ", indexes.toArray(new String[indexes.size()]), null, null, null, null);
         c.moveToFirst();
 
         pdba = new PrgnDBAdapter(this, R.layout.list_item_layout, c, from, to, 0);
         searchOutputField.setAdapter(pdba);
-
-        prgnDatabase.close();
 
     }
 
