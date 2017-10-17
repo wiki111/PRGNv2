@@ -1,116 +1,176 @@
 package com.example.maciejwikira.prgnv2;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.SparseArray;
-import android.widget.TextView;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import com.google.android.gms.vision.Frame;
-import com.google.android.gms.vision.text.Text;
 import com.google.android.gms.vision.text.TextBlock;
 import com.google.android.gms.vision.text.TextRecognizer;
 import com.theartofdev.edmodo.cropper.CropImage;
-import com.theartofdev.edmodo.cropper.CropImageView;
 
-
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class NewPrgnActivity extends AppCompatActivity {
 
-    private TextView txtView;
+    //Deklaracja elementów interfejsu :
+    private EditText nameField;
+    private EditText categoryField;
+    private EditText valueField;
+    private EditText dateField;
+    private Button addToDBBtn;
 
+    //Deklaracje obiektów potrzebnych do przetworzenia obrazów :
     private Bitmap activeBitmap;
     private Uri activeUri;
+    private String imgToSave;
 
-    private Matcher match;
+    //Wskaźniki przechowujące informacje o tym, czy znaleziono datę i wartość paragonu :
     private boolean valueFound = false;
+    private boolean dateFound = false;
 
-    private int REQUEST_CROP = 200;
+    private Matcher match;  //obiekt umożliwiający wyszukiwanie wyrażenia w danym łańcuchu znaków
 
-    //Patterns :
+    //Wzory do wyszukiwania wartości zakupu :
     private Pattern wholeValue = Pattern.compile("suma pln");
     private Pattern wholeValue2 = Pattern.compile("suma pln \\d+,\\d+");
     private Pattern wholeValue3 = Pattern.compile("([0-9]+,[0-9]+ pln)(.*?)");
-    private Pattern theValue = Pattern.compile("([0-9]+,[0-9]+)");
+    private Pattern theValue = Pattern.compile("([0-9]+(,|\\.)[0-9]+)");
 
+    //Wzór do wyszukiwania daty :
+    private Pattern theDate = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");
+
+    //Deklaracja obiektu bazy danych
+    private SQLiteDatabase prgnDatabase;
+
+    String prgnText;
+
+    //funkcja onCreate - inicjalizacja obiektów interfejsu użytkownika i wywołanie funkcji aktywności
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_prgn);
 
-        txtView = (TextView)findViewById(R.id.textView);
+        final Context context = getApplicationContext();    //zapisanie kontekstu do zmiennej
 
-        openGallery();
+        //inicjalizacja elementów interfejsu użytkownika
+        nameField = (EditText)findViewById(R.id.nameField);
+        categoryField = (EditText) findViewById(R.id.categoryField);
+        valueField = (EditText) findViewById(R.id.valueField);
+        dateField = (EditText) findViewById(R.id.dateField);
+        addToDBBtn = (Button)findViewById(R.id.addToDBButton);
 
+        //Obsługa kliknięcia przycisku dodającego dane do bazy
+        addToDBBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                databaseInit(); //inicjalizacja bazy danych
+                try{
+                    //Stworzenie obiektu przechowującego dane do zapisania w bazie danych aplikacji
+                    ContentValues cv = new ContentValues();
+                    cv.put("name", nameField.getText().toString()); //nazwa wpisu
+                    cv.put("category", categoryField.getText().toString()); //kategoria wpisu
+                    cv.put("date", dateField.getText().toString()); //data paragonu
+                    cv.put("value", Double.parseDouble(valueField.getText().toString().replaceAll("," , "\\.")));   //wartość paragonu
+                    cv.put("img", imgToSave);   //ścieżka absolutna do zdjęcia paragonu
+                    cv.put("text", prgnText);
+
+                    prgnDatabase.insert("prgns", null, cv); //dodanie rekordu do bazy danych
+
+                    //Wyświetlenie potwierdzenia pomyślnego wykonania operacji
+                    Toast toast = Toast.makeText(context, "Yay, everything went good !!! " , Toast.LENGTH_LONG);
+                    toast.show();
+                }catch (Exception e){
+                    //Wyświetlenie komunikatu błędu w wypadku jego wystąpienia
+                    Toast toast = Toast.makeText(context, "Smth went very, very wrong ... " + e.toString(), Toast.LENGTH_LONG);
+                    toast.show();
+                }
+                //zamknięcie bazy danych
+                prgnDatabase.close();
+            }
+        });
+
+        openGallery();  //wywołanie funkcji otwierającej galerię w celu wyborania zdjęcia paragonu
 
     }
 
+    //Funkcja otwierająca galerię w celu wbrania zdjęcia paragonu
     private void openGallery(){
         Intent gallery = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
         startActivityForResult(gallery, 100);
     }
 
+    //Funkcja wywoływana przy powrocie z zewnętrznej aktywności - wyboru zdjęcia lub wskazywania obszaru
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        // fragment kodu wykonywany, gdy następuje powrtót z aktywności wyboru zdjęcia paragonu
         if (resultCode == RESULT_OK && requestCode == 100) {
             Context context = getApplicationContext();
-            activeUri = data.getData();
+            activeUri = data.getData(); //pobierz uri obrazu z danych zwróconych przez aktywność i zapisz do zmiennej
 
-            TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();
+            TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();    //inicjalizacja obiektu odpowiedzialnego za rozpoznawanie tekstu
             try {
-                activeBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), activeUri);
-                Frame frame = new Frame.Builder().setBitmap(activeBitmap).build();
+                activeBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), activeUri); //pobranie obrazu na podstawie pozyskanego uri
+                imgToSave = getRealPathFromURI(activeUri);  //zapis ścieżki absolutnej do obrazu do zmiennej
+                Frame frame = new Frame.Builder().setBitmap(activeBitmap).build();  //inicjalizacja obiektu przechowywującego obraz, z którego sczytywane są dane
 
-                SparseArray<TextBlock> items = textRecognizer.detect(frame);
+                SparseArray<TextBlock> items = textRecognizer.detect(frame);    //sczytywanie danych z obrazu i zapis do tablicy
 
-                txtView.append(" ZNALEZIONA ! ----> Suma PLN : " + searchForTheValue(items) + "\n");
+                prgnText = "";
+                for(int i = 0; i < items.size(); i++){
+                    TextBlock item = items.valueAt(i);
+                    prgnText += item.getValue().toLowerCase();
+                }
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }else if(resultCode == RESULT_OK && requestCode == REQUEST_CROP){
+                if(valueFound == false) //jeśli nie znaleziono wartości
+                    valueField.setText(searchForTheValue(items));   // wyszukaj wartość w odczytanych danych
 
-            Context context = getApplicationContext();
-
-            TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();
-            try {
-               Bitmap croppedBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), data.getData());
-                Frame frame = new Frame.Builder().setBitmap(croppedBitmap).build();
-
-                SparseArray<TextBlock> items = textRecognizer.detect(frame);
-
-                txtView.append(" ZNALEZIONA ! ----> Suma PLN : " + searchForTheValue(items) + "\n");
+                if(dateFound == false)  //jeśli nie znaleziono daty
+                    dateField.setText(searchForTheDate(items)); //wyszukaj datę w odczytanych danych
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-        }else if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) {
+        }else if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) { //Fragment kodu wykonywany przy powrocie z aktywności wyboru obszaru
 
-            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+            CropImage.ActivityResult result = CropImage.getActivityResult(data);    //pobranie danych zwróconych przez aktywność
 
-            if (resultCode == RESULT_OK) {
+            if (resultCode == RESULT_OK) {  //jeśli aktywność zakończyła się pomyślnie
 
-                Uri resultUri = result.getUri();
+                Uri resultUri = result.getUri();    //pobierz uri wskazanego na obrazie obszaru
 
-                Context context = getApplicationContext();
+                Context context = getApplicationContext();  //zapisz kontekst
 
-                TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();
+                TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();    //inicjalizacja obiektu odpowiedzialnego za rozpoznawanie tekstu
                 try {
-                    Bitmap croppedBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), resultUri);
-                    Frame frame = new Frame.Builder().setBitmap(croppedBitmap).build();
+                    Bitmap croppedBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), resultUri); //pobranie obrazu na podstawie pozyskanego uri
+                    Frame frame = new Frame.Builder().setBitmap(croppedBitmap).build(); //inicjalizacja obiektu przechowywującego obraz, z którego sczytywane są dane
 
-                    SparseArray<TextBlock> items = textRecognizer.detect(frame);
+                    SparseArray<TextBlock> items = textRecognizer.detect(frame);    //sczytywanie danych z obrazu i zapis do tablicy
 
-                    txtView.append(" ZNALEZIONA ! ----> Suma PLN : " + searchForTheValue(items) + "\n");
+                    if(valueFound == false) //jeśli nie znaleziono wartości
+                        valueField.setText(searchForTheValue(items));   // wyszukaj wartość w odczytanych danych
+
+                    if(dateFound == false) //jeśli nie znaleziono daty
+                        dateField.setText(searchForTheDate(items)); //wyszukaj datę w odczytanych danych
 
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -126,23 +186,25 @@ public class NewPrgnActivity extends AppCompatActivity {
 
     }
 
+    //Funkcja wyszukująca wartość paragonu
     private String searchForTheValue(SparseArray<TextBlock> items){
 
-        String val = "oops";
-        String foundVal = "";
+        String val = "";    //inicjalizacja zmiennej przechowującej znalezioną wartość
+        String foundVal;    //zmienna tymczasowa przechowująca wartość
 
+        //Pętla przeszukująca każdą linię sczytanego z obrazu tekstu
         for (int i = 0; i < items.size(); ++i) {
 
-            TextBlock item = items.valueAt(i);
+            TextBlock item = items.valueAt(i);  //pobranie linii tekstu
 
-            //txtView.append("Checking item : " + item.getValue().toLowerCase() + "\n");
-
+            //Sprawdzanie, czy linia pasuje do danego wzorca
             match = wholeValue3.matcher(item.getValue().toLowerCase());
-            if(match.find() && valueFound == false){
+            if(match.find() && valueFound == false){    //jeśli znaleziono wyrażenie pasujące do wzorca i nie znaleziono żadnego wcześniej
 
-                valueFound = true;
-                foundVal = match.group().substring(0);
+                valueFound = true;  //ustaw zmienną sygnalizującą znalezienie poszukiwanej wartości
+                foundVal = match.group().substring(0);  //zapisz pierwsze wystąpienie wyszukiwanej wartości do zmiennej
 
+                //pozyskanie wartości zakupu jako liczby ze znalezionego wyrażenia
                 match = theValue.matcher(foundVal);
                 match.find();
                 val = match.group().substring(0);
@@ -150,6 +212,7 @@ public class NewPrgnActivity extends AppCompatActivity {
 
             }
 
+            //Sprawdzanie, czy linia pasuje do danego wzorca
             match = wholeValue.matcher(item.getValue().toLowerCase());
             if(match.matches() && valueFound == false){
 
@@ -165,6 +228,7 @@ public class NewPrgnActivity extends AppCompatActivity {
 
             }
 
+            //Sprawdzanie, czy linia pasuje do danego wzorca
             match = wholeValue2.matcher(item.getValue().toLowerCase());
             if(match.find() && valueFound == false){
 
@@ -177,25 +241,95 @@ public class NewPrgnActivity extends AppCompatActivity {
 
             }
 
+            if(valueFound == true){ // jeśli znaleziono wartość
+
+                //Wyświetlenie potwierdzenia odnalezienia wartości
+                Toast toast = Toast.makeText(this, "Znaleziono wartosc ! : " +  val , Toast.LENGTH_SHORT);
+                toast.show();
+
+                return val; // zwrócenie znalezionej wartości
+
+            }
+
+
         }
+        /*
+        if(valueFound == false){ // jeśli nie udało się znaleźć wartości
 
-        if(valueFound == false){
+            //Wyświetl informację dla użytkownika
+            Toast toast = Toast.makeText(this, "Wskaż miejsce gdzie powinna znajdować się wartość" , Toast.LENGTH_LONG);
+            toast.show();
 
-            // start picker to get image for cropping and then use the image in cropping activity
-            //CropImage.activity()
-              //      .setGuidelines(CropImageView.Guidelines.ON)
-                //    .start(this);
-
-            // start cropping activity for pre-acquired image saved on the device
+            //Uruchom aktywność wyboru obszaru obrazu
             CropImage.activity(activeUri)
                     .start(this);
 
-            // for fragment (DO NOT use `getActivity()`)
-            //CropImage.activity()
-                   // .start(getContext(), this);
-
         }
+        */
 
         return val;
     }
+
+    //Funkcja wyszukująca datę
+    private String searchForTheDate(SparseArray<TextBlock> items){
+
+        String foundDate = "";  //inicjalizacja zmiennej przechowującej datę
+
+        for (int i = 0; i < items.size(); ++i) {    //sprawdzanie każdej linii w poszukiwaniu daty
+
+            TextBlock item = items.valueAt(i);  // pobranie linii tekstu
+
+            //Sprawdzenie czy w tekście znajduje się wyrażenie pasujące do wzorca
+            match = theDate.matcher(item.getValue().toLowerCase());
+            if (match.find() && dateFound == false) {   //jeśli znaleziono wystąpienie i nie znaleziono jeszcze daty
+
+                dateFound = true;   //ustaw zmienną sygnalizującą znalezienie daty
+                foundDate = match.group().substring(0); //zapisz znalezioną datę
+
+                //Wyświetl potwierdzenie znalezienia daty
+                Toast toast = Toast.makeText(this, "Znaleziono datę ! : " +  foundDate , Toast.LENGTH_SHORT);
+                toast.show();
+
+            }
+        }
+
+        /*
+        if(dateFound == false){ //jeśli nie udało się znaleźć daty
+
+            //Wyświetl informację dla użytkownika
+            Toast toast = Toast.makeText(this, "Wskaż miejsce gdzie powinna znajdować się data", Toast.LENGTH_LONG);
+            toast.show();
+
+            //Uruchom aktywność wyboru obszaru obrazu
+            CropImage.activity(activeUri)
+                    .start(this);
+
+        }
+        */
+
+       return foundDate;    //zwróć znalezioną datę
+    }
+
+    //Inicjalizacja bazy danych
+    private void databaseInit(){
+
+        prgnDatabase = openOrCreateDatabase("prgnDatabase",MODE_PRIVATE,null);  //stwórz lub otwórz bazę danych
+        //stwórz tabelę z danymi jeśli nie istnieje
+        prgnDatabase.execSQL("CREATE TABLE IF NOT EXISTS prgns( _id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT, category TEXT, date TEXT, value REAL, img TEXT, text TEXT)");
+
+    }
+
+    //Pozyskaj absolutną ścieżkę obrazu na podstawie uri
+    @SuppressWarnings("deprecation")
+    private String getRealPathFromURI(Uri contentUri) {
+        String[] proj = { MediaStore.Images.Media.DATA };
+        Cursor cursor = managedQuery(contentUri, proj, null, null, null);
+        if (cursor == null) {
+            return contentUri.getPath();
+        }
+        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        cursor.moveToFirst();
+        return cursor.getString(column_index);
+    }
+
 }
