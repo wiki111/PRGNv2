@@ -89,7 +89,35 @@ public class NewPrgnActivity extends AppCompatActivity {
                     cv.put("text", prgnText);
 
                     SQLiteDatabase db = mDbHelper.getWritableDatabase();
-                    db.insert(ParagonContract.Paragon.TABLE_NAME, null, cv); //dodanie rekordu do bazy danych
+
+                    String[] projection = {
+                            ParagonContract.Categories._ID,
+                            ParagonContract.Categories.CATEGORY_NAME
+                    };
+
+                    String selection = ParagonContract.Categories.CATEGORY_NAME + " =?";
+                    String[] selectionArgs = { categoryField.getText().toString().toLowerCase() };
+
+                    Cursor cursor = db.query(
+                            ParagonContract.Categories.TABLE_NAME,
+                            projection,
+                            selection,
+                            selectionArgs,
+                            null,
+                            null,
+                            null
+                    );
+
+                    if(cursor != null){
+                        db.insert(ParagonContract.Paragon.TABLE_NAME, null, cv); //dodanie rekordu do bazy danych
+                    }else{
+                        ContentValues newCategoryValue = new ContentValues();
+                        newCategoryValue.put(ParagonContract.Categories.CATEGORY_NAME, categoryField.getText().toString().toLowerCase());
+                        db.insert(ParagonContract.Categories.TABLE_NAME, null, newCategoryValue);
+                        db.insert(ParagonContract.Paragon.TABLE_NAME, null, cv); //dodanie rekordu do bazy danych
+                    }
+
+                    cursor.close();
 
                     //Wyświetlenie potwierdzenia pomyślnego wykonania operacji
                     Toast toast = Toast.makeText(context, "Yay, everything went good !!! " , Toast.LENGTH_LONG);

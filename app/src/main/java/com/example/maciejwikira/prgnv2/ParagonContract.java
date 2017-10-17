@@ -21,9 +21,19 @@ public final class ParagonContract {
         public static final String SQL_CREATE_PARAGONS = "CREATE TABLE IF NOT EXISTS " + Paragon.TABLE_NAME + " (" +
                 Paragon._ID + " INTEGER PRIMARY KEY, " + Paragon.NAME + " TEXT," + Paragon.CATEGORY + " TEXT," +
                 Paragon.DATE +  " DATE," + Paragon.VALUE + " REAL," + Paragon.IMAGE_PATH + " TEXT," +
-                Paragon.CONTENT + " TEXT)";
+                Paragon.CONTENT + " TEXT," +
+                    "FOREIGN KEY (" + Paragon.CATEGORY + ") REFERENCES categories(" + Categories.CATEGORY_NAME + "))";
 
         public static final String SQL_DELETE_PARAGONS = "DROP TABLE IF EXISTS " + Paragon.TABLE_NAME;
     }
 
+    public static class Categories implements BaseColumns{
+        public static final String TABLE_NAME = "categories";
+        public static final String CATEGORY_NAME = "category_name";
+
+        public static final String SQL_CREATE_CATEGORIES = "CREATE TABLE IF NOT EXISTS " + Categories.TABLE_NAME + " (" +
+                Categories._ID + " INTEGER PRIMARY KEY, " + Categories.CATEGORY_NAME + " TEXT)";
+
+        public static final String SQL_DELETE_PARAGONS = "DROP TABLE IF EXISTS " + Categories.TABLE_NAME;
+    }
 }
