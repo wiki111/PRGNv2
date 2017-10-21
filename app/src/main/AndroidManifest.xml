@@ -23,7 +23,11 @@
             android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
             android:theme="@style/Base.Theme.AppCompat" />
         <activity android:name=".RaportActivity" />
-        <activity android:name=".SearchActivity"></activity>
+        <activity android:name=".SearchActivity" />
+        <activity
+            android:name=".MainViewActivity"
+            android:label="PRGN"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

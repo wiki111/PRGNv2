@@ -21,6 +21,9 @@ public class MainActivity extends AppCompatActivity {
 
         final Context context = getApplicationContext();
 
+        Intent intent = new Intent(context, MainViewActivity.class);
+        startActivity(intent);
+
         newPrgnBtn = (Button)findViewById(R.id.newPrgnBtn);
         newPrgnBtn.setOnClickListener(new View.OnClickListener() {
             @Override
