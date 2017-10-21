@@ -2,6 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/action_search"
+        android:icon="@drawable/ic_search_white_24dp"
+        android:orderInCategory="101"
+        android:title="Search"
+        app:showAsAction="always|collapseActionView"
+        app:actionViewClass="com.example.maciejwikira.prgnv2.MySearchView"  />
+
+    <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"
         android:title="@string/action_settings"
@@ -9,15 +17,10 @@
 
     <item
         android:id="@+id/action_filter"
-        android:orderInCategory="101"
+        android:orderInCategory="102"
         android:title="Filter"
         android:icon="@drawable/ic_filter_list_white_24dp"
         app:showAsAction="always" />
 
-    <item
-        android:id="@+id/action_search"
-        android:orderInCategory="102"
-        android:title="Filter"
-        android:icon="@drawable/ic_search_white_24dp"
-        app:showAsAction="always" />
+
 </menu>
