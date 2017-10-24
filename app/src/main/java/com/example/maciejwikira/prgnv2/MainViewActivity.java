@@ -1,10 +1,11 @@
 package com.example.maciejwikira.prgnv2;
 
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.widget.SearchView;
@@ -25,8 +26,13 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
+
 public class MainViewActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    public static final String CAMERA_OR_MEDIA = "CAMERA_OR_MEDIA";
 
     private ListView paragonsListView;
     private ArrayList<Paragon> paragonsArray;
@@ -41,7 +47,25 @@ public class MainViewActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        FloatingActionButton fabMedia = (FloatingActionButton)findViewById(R.id.material_design_floating_action_menu_item1);
+        fabMedia.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), NewPrgnActivity.class);
+                intent.putExtra(CAMERA_OR_MEDIA, "media");
+                startActivity(intent);
+            }
+        });
 
+        FloatingActionButton fabCamera = (FloatingActionButton)findViewById(R.id.material_design_floating_action_menu_item2);
+        fabCamera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), NewPrgnActivity.class);
+                intent.putExtra(CAMERA_OR_MEDIA, "cam");
+                startActivity(intent);
+            }
+        });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -53,30 +77,15 @@ public class MainViewActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         paragonsArray = new ArrayList<Paragon>();
-
         paragonsListView = (ListView)findViewById(R.id.paragonsListView);
+        populateList(paragonsListView);
 
-        //get reference do the database
-        mDbHelper = new ParagonDbHelper(this);
-        db = mDbHelper.getReadableDatabase();
+    }
 
-        //declare what to get from db
-        String[] cols = new String[]{
-                "_id",
-                "name",
-                "category",
-                "value",
-                "date",
-                "img",
-                "text"
-        };
-
-        //get cursor
-        Cursor c = db.query(true, ParagonContract.Paragon.TABLE_NAME, cols,null, null, null, null, null, null);
-
-        populateList(paragonsListView, c);
-
-        c.close();
+    @Override
+    protected void onResume(){
+        super.onResume();
+        populateList(paragonsListView);
     }
 
     @Override
@@ -114,22 +123,17 @@ public class MainViewActivity extends AppCompatActivity
         searchView.setOnSearchViewCollapsedEventListener(new MySearchView.OnSearchViewCollapsedEventListener() {
             @Override
             public void onSearchViewCollapsed() {
-                String[] cols = new String[]{
-                        "_id",
-                        "name",
-                        "category",
-                        "value",
-                        "date",
-                        "img",
-                        "text"
-                };
+                populateList(paragonsListView);
+            }
+        });
 
-                //get cursor
-                Cursor c = db.query(true, ParagonContract.Paragon.TABLE_NAME, cols,null, null, null, null, null, null);
-
-                populateList(paragonsListView, c);
-
-                c.close();
+        MenuItem filterItem = menu.findItem(R.id.action_filter);
+        filterItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent intent = new Intent(getApplicationContext(), FilterActivity.class);
+                startActivity(intent);
+                return false;
             }
         });
 
@@ -178,28 +182,50 @@ public class MainViewActivity extends AppCompatActivity
         return true;
     }
 
-    private void populateList(ListView lv, Cursor c){
+    private void populateList(ListView lv){
 
-        paragonsArray.clear();
+        //get reference do the database
+        mDbHelper = new ParagonDbHelper(this);
+        db = mDbHelper.getReadableDatabase();
 
-        //fill array with paragon objects created from database data
-        while(c.moveToNext()){
+        //declare what to get from db
+        String[] cols = new String[]{
+                "_id",
+                "name",
+                "category",
+                "value",
+                "date",
+                "img",
+                "text"
+        };
 
-            paragonsArray.add(new Paragon(
-                    c.getInt(c.getColumnIndex("_id")),
-                    c.getString(c.getColumnIndex("name")),
-                    c.getString(c.getColumnIndex("category")),
-                    c.getString(c.getColumnIndex("value")),
-                    c.getString(c.getColumnIndex("date")),
-                    c.getString(c.getColumnIndex("img")),
-                    c.getString(c.getColumnIndex("text"))
-            ));
+        //get cursor
+        Cursor c = db.query(true, ParagonContract.Paragon.TABLE_NAME, cols,null, null, null, null, null, null);
+        try{
+            paragonsArray.clear();
 
+            //fill array with paragon objects created from database data
+            while(c.moveToNext()){
+
+                paragonsArray.add(new Paragon(
+                        c.getInt(c.getColumnIndex("_id")),
+                        c.getString(c.getColumnIndex("name")),
+                        c.getString(c.getColumnIndex("category")),
+                        c.getString(c.getColumnIndex("value")),
+                        c.getString(c.getColumnIndex("date")),
+                        c.getString(c.getColumnIndex("img")),
+                        c.getString(c.getColumnIndex("text"))
+                ));
+
+            }
+
+            //finally get and set adapter
+            ParagonListAdapter paragonListAdapter = new ParagonListAdapter(this.getApplicationContext(), R.layout.paragon_list_item, paragonsArray);
+            lv.setAdapter(paragonListAdapter);
+        }finally {
+            c.close();
+            db.close();
         }
-
-        //finally get and set adapter
-        ParagonListAdapter paragonListAdapter = new ParagonListAdapter(this.getApplicationContext(), R.layout.paragon_list_item, paragonsArray);
-        lv.setAdapter(paragonListAdapter);
 
     }
 
@@ -254,6 +280,7 @@ public class MainViewActivity extends AppCompatActivity
             }
         } finally {
             c.close();
+            db.close();
         }
 
         ParagonListAdapter paragonListAdapter = new ParagonListAdapter(this.getApplicationContext(), R.layout.paragon_list_item, searchResults);

@@ -24,32 +24,6 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(context, MainViewActivity.class);
         startActivity(intent);
 
-        newPrgnBtn = (Button)findViewById(R.id.newPrgnBtn);
-        newPrgnBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(context, NewPrgnActivity.class);
-                startActivity(intent);
-            }
-        });
-
-        raportPrgnBtn = (Button)findViewById(R.id.raportPrgnBtn);
-        raportPrgnBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(context, RaportActivity.class);
-                startActivity(intent);
-            }
-        });
-
-        searchPrgnBtn = (Button)findViewById(R.id.searchPrgnBtn);
-        searchPrgnBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(context, SearchActivity.class);
-                startActivity(intent);
-            }
-        });
     }
 
 

@@ -39,8 +39,15 @@ public class ParagonListAdapter extends ArrayAdapter{
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent){
-        inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View v = inflater.inflate(R.layout.paragon_list_item, null);
+
+        View v;
+        if (convertView == null) {
+            inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
+            v = inflater.inflate(R.layout.paragon_list_item, null);
+        }else
+           v = convertView;
+
 
         ImageView imageView = (ImageView) v.findViewById(R.id.photoView);
         TextView nameView = (TextView) v.findViewById(R.id.nameTextView);

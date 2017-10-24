@@ -1,5 +1,7 @@
 package com.example.maciejwikira.prgnv2;
 
+import android.annotation.SuppressLint;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -7,7 +9,11 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.SparseArray;
@@ -22,7 +28,11 @@ import com.google.android.gms.vision.text.TextRecognizer;
 import com.theartofdev.edmodo.cropper.CropImage;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,6 +64,12 @@ public class NewPrgnActivity extends AppCompatActivity {
 
     //Wzór do wyszukiwania daty :
     private Pattern theDate = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");
+
+    static final int REQUEST_IMAGE_CAPTURE = 1;
+    static final int REQUEST_TAKE_PHOTO = 1;
+
+    private String mCurrentPhotoPath;
+    private Uri mUri;
 
     String prgnText;
 
@@ -133,14 +149,41 @@ public class NewPrgnActivity extends AppCompatActivity {
             }
         });
 
-        openGallery();  //wywołanie funkcji otwierającej galerię w celu wyborania zdjęcia paragonu
 
+        Intent intent = getIntent();
+        if(intent.getStringExtra(MainViewActivity.CAMERA_OR_MEDIA).equals("cam")){
+            takePhoto();
+        }else if(intent.getStringExtra(MainViewActivity.CAMERA_OR_MEDIA).equals("media")) {
+            openGallery();  //wywołanie funkcji otwierającej galerię w celu wyborania zdjęcia paragonu
+        }
     }
 
     //Funkcja otwierająca galerię w celu wbrania zdjęcia paragonu
     private void openGallery(){
         Intent gallery = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
         startActivityForResult(gallery, 100);
+    }
+
+    private void takePhoto(){
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.example.android.fileprovider",
+                        photoFile);
+                mUri = photoURI;
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+            }
+        }
     }
 
     //Funkcja wywoływana przy powrocie z zewnętrznej aktywności - wyboru zdjęcia lub wskazywania obszaru
@@ -150,68 +193,45 @@ public class NewPrgnActivity extends AppCompatActivity {
 
         // fragment kodu wykonywany, gdy następuje powrtót z aktywności wyboru zdjęcia paragonu
         if (resultCode == RESULT_OK && requestCode == 100) {
+
             Context context = getApplicationContext();
             activeUri = data.getData(); //pobierz uri obrazu z danych zwróconych przez aktywność i zapisz do zmiennej
+            searchForValues(getRealPathFromURI(activeUri), context);
 
-            TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();    //inicjalizacja obiektu odpowiedzialnego za rozpoznawanie tekstu
-            try {
-                activeBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), activeUri); //pobranie obrazu na podstawie pozyskanego uri
-                imgToSave = getRealPathFromURI(activeUri);  //zapis ścieżki absolutnej do obrazu do zmiennej
-                Frame frame = new Frame.Builder().setBitmap(activeBitmap).build();  //inicjalizacja obiektu przechowywującego obraz, z którego sczytywane są dane
+        }else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK){
 
-                SparseArray<TextBlock> items = textRecognizer.detect(frame);    //sczytywanie danych z obrazu i zapis do tablicy
-
-                prgnText = "";
-                for(int i = 0; i < items.size(); i++){
-                    TextBlock item = items.valueAt(i);
-                    prgnText += item.getValue().toLowerCase();
-                }
-
-                if(valueFound == false) //jeśli nie znaleziono wartości
-                    valueField.setText(searchForTheValue(items));   // wyszukaj wartość w odczytanych danych
-
-                if(dateFound == false)  //jeśli nie znaleziono daty
-                    dateField.setText(searchForTheDate(items)); //wyszukaj datę w odczytanych danych
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }else if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) { //Fragment kodu wykonywany przy powrocie z aktywności wyboru obszaru
-
-            CropImage.ActivityResult result = CropImage.getActivityResult(data);    //pobranie danych zwróconych przez aktywność
-
-            if (resultCode == RESULT_OK) {  //jeśli aktywność zakończyła się pomyślnie
-
-                Uri resultUri = result.getUri();    //pobierz uri wskazanego na obrazie obszaru
-
-                Context context = getApplicationContext();  //zapisz kontekst
-
-                TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();    //inicjalizacja obiektu odpowiedzialnego za rozpoznawanie tekstu
-                try {
-                    Bitmap croppedBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), resultUri); //pobranie obrazu na podstawie pozyskanego uri
-                    Frame frame = new Frame.Builder().setBitmap(croppedBitmap).build(); //inicjalizacja obiektu przechowywującego obraz, z którego sczytywane są dane
-
-                    SparseArray<TextBlock> items = textRecognizer.detect(frame);    //sczytywanie danych z obrazu i zapis do tablicy
-
-                    if(valueFound == false) //jeśli nie znaleziono wartości
-                        valueField.setText(searchForTheValue(items));   // wyszukaj wartość w odczytanych danych
-
-                    if(dateFound == false) //jeśli nie znaleziono daty
-                        dateField.setText(searchForTheDate(items)); //wyszukaj datę w odczytanych danych
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
-
-                Exception error = result.getError();
-
-            }
+            Context context = getApplicationContext();
+            activeUri = mUri;
+            searchForValues(mCurrentPhotoPath, context);
 
         }
 
+    }
+
+    private void searchForValues(String realPath, Context context){
+        TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();    //inicjalizacja obiektu odpowiedzialnego za rozpoznawanie tekstu
+        try {
+            activeBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), activeUri); //pobranie obrazu na podstawie pozyskanego uri
+            imgToSave = realPath;  //zapis ścieżki absolutnej do obrazu do zmiennej
+            Frame frame = new Frame.Builder().setBitmap(activeBitmap).build();  //inicjalizacja obiektu przechowywującego obraz, z którego sczytywane są dane
+
+            SparseArray<TextBlock> items = textRecognizer.detect(frame);    //sczytywanie danych z obrazu i zapis do tablicy
+
+            prgnText = "";
+            for(int i = 0; i < items.size(); i++){
+                TextBlock item = items.valueAt(i);
+                prgnText += item.getValue().toLowerCase();
+            }
+
+            if(valueFound == false) //jeśli nie znaleziono wartości
+                valueField.setText(searchForTheValue(items));   // wyszukaj wartość w odczytanych danych
+
+            if(dateFound == false)  //jeśli nie znaleziono daty
+                dateField.setText(searchForTheDate(items)); //wyszukaj datę w odczytanych danych
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     //Funkcja wyszukująca wartość paragonu
@@ -279,21 +299,7 @@ public class NewPrgnActivity extends AppCompatActivity {
 
             }
 
-
         }
-        /*
-        if(valueFound == false){ // jeśli nie udało się znaleźć wartości
-
-            //Wyświetl informację dla użytkownika
-            Toast toast = Toast.makeText(this, "Wskaż miejsce gdzie powinna znajdować się wartość" , Toast.LENGTH_LONG);
-            toast.show();
-
-            //Uruchom aktywność wyboru obszaru obrazu
-            CropImage.activity(activeUri)
-                    .start(this);
-
-        }
-        */
 
         return val;
     }
@@ -321,24 +327,10 @@ public class NewPrgnActivity extends AppCompatActivity {
             }
         }
 
-        /*
-        if(dateFound == false){ //jeśli nie udało się znaleźć daty
-
-            //Wyświetl informację dla użytkownika
-            Toast toast = Toast.makeText(this, "Wskaż miejsce gdzie powinna znajdować się data", Toast.LENGTH_LONG);
-            toast.show();
-
-            //Uruchom aktywność wyboru obszaru obrazu
-            CropImage.activity(activeUri)
-                    .start(this);
-
-        }
-        */
-
        return foundDate;    //zwróć znalezioną datę
     }
 
-    //Pozyskaj absolutną ścieżkę obrazu na podstawie uri
+    //Pozyskanie absolutnej sciezki do pliku na podstawie Uri
     @SuppressWarnings("deprecation")
     private String getRealPathFromURI(Uri contentUri) {
         String[] proj = { MediaStore.Images.Media.DATA };
@@ -349,6 +341,23 @@ public class NewPrgnActivity extends AppCompatActivity {
         int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
         cursor.moveToFirst();
         return cursor.getString(column_index);
+    }
+
+    //Stworzenie pliku w ktorym zapisany zostanie obraz przechwycony przez kamere
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        mCurrentPhotoPath = image.getAbsolutePath();
+        return image;
     }
 
 }
