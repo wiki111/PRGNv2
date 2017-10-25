@@ -1,5 +1,7 @@
 package com.example.maciejwikira.prgnv2;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -9,6 +11,7 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.CursorAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -18,6 +21,7 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
     private SQLiteOpenHelper mDbHelper;
     private SQLiteDatabase db;
     private Cursor c;
+    private String chosenCategory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +58,28 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
         SimpleCursorAdapter simpleCursorAdapter = new SimpleCursorAdapter(this, R.layout.category_spinner_item, c, from, to, 0);
         spinner.setAdapter(simpleCursorAdapter);
         spinner.setOnItemSelectedListener(this);
+
+        Button filterButton =(Button)findViewById(R.id.filterButton);
+        filterButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent resultIntent = new Intent();
+                resultIntent.putExtra("Chosen_Category", chosenCategory);
+                setResult(Activity.RESULT_OK, resultIntent);
+                finish();
+            }
+        });
+
+        Button resertButton = (Button)findViewById(R.id.resetButton);
+        resertButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent resultIntent = new Intent();
+                resultIntent.putExtra("Chosen_Category", "");
+                setResult(Activity.RESULT_OK, resultIntent);
+                finish();
+            }
+        });
     }
 
 
@@ -71,8 +97,7 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
         c = db.query(ParagonContract.Categories.TABLE_NAME, cols,selection,selectionArgs,null,null,null);
 
         while(c.moveToNext()){
-            Toast toast = Toast.makeText(this, c.getString(c.getColumnIndex(ParagonContract.Categories.CATEGORY_NAME)), Toast.LENGTH_SHORT);
-            toast.show();
+            chosenCategory = c.getString(c.getColumnIndex(ParagonContract.Categories.CATEGORY_NAME));
         }
     }
 

@@ -1,5 +1,6 @@
 package com.example.maciejwikira.prgnv2;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -38,11 +39,14 @@ public class MainViewActivity extends AppCompatActivity
     private ArrayList<Paragon> paragonsArray;
     private SQLiteDatabase db;
     private ParagonDbHelper mDbHelper;
+    private ParagonListAdapter paragonListAdapter;
+    private String chosenCategory;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main_view2);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -85,7 +89,14 @@ public class MainViewActivity extends AppCompatActivity
     @Override
     protected void onResume(){
         super.onResume();
-        populateList(paragonsListView);
+        if(chosenCategory != null && !chosenCategory.equals("")){
+            String selection = ParagonContract.Paragon.CATEGORY + " = ?";
+            String[] selectionArgs = { chosenCategory };
+
+            populateListRefined(paragonsListView, selection, selectionArgs);
+        }else{
+            populateList(paragonsListView);
+        }
     }
 
     @Override
@@ -132,12 +143,20 @@ public class MainViewActivity extends AppCompatActivity
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 Intent intent = new Intent(getApplicationContext(), FilterActivity.class);
-                startActivity(intent);
+                startActivityForResult(intent, 0);
                 return false;
             }
         });
 
         return true;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode == Activity.RESULT_OK){
+            chosenCategory = data.getStringExtra("Chosen_Category");
+        }
     }
 
     @Override
@@ -220,8 +239,58 @@ public class MainViewActivity extends AppCompatActivity
             }
 
             //finally get and set adapter
-            ParagonListAdapter paragonListAdapter = new ParagonListAdapter(this.getApplicationContext(), R.layout.paragon_list_item, paragonsArray);
+            paragonListAdapter = new ParagonListAdapter(this.getApplicationContext(), R.layout.paragon_list_item, paragonsArray);
             lv.setAdapter(paragonListAdapter);
+
+        }finally {
+            c.close();
+            db.close();
+        }
+
+    }
+
+    private void populateListRefined(ListView lv, String selection, String[] selectionArgs){
+
+
+        //get reference do the database
+        mDbHelper = new ParagonDbHelper(this);
+        db = mDbHelper.getWritableDatabase();
+
+        //declare what to get from db
+        String[] cols = new String[]{
+                "_id",
+                "name",
+                "category",
+                "value",
+                "date",
+                "img",
+                "text"
+        };
+
+        //get cursor
+        Cursor c = db.query(ParagonContract.Paragon.TABLE_NAME, cols,selection, selectionArgs, null, null, null);
+        try{
+            paragonsArray.clear();
+
+            //fill array with paragon objects created from database data
+            while(c.moveToNext()){
+
+                paragonsArray.add(new Paragon(
+                        c.getInt(c.getColumnIndex("_id")),
+                        c.getString(c.getColumnIndex("name")),
+                        c.getString(c.getColumnIndex("category")),
+                        c.getString(c.getColumnIndex("value")),
+                        c.getString(c.getColumnIndex("date")),
+                        c.getString(c.getColumnIndex("img")),
+                        c.getString(c.getColumnIndex("text"))
+                ));
+
+            }
+
+            //finally get and set adapter
+            paragonListAdapter = new ParagonListAdapter(this.getApplicationContext(), R.layout.paragon_list_item, paragonsArray);
+            lv.setAdapter(paragonListAdapter);
+
         }finally {
             c.close();
             db.close();

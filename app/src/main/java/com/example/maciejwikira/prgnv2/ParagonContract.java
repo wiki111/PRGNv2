@@ -18,10 +18,15 @@ public final class ParagonContract {
         public static final String IMAGE_PATH = "img";
         public static final String CONTENT = "text";
 
-        public static final String SQL_CREATE_PARAGONS = "CREATE TABLE IF NOT EXISTS " + Paragon.TABLE_NAME + " (" +
-                Paragon._ID + " INTEGER PRIMARY KEY, " + Paragon.NAME + " TEXT," + Paragon.CATEGORY + " TEXT," +
-                Paragon.DATE +  " DATE," + Paragon.VALUE + " REAL," + Paragon.IMAGE_PATH + " TEXT," +
-                Paragon.CONTENT + " TEXT," +
+        public static final String SQL_CREATE_PARAGONS =
+                "CREATE TABLE IF NOT EXISTS " + Paragon.TABLE_NAME + " (" +
+                    Paragon._ID + " INTEGER PRIMARY KEY, " +
+                    Paragon.NAME + " TEXT," +
+                    Paragon.CATEGORY + " TEXT," +
+                    Paragon.DATE +  " DATE," +
+                    Paragon.VALUE + " REAL," +
+                    Paragon.IMAGE_PATH + " TEXT," +
+                    Paragon.CONTENT + " TEXT," +
                     "FOREIGN KEY (" + Paragon.CATEGORY + ") REFERENCES categories(" + Categories.CATEGORY_NAME + "))";
 
         public static final String SQL_DELETE_PARAGONS = "DROP TABLE IF EXISTS " + Paragon.TABLE_NAME;

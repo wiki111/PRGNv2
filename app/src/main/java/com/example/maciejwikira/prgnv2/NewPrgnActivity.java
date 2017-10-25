@@ -98,7 +98,7 @@ public class NewPrgnActivity extends AppCompatActivity {
                     //Stworzenie obiektu przechowującego dane do zapisania w bazie danych aplikacji
                     ContentValues cv = new ContentValues();
                     cv.put("name", nameField.getText().toString()); //nazwa wpisu
-                    cv.put("category", categoryField.getText().toString()); //kategoria wpisu
+                    cv.put("category", categoryField.getText().toString().toLowerCase()); //kategoria wpisu
                     cv.put("date", dateField.getText().toString()); //data paragonu
                     cv.put("value", Double.parseDouble(valueField.getText().toString().replaceAll("," , "\\.")));   //wartość paragonu
                     cv.put("img", imgToSave);   //ścieżka absolutna do zdjęcia paragonu
