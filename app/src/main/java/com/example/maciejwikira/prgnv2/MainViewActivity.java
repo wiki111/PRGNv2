@@ -23,7 +23,10 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,6 +44,15 @@ public class MainViewActivity extends AppCompatActivity
     private ParagonDbHelper mDbHelper;
     private ParagonListAdapter paragonListAdapter;
     private String chosenCategory;
+    private String chosenFromDate;
+    private String chosenToDate;
+    private boolean resetFilters;
+    private String selection;
+    private String[] selectionArgs;
+    private Pattern datePattern = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");
+    String query;
+    private Matcher matcherFrom;
+    private Matcher matcherTo;
 
 
     @Override
@@ -50,6 +62,8 @@ public class MainViewActivity extends AppCompatActivity
         setContentView(R.layout.activity_main_view2);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        resetFilters = true;
 
         FloatingActionButton fabMedia = (FloatingActionButton)findViewById(R.id.material_design_floating_action_menu_item1);
         fabMedia.setOnClickListener(new View.OnClickListener() {
@@ -89,13 +103,11 @@ public class MainViewActivity extends AppCompatActivity
     @Override
     protected void onResume(){
         super.onResume();
-        if(chosenCategory != null && !chosenCategory.equals("")){
-            String selection = ParagonContract.Paragon.CATEGORY + " = ?";
-            String[] selectionArgs = { chosenCategory };
 
-            populateListRefined(paragonsListView, selection, selectionArgs);
-        }else{
+        if(resetFilters){
             populateList(paragonsListView);
+        }else{
+            populateListRefined(paragonsListView, query);
         }
     }
 
@@ -155,7 +167,61 @@ public class MainViewActivity extends AppCompatActivity
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode == Activity.RESULT_OK){
-            chosenCategory = data.getStringExtra("Chosen_Category");
+            Bundle extras = data.getExtras();
+
+            String reset = extras.getString("Reset");
+
+            if(reset.equals("false")){
+                resetFilters = false;
+                chosenCategory = extras.getString("Chosen_Category");
+                chosenFromDate = extras.getString("Chosen_From_Date");
+                chosenToDate = extras.getString("Chosen_To_Date");
+
+                if(chosenFromDate.equals("YYYY-MM-DD") && chosenToDate.equals("YYYY-MM-DD")){
+                    if(!chosenCategory.equals("Brak Kategorii")){
+                        selection = ParagonContract.Paragon.CATEGORY + " = ?";
+                        selectionArgs = new String[]{chosenCategory};
+                    }else{
+                        selection = null;
+                        selectionArgs = null;
+                    }
+
+                }else{
+                    matcherFrom = datePattern.matcher(chosenFromDate);
+                    matcherTo = datePattern.matcher(chosenToDate);
+
+                    if(matcherFrom.find() && matcherTo.find()){
+                        String from = "'" + chosenFromDate + "'";
+                        String to = "'" + chosenToDate + "'";
+                        selection = ParagonContract.Paragon.CATEGORY + " = ? AND " + ParagonContract.Paragon.DATE + " > ?" + " AND " + ParagonContract.Paragon.DATE + " < ?";
+                        selectionArgs = new String[]{chosenCategory, from, to};
+                        if(!chosenCategory.equals("Brak Kategorii")){
+                            query = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " + ParagonContract.Paragon.CATEGORY + " = '" + chosenCategory + "' AND " + ParagonContract.Paragon.DATE + " >= " + from
+                                    + " AND " + ParagonContract.Paragon.DATE + " <= " + to;
+                        }else{
+                            query = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " + ParagonContract.Paragon.DATE + " >= " + from
+                                    + " AND " + ParagonContract.Paragon.DATE + " <= " + to;
+                        }
+
+                    }else{
+                        Toast tst = Toast.makeText(getApplicationContext(), "Nieprawidłowa data - spróbuj jeszcze raz.", Toast.LENGTH_LONG);
+                        tst.show();
+                        if(!chosenCategory.equals("Brak Kategorii")){
+                            selection = ParagonContract.Paragon.CATEGORY + " = ?";
+                            selectionArgs = new String[]{chosenCategory};
+                        }else{
+                            selection = null;
+                            selectionArgs = null;
+                        }
+                    }
+                }
+            }
+
+            if(reset.equals("true")){
+                resetFilters = true;
+            }
+
+
         }
     }
 
@@ -249,7 +315,7 @@ public class MainViewActivity extends AppCompatActivity
 
     }
 
-    private void populateListRefined(ListView lv, String selection, String[] selectionArgs){
+    private void populateListRefined(ListView lv, String query){
 
 
         //get reference do the database
@@ -268,7 +334,8 @@ public class MainViewActivity extends AppCompatActivity
         };
 
         //get cursor
-        Cursor c = db.query(ParagonContract.Paragon.TABLE_NAME, cols,selection, selectionArgs, null, null, null);
+        //Cursor c = db.query(ParagonContract.Paragon.TABLE_NAME, cols,selection, selectionArgs, null, null, null);
+        Cursor c = db.rawQuery(query, null);
         try{
             paragonsArray.clear();
 

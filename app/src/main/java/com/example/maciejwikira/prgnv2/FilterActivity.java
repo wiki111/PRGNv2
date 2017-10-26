@@ -1,6 +1,7 @@
 package com.example.maciejwikira.prgnv2;
 
 import android.app.Activity;
+import android.app.DialogFragment;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -13,8 +14,12 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CursorAdapter;
+import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class FilterActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
 
@@ -22,6 +27,12 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
     private SQLiteDatabase db;
     private Cursor c;
     private String chosenCategory;
+    private String chosenFromDate;
+    private EditText editFromDate;
+    private EditText editToDate;
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +75,12 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
             @Override
             public void onClick(View v) {
                 Intent resultIntent = new Intent();
-                resultIntent.putExtra("Chosen_Category", chosenCategory);
+                Bundle extras = new Bundle();
+                extras.putString("Chosen_Category", chosenCategory);
+                extras.putString("Chosen_From_Date", editFromDate.getText().toString());
+                extras.putString("Chosen_To_Date", editToDate.getText().toString());
+                extras.putString("Reset", "false");
+                resultIntent.putExtras(extras);
                 setResult(Activity.RESULT_OK, resultIntent);
                 finish();
             }
@@ -75,9 +91,36 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
             @Override
             public void onClick(View v) {
                 Intent resultIntent = new Intent();
-                resultIntent.putExtra("Chosen_Category", "");
+                Bundle extras = new Bundle();
+                extras.putString("Reset", "true");
+                resultIntent.putExtras(extras);
                 setResult(Activity.RESULT_OK, resultIntent);
                 finish();
+            }
+        });
+
+        editFromDate = (EditText)findViewById(R.id.editFromDate);
+        editFromDate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DialogFragment newFragment = new DatePickerFragment();
+                Bundle arg = new Bundle();
+                arg.putInt("Field_ID", R.id.editFromDate);
+                newFragment.setArguments(arg);
+                newFragment.show(getFragmentManager(), "datePicker");
+            }
+        });
+
+
+        editToDate = (EditText)findViewById(R.id.editToDate);
+        editToDate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DialogFragment newFragment = new DatePickerFragment();
+                Bundle arg = new Bundle();
+                arg.putInt("Field_ID", R.id.editToDate);
+                newFragment.setArguments(arg);
+                newFragment.show(getFragmentManager(), "datePicker");
             }
         });
     }
@@ -112,4 +155,5 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
         c.close();
         db.close();
     }
+
 }
