@@ -20,7 +20,7 @@ public final class ParagonContract {
 
         public static final String SQL_CREATE_PARAGONS =
                 "CREATE TABLE IF NOT EXISTS " + Paragon.TABLE_NAME + " (" +
-                    Paragon._ID + " INTEGER PRIMARY KEY, " +
+                    Paragon._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     Paragon.NAME + " TEXT," +
                     Paragon.CATEGORY + " TEXT," +
                     Paragon.DATE +  " DATE," +
@@ -37,7 +37,7 @@ public final class ParagonContract {
         public static final String CATEGORY_NAME = "category_name";
 
         public static final String SQL_CREATE_CATEGORIES = "CREATE TABLE IF NOT EXISTS " + Categories.TABLE_NAME + " (" +
-                Categories._ID + " INTEGER PRIMARY KEY, " + Categories.CATEGORY_NAME + " TEXT)";
+                Categories._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + Categories.CATEGORY_NAME + " TEXT)";
 
         public static final String SQL_INSERT_EMPTY_CATEGORY = "INSERT INTO " + Categories.TABLE_NAME + " (" + Categories.CATEGORY_NAME + ") "
                 + "VALUES ('Brak Kategorii')";

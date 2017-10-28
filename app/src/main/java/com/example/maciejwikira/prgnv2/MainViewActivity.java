@@ -19,6 +19,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -47,12 +48,12 @@ public class MainViewActivity extends AppCompatActivity
     private String chosenFromDate;
     private String chosenToDate;
     private boolean resetFilters;
-    private String selection;
-    private String[] selectionArgs;
     private Pattern datePattern = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");
-    String query;
+    private String query;
     private Matcher matcherFrom;
     private Matcher matcherTo;
+    String selection;
+    String[] selectionArgs;
 
 
     @Override
@@ -97,6 +98,15 @@ public class MainViewActivity extends AppCompatActivity
         paragonsArray = new ArrayList<Paragon>();
         paragonsListView = (ListView)findViewById(R.id.paragonsListView);
         populateList(paragonsListView);
+
+        paragonsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(getApplicationContext(), DetailsActivity.class);
+                intent.putExtra("item_id", Integer.toString(paragonsArray.get(position).getDbId()));
+                startActivity(intent);
+            }
+        });
 
     }
 
