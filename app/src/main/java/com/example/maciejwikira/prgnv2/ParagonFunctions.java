@@ -28,6 +28,9 @@ public class ParagonFunctions {
     private String query;
     private Matcher matcherFrom;
     private Matcher matcherTo;
+    private String chosenCategory;
+    private String chosenFromDate;
+    private String chosenToDate;
 
 
     public ParagonFunctions(Context context){
@@ -150,15 +153,15 @@ public class ParagonFunctions {
 
     }
 
-    public ArrayList<Paragon> getParagonsArray(){
-        return this.paragonsArray;
-    }
+    public void filterList(Bundle extras){
 
-    public void filterList(String reset, String chosenCategory, String chosenFromDate, String chosenToDate){
+        String reset = extras.getString("Reset");
+        chosenCategory = extras.getString("Chosen_Category");
+        chosenFromDate = extras.getString("Chosen_From_Date");
+        chosenToDate = extras.getString("Chosen_To_Date");
 
         if(reset.equals("false")){
             resetFilters = false;
-
             if(chosenFromDate.equals("YYYY-MM-DD") && chosenToDate.equals("YYYY-MM-DD")){
                 if(chosenCategory.equals("Brak Kategorii")){
                     query = null;
@@ -166,11 +169,9 @@ public class ParagonFunctions {
                     query = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " +
                             ParagonContract.Paragon.CATEGORY + " = '" + chosenCategory + "'";
                 }
-
             }else{
                 matcherFrom = datePattern.matcher(chosenFromDate);
                 matcherTo = datePattern.matcher(chosenToDate);
-
                 if(matcherFrom.find() && matcherTo.find()){
                     String from = "'" + chosenFromDate + "'";
                     String to = "'" + chosenToDate + "'";
@@ -181,7 +182,6 @@ public class ParagonFunctions {
                         query = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " + ParagonContract.Paragon.DATE + " >= " + from
                                 + " AND " + ParagonContract.Paragon.DATE + " <= " + to;
                     }
-
                 }else{
                     Toast tst = Toast.makeText(context, "Nieprawidłowa data - spróbuj jeszcze raz.", Toast.LENGTH_LONG);
                     tst.show();
@@ -193,12 +193,9 @@ public class ParagonFunctions {
                     }
                 }
             }
-        }
-
-        if(reset.equals("true")){
+        }else{
             resetFilters = true;
         }
-
     }
 
     public boolean getResetFilters(){
@@ -207,6 +204,10 @@ public class ParagonFunctions {
 
     public String getQuery(){
         return this.query;
+    }
+
+    public ArrayList<Paragon> getParagonsArray(){
+        return this.paragonsArray;
     }
 
 }

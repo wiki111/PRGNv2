@@ -31,18 +31,8 @@ public class MainViewActivity extends AppCompatActivity
     public static final String CAMERA_OR_MEDIA = "CAMERA_OR_MEDIA";
 
     private ListView paragonsListView;
-    private ArrayList<Paragon> paragonsArray;
-    private SQLiteDatabase db;
-    private ParagonDbHelper mDbHelper;
-    private String chosenCategory;
-    private String chosenFromDate;
-    private String chosenToDate;
-    private boolean resetFilters;
-    private Pattern datePattern = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");
-    private String query;
-    private Matcher matcherFrom;
-    private Matcher matcherTo;
     private boolean showFavorites;
+
     private ParagonFunctions paragonFunctions;
 
     @Override
@@ -53,7 +43,6 @@ public class MainViewActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        resetFilters = true;
         showFavorites = false;
 
         FloatingActionButton fabMedia = (FloatingActionButton)findViewById(R.id.material_design_floating_action_menu_item1);
@@ -179,12 +168,7 @@ public class MainViewActivity extends AppCompatActivity
         if(resultCode == Activity.RESULT_OK){
             Bundle extras = data.getExtras();
 
-            String reset = extras.getString("Reset");
-            chosenCategory = extras.getString("Chosen_Category");
-            chosenFromDate = extras.getString("Chosen_From_Date");
-            chosenToDate = extras.getString("Chosen_To_Date");
-
-           paragonFunctions.filterList(reset, chosenCategory, chosenFromDate, chosenToDate);
+            paragonFunctions.filterList(extras);
         }
     }
 
