@@ -17,6 +17,7 @@ public final class ParagonContract {
         public static final String VALUE = "value";
         public static final String IMAGE_PATH = "img";
         public static final String CONTENT = "text";
+        public static final String FAVORITED = "favorited";
 
         public static final String SQL_CREATE_PARAGONS =
                 "CREATE TABLE IF NOT EXISTS " + Paragon.TABLE_NAME + " (" +

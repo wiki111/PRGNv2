@@ -1,15 +1,11 @@
 package com.example.maciejwikira.prgnv2;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
-import android.support.design.widget.Snackbar;
 import android.support.v4.view.MenuItemCompat;
-import android.support.v7.widget.SearchView;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -24,15 +20,10 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.github.clans.fab.FloatingActionButton;
-import com.github.clans.fab.FloatingActionMenu;
 
 public class MainViewActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -43,7 +34,6 @@ public class MainViewActivity extends AppCompatActivity
     private ArrayList<Paragon> paragonsArray;
     private SQLiteDatabase db;
     private ParagonDbHelper mDbHelper;
-    private ParagonListAdapter paragonListAdapter;
     private String chosenCategory;
     private String chosenFromDate;
     private String chosenToDate;
@@ -52,9 +42,8 @@ public class MainViewActivity extends AppCompatActivity
     private String query;
     private Matcher matcherFrom;
     private Matcher matcherTo;
-    String selection;
-    String[] selectionArgs;
-
+    private boolean showFavorites;
+    private ParagonFunctions paragonFunctions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +54,7 @@ public class MainViewActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         resetFilters = true;
+        showFavorites = false;
 
         FloatingActionButton fabMedia = (FloatingActionButton)findViewById(R.id.material_design_floating_action_menu_item1);
         fabMedia.setOnClickListener(new View.OnClickListener() {
@@ -92,21 +82,21 @@ public class MainViewActivity extends AppCompatActivity
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-
-        paragonsArray = new ArrayList<Paragon>();
         paragonsListView = (ListView)findViewById(R.id.paragonsListView);
-        populateList(paragonsListView);
-
         paragonsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(getApplicationContext(), DetailsActivity.class);
-                intent.putExtra("item_id", Integer.toString(paragonsArray.get(position).getDbId()));
+                intent.putExtra("item_id", Integer.toString(paragonFunctions.getParagonsArray().get(position).getDbId()));
                 startActivity(intent);
             }
         });
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        paragonFunctions = new ParagonFunctions(getApplicationContext());
+        paragonFunctions.populateList(paragonsListView, null);
 
     }
 
@@ -114,10 +104,10 @@ public class MainViewActivity extends AppCompatActivity
     protected void onResume(){
         super.onResume();
 
-        if(resetFilters){
-            populateList(paragonsListView);
+        if(paragonFunctions.getResetFilters()){
+            paragonFunctions.populateList(paragonsListView, null);
         }else{
-            populateListRefined(paragonsListView, query);
+            paragonFunctions.populateList(paragonsListView, paragonFunctions.getQuery());
         }
     }
 
@@ -139,24 +129,21 @@ public class MainViewActivity extends AppCompatActivity
         MenuItem searchItem = menu.findItem(R.id.action_search);
         final MySearchView searchView = (MySearchView) MenuItemCompat.getActionView(searchItem);
         searchView.setSubmitButtonEnabled(true);
-
         searchView.setOnQueryTextListener(new MySearchView.OnQueryTextListener(){
             @Override
             public boolean onQueryTextSubmit(String query) {
-                search(searchView.getQuery().toString());
+                paragonFunctions.search(paragonsListView, searchView.getQuery().toString());
                 return false;
             }
-
             @Override
             public boolean onQueryTextChange(String newText) {
                 return false;
             }
         });
-
         searchView.setOnSearchViewCollapsedEventListener(new MySearchView.OnSearchViewCollapsedEventListener() {
             @Override
             public void onSearchViewCollapsed() {
-                populateList(paragonsListView);
+                paragonFunctions.populateList(paragonsListView, null);
             }
         });
 
@@ -166,6 +153,19 @@ public class MainViewActivity extends AppCompatActivity
             public boolean onMenuItemClick(MenuItem item) {
                 Intent intent = new Intent(getApplicationContext(), FilterActivity.class);
                 startActivityForResult(intent, 0);
+                return false;
+            }
+        });
+
+        MenuItem favItem = menu.findItem(R.id.action_fav);
+        favItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener(){
+            @Override
+            public boolean onMenuItemClick(MenuItem item){
+
+                if(showFavorites == false){
+                    showFavorites = true;
+                }
+
                 return false;
             }
         });
@@ -180,58 +180,11 @@ public class MainViewActivity extends AppCompatActivity
             Bundle extras = data.getExtras();
 
             String reset = extras.getString("Reset");
+            chosenCategory = extras.getString("Chosen_Category");
+            chosenFromDate = extras.getString("Chosen_From_Date");
+            chosenToDate = extras.getString("Chosen_To_Date");
 
-            if(reset.equals("false")){
-                resetFilters = false;
-                chosenCategory = extras.getString("Chosen_Category");
-                chosenFromDate = extras.getString("Chosen_From_Date");
-                chosenToDate = extras.getString("Chosen_To_Date");
-
-                if(chosenFromDate.equals("YYYY-MM-DD") && chosenToDate.equals("YYYY-MM-DD")){
-                    if(!chosenCategory.equals("Brak Kategorii")){
-                        selection = ParagonContract.Paragon.CATEGORY + " = ?";
-                        selectionArgs = new String[]{chosenCategory};
-                    }else{
-                        selection = null;
-                        selectionArgs = null;
-                    }
-
-                }else{
-                    matcherFrom = datePattern.matcher(chosenFromDate);
-                    matcherTo = datePattern.matcher(chosenToDate);
-
-                    if(matcherFrom.find() && matcherTo.find()){
-                        String from = "'" + chosenFromDate + "'";
-                        String to = "'" + chosenToDate + "'";
-                        selection = ParagonContract.Paragon.CATEGORY + " = ? AND " + ParagonContract.Paragon.DATE + " > ?" + " AND " + ParagonContract.Paragon.DATE + " < ?";
-                        selectionArgs = new String[]{chosenCategory, from, to};
-                        if(!chosenCategory.equals("Brak Kategorii")){
-                            query = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " + ParagonContract.Paragon.CATEGORY + " = '" + chosenCategory + "' AND " + ParagonContract.Paragon.DATE + " >= " + from
-                                    + " AND " + ParagonContract.Paragon.DATE + " <= " + to;
-                        }else{
-                            query = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " + ParagonContract.Paragon.DATE + " >= " + from
-                                    + " AND " + ParagonContract.Paragon.DATE + " <= " + to;
-                        }
-
-                    }else{
-                        Toast tst = Toast.makeText(getApplicationContext(), "Nieprawidłowa data - spróbuj jeszcze raz.", Toast.LENGTH_LONG);
-                        tst.show();
-                        if(!chosenCategory.equals("Brak Kategorii")){
-                            selection = ParagonContract.Paragon.CATEGORY + " = ?";
-                            selectionArgs = new String[]{chosenCategory};
-                        }else{
-                            selection = null;
-                            selectionArgs = null;
-                        }
-                    }
-                }
-            }
-
-            if(reset.equals("true")){
-                resetFilters = true;
-            }
-
-
+           paragonFunctions.filterList(reset, chosenCategory, chosenFromDate, chosenToDate);
         }
     }
 
@@ -277,160 +230,4 @@ public class MainViewActivity extends AppCompatActivity
         return true;
     }
 
-    private void populateList(ListView lv){
-
-        //get reference do the database
-        mDbHelper = new ParagonDbHelper(this);
-        db = mDbHelper.getReadableDatabase();
-
-        //declare what to get from db
-        String[] cols = new String[]{
-                "_id",
-                "name",
-                "category",
-                "value",
-                "date",
-                "img",
-                "text"
-        };
-
-        //get cursor
-        Cursor c = db.query(true, ParagonContract.Paragon.TABLE_NAME, cols,null, null, null, null, null, null);
-        try{
-            paragonsArray.clear();
-
-            //fill array with paragon objects created from database data
-            while(c.moveToNext()){
-
-                paragonsArray.add(new Paragon(
-                        c.getInt(c.getColumnIndex("_id")),
-                        c.getString(c.getColumnIndex("name")),
-                        c.getString(c.getColumnIndex("category")),
-                        c.getString(c.getColumnIndex("value")),
-                        c.getString(c.getColumnIndex("date")),
-                        c.getString(c.getColumnIndex("img")),
-                        c.getString(c.getColumnIndex("text"))
-                ));
-
-            }
-
-            //finally get and set adapter
-            paragonListAdapter = new ParagonListAdapter(this.getApplicationContext(), R.layout.paragon_list_item, paragonsArray);
-            lv.setAdapter(paragonListAdapter);
-
-        }finally {
-            c.close();
-            db.close();
-        }
-
-    }
-
-    private void populateListRefined(ListView lv, String query){
-
-
-        //get reference do the database
-        mDbHelper = new ParagonDbHelper(this);
-        db = mDbHelper.getWritableDatabase();
-
-        //declare what to get from db
-        String[] cols = new String[]{
-                "_id",
-                "name",
-                "category",
-                "value",
-                "date",
-                "img",
-                "text"
-        };
-
-        //get cursor
-        //Cursor c = db.query(ParagonContract.Paragon.TABLE_NAME, cols,selection, selectionArgs, null, null, null);
-        Cursor c = db.rawQuery(query, null);
-        try{
-            paragonsArray.clear();
-
-            //fill array with paragon objects created from database data
-            while(c.moveToNext()){
-
-                paragonsArray.add(new Paragon(
-                        c.getInt(c.getColumnIndex("_id")),
-                        c.getString(c.getColumnIndex("name")),
-                        c.getString(c.getColumnIndex("category")),
-                        c.getString(c.getColumnIndex("value")),
-                        c.getString(c.getColumnIndex("date")),
-                        c.getString(c.getColumnIndex("img")),
-                        c.getString(c.getColumnIndex("text"))
-                ));
-
-            }
-
-            //finally get and set adapter
-            paragonListAdapter = new ParagonListAdapter(this.getApplicationContext(), R.layout.paragon_list_item, paragonsArray);
-            lv.setAdapter(paragonListAdapter);
-
-        }finally {
-            c.close();
-            db.close();
-        }
-
-    }
-
-    private void search(String query){
-
-        mDbHelper = new ParagonDbHelper(this);
-        db = mDbHelper.getReadableDatabase();
-
-        String[] cols = new String[]{
-                "_id",
-                "name",
-                "category",
-                "value",
-                "date",
-                "img",
-                "text"
-        };
-
-        String itemContent;
-        String itemNameContent;
-
-        Cursor c;
-        int text_index;
-        int title_index;
-        ArrayList<Paragon> searchResults = new ArrayList<Paragon>();
-        Matcher matchName, matchContent;
-        Pattern pattern = Pattern.compile(query.toLowerCase());
-
-        c = db.query(true, ParagonContract.Paragon.TABLE_NAME, cols,null, null, null, null, null, null);
-
-        try {
-            while (c.moveToNext()) {
-
-                title_index = c.getColumnIndex(ParagonContract.Paragon.NAME);
-                itemNameContent = c.getString(title_index).toLowerCase();
-                matchName = pattern.matcher(itemNameContent);
-                text_index = c.getColumnIndex(ParagonContract.Paragon.CONTENT);
-                itemContent = c.getString(text_index);
-                itemContent.toLowerCase();
-                matchContent = pattern.matcher(itemContent);
-                if(matchName.find() || matchContent.find()){
-                    searchResults.add(new Paragon(
-                            c.getInt(c.getColumnIndex("_id")),
-                            c.getString(c.getColumnIndex("name")),
-                            c.getString(c.getColumnIndex("category")),
-                            c.getString(c.getColumnIndex("value")),
-                            c.getString(c.getColumnIndex("date")),
-                            c.getString(c.getColumnIndex("img")),
-                            c.getString(c.getColumnIndex("text"))
-                    ));
-                }
-            }
-        } finally {
-            c.close();
-            db.close();
-        }
-
-        ParagonListAdapter paragonListAdapter = new ParagonListAdapter(this.getApplicationContext(), R.layout.paragon_list_item, searchResults);
-        paragonsListView.setAdapter(paragonListAdapter);
-
-    }
 }

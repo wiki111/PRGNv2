@@ -82,7 +82,7 @@ public class EditActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int id) {
                         ContentValues cv = new ContentValues();
                         cv.put(ParagonContract.Paragon.NAME, nameEdit.getText().toString());
-                        cv.put(ParagonContract.Paragon.CATEGORY, categoryEdit.getText().toString());
+                        cv.put(ParagonContract.Paragon.CATEGORY, categoryEdit.getText().toString().toLowerCase());
                         cv.put(ParagonContract.Paragon.DATE, dateEdit.getText().toString());
                         cv.put(ParagonContract.Paragon.VALUE, valueEdit.getText().toString());
                         cv.put(ParagonContract.Paragon.IMAGE_PATH, c.getString(c.getColumnIndex(ParagonContract.Paragon.IMAGE_PATH)));

@@ -27,12 +27,8 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
     private SQLiteDatabase db;
     private Cursor c;
     private String chosenCategory;
-    private String chosenFromDate;
     private EditText editFromDate;
     private EditText editToDate;
-
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
