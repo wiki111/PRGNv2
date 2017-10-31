@@ -1,5 +1,6 @@
 package com.example.maciejwikira.prgnv2;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -7,6 +8,7 @@ import android.os.Bundle;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,7 +24,6 @@ public class ParagonFunctions {
     private ParagonDbHelper mDbHelper;
     private ParagonListAdapter paragonListAdapter;
     private Context context;
-
     private boolean resetFilters;
     private Pattern datePattern = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");
     private String query;
@@ -195,6 +196,54 @@ public class ParagonFunctions {
             }
         }else{
             resetFilters = true;
+        }
+    }
+
+    public void addParagon(ContentValues cv){
+        try{
+            mDbHelper = new ParagonDbHelper(context);
+            db = mDbHelper.getWritableDatabase();
+
+            String[] projection = {
+                    ParagonContract.Categories._ID,
+                    ParagonContract.Categories.CATEGORY_NAME
+            };
+
+            String selection = ParagonContract.Categories.CATEGORY_NAME + " = ?";
+            String[] selectionArgs = { cv.get("category").toString().toLowerCase() };
+
+            Cursor cursor = db.query(
+                    ParagonContract.Categories.TABLE_NAME,
+                    projection,
+                    selection,
+                    selectionArgs,
+                    null,
+                    null,
+                    null
+            );
+
+            cursor.moveToFirst();
+
+            if((cursor != null) && (cursor.getCount() > 0)){
+                db.insert(ParagonContract.Paragon.TABLE_NAME, null, cv); //dodanie rekordu do bazy danych
+            }else{
+                ContentValues newCategoryValue = new ContentValues();
+                newCategoryValue.put(ParagonContract.Categories.CATEGORY_NAME,  cv.get("category").toString().toLowerCase() );
+                db.insert(ParagonContract.Categories.TABLE_NAME, null, newCategoryValue);
+                db.insert(ParagonContract.Paragon.TABLE_NAME, null, cv); //dodanie rekordu do bazy danych
+            }
+
+            cursor.close();
+
+            //Wyświetlenie potwierdzenia pomyślnego wykonania operacji
+            Toast toast = Toast.makeText(context, "Yay, everything went good !!! " , Toast.LENGTH_LONG);
+            toast.show();
+        }catch (Exception e){
+            //Wyświetlenie komunikatu błędu w wypadku jego wystąpienia
+            Toast toast = Toast.makeText(context, "Smth went very, very wrong ... " + e.toString(), Toast.LENGTH_LONG);
+            toast.show();
+        }finally {
+            db.close();
         }
     }
 
