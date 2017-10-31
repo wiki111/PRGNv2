@@ -19,7 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 
-public class NewPrgnActivity extends AppCompatActivity {
+public class NewParagonActivity extends AppCompatActivity {
 
     //Deklaracja elementów interfejsu :
     private EditText nameField;

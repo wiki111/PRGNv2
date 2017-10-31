@@ -2,8 +2,6 @@ package com.example.maciejwikira.prgnv2;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
 import android.view.View;
@@ -17,11 +15,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.Toast;
-
-import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.github.clans.fab.FloatingActionButton;
 
@@ -49,7 +42,7 @@ public class MainViewActivity extends AppCompatActivity
         fabMedia.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), NewPrgnActivity.class);
+                Intent intent = new Intent(getApplicationContext(), NewParagonActivity.class);
                 intent.putExtra(CAMERA_OR_MEDIA, "media");
                 startActivity(intent);
             }
@@ -59,7 +52,7 @@ public class MainViewActivity extends AppCompatActivity
         fabCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), NewPrgnActivity.class);
+                Intent intent = new Intent(getApplicationContext(), NewParagonActivity.class);
                 intent.putExtra(CAMERA_OR_MEDIA, "cam");
                 startActivity(intent);
             }

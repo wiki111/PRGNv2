@@ -5,7 +5,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.support.v7.app.AlertDialog;
@@ -70,14 +69,15 @@ public class EditActivity extends AppCompatActivity {
         Bitmap paragonPhoto = BitmapFactory.decodeFile(c.getString(c.getColumnIndex(ParagonContract.Paragon.IMAGE_PATH)));
         paragonPhotoView.setImageBitmap(paragonPhoto);
 
-        Button saveEditButton = (Button)findViewById(R.id.saveEditButton);
-        saveEditButton.setOnClickListener(new View.OnClickListener() {
+        final ParagonFunctions paragonFunctions = new ParagonFunctions(getApplicationContext());
+
+        Button updateButton = (Button)findViewById(R.id.updateButton);
+        updateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(EditActivity.this, R.style.myDialog));
-                builder.setMessage("Czy na pewno chcesz zmienić ten paragon ?")
-                        .setTitle("Edycja paragonu.");
+                builder.setMessage("Czy na pewno chcesz zmienić ten paragon ?").setTitle("Edycja paragonu.");
                 builder.setPositiveButton("Tak", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         ContentValues cv = new ContentValues();
@@ -87,49 +87,16 @@ public class EditActivity extends AppCompatActivity {
                         cv.put(ParagonContract.Paragon.VALUE, valueEdit.getText().toString());
                         cv.put(ParagonContract.Paragon.IMAGE_PATH, c.getString(c.getColumnIndex(ParagonContract.Paragon.IMAGE_PATH)));
                         cv.put(ParagonContract.Paragon.CONTENT, c.getString(c.getColumnIndex(ParagonContract.Paragon.CONTENT)));
-
-                        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
-                        String[] projection = {
-                                ParagonContract.Categories._ID,
-                                ParagonContract.Categories.CATEGORY_NAME
-                        };
-
-                        String selection = ParagonContract.Categories.CATEGORY_NAME + " = ?";
-                        String[] selectionArgs = { categoryEdit.getText().toString().toLowerCase() };
-
-                        String selectedParagon = ParagonContract.Paragon._ID + " = ?";
-                        String[] args = new String[]{
-                                item_id
-                        };
-
-                        Cursor cursor = db.query(
-                                ParagonContract.Categories.TABLE_NAME,
-                                projection,
-                                selection,
-                                selectionArgs,
-                                null,
-                                null,
-                                null
-                        );
-
-                        cursor.moveToFirst();
-
-                        if((cursor != null) && (cursor.getCount() > 0)){
-                            db.update(ParagonContract.Paragon.TABLE_NAME, cv, selectedParagon, args); //dodanie rekordu do bazy danych
-                        }else{
-                            ContentValues newCategoryValue = new ContentValues();
-                            newCategoryValue.put(ParagonContract.Categories.CATEGORY_NAME, categoryEdit.getText().toString().toLowerCase());
-                            db.insert(ParagonContract.Categories.TABLE_NAME, null, newCategoryValue);
-                            db.update(ParagonContract.Paragon.TABLE_NAME, cv, selectedParagon, args);
-                        }
+                        paragonFunctions.updateParagon(item_id, cv);
                         finish();
                     }
                 });
+
                 builder.setNegativeButton("Nie", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                     }
                 });
+
                 AlertDialog dialog = builder.create();
                 dialog.show();
             }
