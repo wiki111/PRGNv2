@@ -60,6 +60,7 @@ public class NewParagonActivity extends AppCompatActivity {
                 cv.put("value", Double.parseDouble(valueField.getText().toString().replaceAll("," , "\\.")));   //wartość paragonu
                 cv.put("img", textRecognitionFunctions.getImgToSave());   //ścieżka absolutna do zdjęcia paragonu
                 cv.put("text", textRecognitionFunctions.getPrgnText());
+                cv.put("favorited", "no");
                 paragonFunctions.addParagon(cv);
             }
         });

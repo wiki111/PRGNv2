@@ -1,5 +1,6 @@
 package com.example.maciejwikira.prgnv2;
 
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
@@ -15,6 +16,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class DetailsActivity extends AppCompatActivity {
 
@@ -105,7 +107,20 @@ public class DetailsActivity extends AppCompatActivity {
         favoriteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO implement favorite paragons
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(ParagonContract.Paragon.NAME, nameTextView.getText().toString());
+                contentValues.put(ParagonContract.Paragon.CATEGORY, categoryTextView.getText().toString());
+                contentValues.put(ParagonContract.Paragon.DATE, dateTextView.getText().toString());
+                contentValues.put(ParagonContract.Paragon.VALUE, valueTextView.getText().toString());
+                contentValues.put(ParagonContract.Paragon.IMAGE_PATH, c.getString(c.getColumnIndex(ParagonContract.Paragon.IMAGE_PATH)));
+                contentValues.put(ParagonContract.Paragon.CONTENT, c.getString(c.getColumnIndex(ParagonContract.Paragon.CONTENT)));
+                contentValues.put(ParagonContract.Paragon.FAVORITED, "yes");
+
+                ParagonFunctions pf = new ParagonFunctions(getApplicationContext());
+                pf.updateParagon(id, contentValues);
+
+                Toast toast = Toast.makeText(getApplicationContext(), "Paragon dodano do ulubionych", Toast.LENGTH_SHORT);
+                toast.show();
             }
         });
 
@@ -130,6 +145,27 @@ public class DetailsActivity extends AppCompatActivity {
                 });
                 AlertDialog dialog = builder.create();
                 dialog.show();
+            }
+        });
+
+        Button unfavoriteButton = (Button)findViewById(R.id.unfavoriteButton);
+        unfavoriteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(ParagonContract.Paragon.NAME, nameTextView.getText().toString());
+                contentValues.put(ParagonContract.Paragon.CATEGORY, categoryTextView.getText().toString());
+                contentValues.put(ParagonContract.Paragon.DATE, dateTextView.getText().toString());
+                contentValues.put(ParagonContract.Paragon.VALUE, valueTextView.getText().toString());
+                contentValues.put(ParagonContract.Paragon.IMAGE_PATH, c.getString(c.getColumnIndex(ParagonContract.Paragon.IMAGE_PATH)));
+                contentValues.put(ParagonContract.Paragon.CONTENT, c.getString(c.getColumnIndex(ParagonContract.Paragon.CONTENT)));
+                contentValues.put(ParagonContract.Paragon.FAVORITED, "no");
+
+                ParagonFunctions pf = new ParagonFunctions(getApplicationContext());
+                pf.updateParagon(id, contentValues);
+
+                Toast toast = Toast.makeText(getApplicationContext(), "Paragon usunięto z ulubionych", Toast.LENGTH_SHORT);
+                toast.show();
             }
         });
 

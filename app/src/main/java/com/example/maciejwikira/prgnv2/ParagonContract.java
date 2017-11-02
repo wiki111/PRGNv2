@@ -28,6 +28,7 @@ public final class ParagonContract {
                     Paragon.VALUE + " REAL," +
                     Paragon.IMAGE_PATH + " TEXT," +
                     Paragon.CONTENT + " TEXT," +
+                    Paragon.FAVORITED + " TEXT," +
                     "FOREIGN KEY (" + Paragon.CATEGORY + ") REFERENCES categories(" + Categories.CATEGORY_NAME + "))";
 
         public static final String SQL_DELETE_PARAGONS = "DROP TABLE IF EXISTS " + Paragon.TABLE_NAME;

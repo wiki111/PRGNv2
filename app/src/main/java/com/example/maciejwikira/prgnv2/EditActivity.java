@@ -87,6 +87,7 @@ public class EditActivity extends AppCompatActivity {
                         cv.put(ParagonContract.Paragon.VALUE, valueEdit.getText().toString());
                         cv.put(ParagonContract.Paragon.IMAGE_PATH, c.getString(c.getColumnIndex(ParagonContract.Paragon.IMAGE_PATH)));
                         cv.put(ParagonContract.Paragon.CONTENT, c.getString(c.getColumnIndex(ParagonContract.Paragon.CONTENT)));
+                        cv.put(ParagonContract.Paragon.FAVORITED, c.getString(c.getColumnIndex(ParagonContract.Paragon.FAVORITED)));
                         paragonFunctions.updateParagon(item_id, cv);
                         finish();
                     }

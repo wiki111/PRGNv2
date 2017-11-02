@@ -28,6 +28,9 @@ public class MainViewActivity extends AppCompatActivity
 
     private ParagonFunctions paragonFunctions;
 
+    private Menu menu;
+    private MenuItem favItem;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -94,6 +97,14 @@ public class MainViewActivity extends AppCompatActivity
     }
 
     @Override
+    protected void onPause(){
+        super.onPause();
+        showFavorites = false;
+        favItem = menu.findItem(R.id.action_fav);
+        favItem.setIcon(R.drawable.ic_favorite_border_white_24dp);
+    }
+
+    @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
@@ -107,6 +118,8 @@ public class MainViewActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main_view, menu);
+
+        this.menu = menu;
 
         MenuItem searchItem = menu.findItem(R.id.action_search);
         final MySearchView searchView = (MySearchView) MenuItemCompat.getActionView(searchItem);
@@ -139,13 +152,21 @@ public class MainViewActivity extends AppCompatActivity
             }
         });
 
-        MenuItem favItem = menu.findItem(R.id.action_fav);
+        favItem = menu.findItem(R.id.action_fav);
         favItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener(){
             @Override
             public boolean onMenuItemClick(MenuItem item){
 
                 if(showFavorites == false){
+                    favItem.setIcon(R.drawable.ic_favorite_white_24dp);
+                    String query = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " +
+                            ParagonContract.Paragon.FAVORITED + " = 'yes'";
+                    paragonFunctions.populateList(paragonsListView, query);
                     showFavorites = true;
+                }else {
+                    favItem.setIcon(R.drawable.ic_favorite_border_white_24dp);
+                    paragonFunctions.populateList(paragonsListView, null);
+                    showFavorites = false;
                 }
 
                 return false;
