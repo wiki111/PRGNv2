@@ -21,7 +21,7 @@ import android.widget.Toast;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class FilterActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
+public class FilterParagonsActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
 
     private SQLiteOpenHelper mDbHelper;
     private SQLiteDatabase db;

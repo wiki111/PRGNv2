@@ -13,12 +13,11 @@ import android.os.Bundle;
 import android.support.v7.view.ContextThemeWrapper;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class DetailsActivity extends AppCompatActivity {
+public class ParagonDetailsActivity extends AppCompatActivity {
 
     private ParagonDbHelper mDbHelper;
     private SQLiteDatabase db;
@@ -97,7 +96,7 @@ public class DetailsActivity extends AppCompatActivity {
         goToEditButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), EditActivity.class);
+                Intent intent = new Intent(getApplicationContext(), EditParagonActivity.class);
                 intent.putExtra("item_id", id);
                 startActivity(intent);
             }
@@ -129,7 +128,7 @@ public class DetailsActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(DetailsActivity.this, R.style.myDialog));
+                AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(ParagonDetailsActivity.this, R.style.myDialog));
                 builder.setMessage("Czy na pewno chcesz skasować ten paragon ?")
                         .setTitle("Kasowanie paragonu.");
                 builder.setPositiveButton("Tak", new DialogInterface.OnClickListener() {

@@ -20,7 +20,6 @@ import java.util.regex.Pattern;
 public class ParagonFunctions {
 
     private ArrayList<Paragon> paragonsArray;
-    private Paragon paragon;
     private SQLiteDatabase db;
     private ParagonDbHelper mDbHelper;
     private ParagonListAdapter paragonListAdapter;
@@ -47,16 +46,6 @@ public class ParagonFunctions {
         this.paragonsArray = paragonsArray;
         resetFilters = true;
         query = null;
-    }
-
-    public ParagonFunctions(Context context, Paragon paragon){
-
-        this.context = context;
-        paragonsArray = new ArrayList<Paragon>();
-        resetFilters = true;
-        query = null;
-        this.paragon = paragon;
-
     }
 
     public void addParagon(ContentValues cv){
@@ -192,7 +181,8 @@ public class ParagonFunctions {
                         c.getString(c.getColumnIndex("value")),
                         c.getString(c.getColumnIndex("date")),
                         c.getString(c.getColumnIndex("img")),
-                        c.getString(c.getColumnIndex("text"))
+                        c.getString(c.getColumnIndex("text")),
+                        "no"
                 ));
 
             }
@@ -253,7 +243,8 @@ public class ParagonFunctions {
                             c.getString(c.getColumnIndex("value")),
                             c.getString(c.getColumnIndex("date")),
                             c.getString(c.getColumnIndex("img")),
-                            c.getString(c.getColumnIndex("text"))
+                            c.getString(c.getColumnIndex("text")),
+                            "no"
                     ));
                 }
             }

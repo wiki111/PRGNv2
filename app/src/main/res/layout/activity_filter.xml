@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#babdbdbd"
-    tools:context="com.example.maciejwikira.prgnv2.FilterActivity">
+    tools:context="com.example.maciejwikira.prgnv2.FilterParagonsActivity">
 
     <Spinner
         android:id="@+id/categorySpinner"
