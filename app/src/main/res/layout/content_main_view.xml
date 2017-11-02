@@ -8,14 +8,19 @@
     tools:context="com.example.maciejwikira.prgnv2.MainViewActivity"
     tools:showIn="@layout/app_bar_main_view">
 
-    <ListView
-        android:id="@+id/paragonsListView"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:divider="@color/list_divider"
-        android:dividerHeight="1dp"
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/fragmentView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+    </android.support.constraint.ConstraintLayout>
+
 </android.support.constraint.ConstraintLayout>

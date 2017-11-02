@@ -1,6 +1,9 @@
 package com.example.maciejwikira.prgnv2;
 
 import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
@@ -30,6 +33,7 @@ public class MainViewActivity extends AppCompatActivity
 
     private Menu menu;
     private MenuItem favItem;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,41 +71,28 @@ public class MainViewActivity extends AppCompatActivity
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-        paragonsListView = (ListView)findViewById(R.id.paragonsListView);
-        paragonsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(getApplicationContext(), DetailsActivity.class);
-                intent.putExtra("item_id", Integer.toString(paragonFunctions.getParagonsArray().get(position).getDbId()));
-                startActivity(intent);
-            }
-        });
-
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        paragonFunctions = new ParagonFunctions(getApplicationContext());
-        paragonFunctions.populateList(paragonsListView, null);
 
-    }
+        if (findViewById(R.id.fragmentView) != null) {
+            if(savedInstanceState != null){
+                return;
+            }
 
-    @Override
-    protected void onResume(){
-        super.onResume();
-
-        if(paragonFunctions.getResetFilters()){
-            paragonFunctions.populateList(paragonsListView, null);
-        }else{
-            paragonFunctions.populateList(paragonsListView, paragonFunctions.getQuery());
+            ParagonsFragment paragonsFragment = new ParagonsFragment();
+            getFragmentManager().beginTransaction().add(R.id.fragmentView, paragonsFragment,
+                    "PARAGONS_LIST").commit();
         }
     }
+
 
     @Override
     protected void onPause(){
         super.onPause();
-        showFavorites = false;
+        /*showFavorites = false;
         favItem = menu.findItem(R.id.action_fav);
-        favItem.setIcon(R.drawable.ic_favorite_border_white_24dp);
+        favItem.setIcon(R.drawable.ic_favorite_border_white_24dp); */
     }
 
     @Override
@@ -111,78 +102,6 @@ public class MainViewActivity extends AppCompatActivity
             drawer.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main_view, menu);
-
-        this.menu = menu;
-
-        MenuItem searchItem = menu.findItem(R.id.action_search);
-        final MySearchView searchView = (MySearchView) MenuItemCompat.getActionView(searchItem);
-        searchView.setSubmitButtonEnabled(true);
-        searchView.setOnQueryTextListener(new MySearchView.OnQueryTextListener(){
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                paragonFunctions.search(paragonsListView, searchView.getQuery().toString());
-                return false;
-            }
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                return false;
-            }
-        });
-        searchView.setOnSearchViewCollapsedEventListener(new MySearchView.OnSearchViewCollapsedEventListener() {
-            @Override
-            public void onSearchViewCollapsed() {
-                paragonFunctions.populateList(paragonsListView, null);
-            }
-        });
-
-        MenuItem filterItem = menu.findItem(R.id.action_filter);
-        filterItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                Intent intent = new Intent(getApplicationContext(), FilterActivity.class);
-                startActivityForResult(intent, 0);
-                return false;
-            }
-        });
-
-        favItem = menu.findItem(R.id.action_fav);
-        favItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener(){
-            @Override
-            public boolean onMenuItemClick(MenuItem item){
-
-                if(showFavorites == false){
-                    favItem.setIcon(R.drawable.ic_favorite_white_24dp);
-                    String query = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " +
-                            ParagonContract.Paragon.FAVORITED + " = 'yes'";
-                    paragonFunctions.populateList(paragonsListView, query);
-                    showFavorites = true;
-                }else {
-                    favItem.setIcon(R.drawable.ic_favorite_border_white_24dp);
-                    paragonFunctions.populateList(paragonsListView, null);
-                    showFavorites = false;
-                }
-
-                return false;
-            }
-        });
-
-        return true;
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode == Activity.RESULT_OK){
-            Bundle extras = data.getExtras();
-
-            paragonFunctions.filterList(extras);
         }
     }
 
@@ -209,17 +128,9 @@ public class MainViewActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
+        if (id == R.id.paragons_tab) {
 
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
+        } else if (id == R.id.cards_tab) {
 
         }
 

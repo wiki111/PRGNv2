@@ -38,11 +38,12 @@ public final class ParagonContract {
         public static final String TABLE_NAME = "categories";
         public static final String CATEGORY_NAME = "category_name";
 
-        public static final String SQL_CREATE_CATEGORIES = "CREATE TABLE IF NOT EXISTS " + Categories.TABLE_NAME + " (" +
-                Categories._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + Categories.CATEGORY_NAME + " TEXT)";
+        public static final String SQL_CREATE_CATEGORIES = "CREATE TABLE IF NOT EXISTS " +
+                Categories.TABLE_NAME + " (" + Categories._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + Categories.CATEGORY_NAME + " TEXT)";
 
-        public static final String SQL_INSERT_EMPTY_CATEGORY = "INSERT INTO " + Categories.TABLE_NAME + " (" + Categories.CATEGORY_NAME + ") "
-                + "VALUES ('Brak Kategorii')";
+        public static final String SQL_INSERT_EMPTY_CATEGORY = "INSERT INTO " + Categories.TABLE_NAME
+                + " (" + Categories.CATEGORY_NAME + ") " + "VALUES ('Brak Kategorii')";
 
         public static final String SQL_DELETE_CATEGORIES = "DROP TABLE IF EXISTS " + Categories.TABLE_NAME;
     }
