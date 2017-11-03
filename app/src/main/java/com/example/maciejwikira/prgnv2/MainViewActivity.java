@@ -1,7 +1,12 @@
 package com.example.maciejwikira.prgnv2;
 
+import android.app.Activity;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.view.MenuItemCompat;
+import android.view.Menu;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -10,18 +15,36 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
+import android.widget.AdapterView;
+import android.widget.ListView;
 
 import com.github.clans.fab.FloatingActionButton;
+
 
 public class MainViewActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     public static final String CAMERA_OR_MEDIA = "CAMERA_OR_MEDIA";
-    private ParagonsFragment paragonsFragment;
+    public static final String CARDS_OR_PARAGONS = "CARDS_OR_PARAGONS";
+    public static final int RESULT_FILTER = 110;
+
+    private ListView listView;
+    private ParagonFunctions paragonFunctions;
+    private CardFunctions cardFunctions;
+    private Context context;
+    private Menu menu;
+    private MenuItem favItem;
+    private boolean showFavorites;
+    private boolean showParagons;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        context = getApplicationContext();
+        paragonFunctions = new ParagonFunctions(context);
+        cardFunctions = new CardFunctions(context);
+
 
         setContentView(R.layout.activity_main_view2);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -36,26 +59,16 @@ public class MainViewActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        if (findViewById(R.id.fragmentView) != null) {
-            if(savedInstanceState != null){
-                return;
-            }
-
-            paragonsFragment = new ParagonsFragment();
-            getFragmentManager().beginTransaction().add(R.id.fragmentView, paragonsFragment,
-                    "PARAGONS_LIST").commit();
-        }
-
         FloatingActionButton fabMedia = (FloatingActionButton)findViewById(R.id.material_design_floating_action_menu_item1);
         fabMedia.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                paragonsFragment = (ParagonsFragment)getFragmentManager().findFragmentByTag("PARAGONS_LIST");
-                if(paragonsFragment != null){
-                    Intent intent = new Intent(getApplicationContext(), NewParagonActivity.class);
-                    intent.putExtra(CAMERA_OR_MEDIA, "media");
-                    startActivity(intent);
-                }
+            Intent intent = new Intent(getApplicationContext(), NewParagonActivity.class);
+            Bundle extras = new Bundle();
+            extras.putString(CARDS_OR_PARAGONS, Boolean.toString(showParagons));
+            extras.putString(CAMERA_OR_MEDIA, "media");
+            intent.putExtras(extras);
+            startActivity(intent);
             }
         });
 
@@ -63,16 +76,67 @@ public class MainViewActivity extends AppCompatActivity
         fabCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                paragonsFragment = (ParagonsFragment)getFragmentManager().findFragmentByTag("PARAGONS_LIST");
-                if(paragonsFragment != null) {
-                    Intent intent = new Intent(getApplicationContext(), NewParagonActivity.class);
-                    intent.putExtra(CAMERA_OR_MEDIA, "cam");
-                    startActivity(intent);
-                }
+            Intent intent = new Intent(getApplicationContext(), NewParagonActivity.class);
+            Bundle extras = new Bundle();
+            extras.putString(CARDS_OR_PARAGONS, Boolean.toString(showParagons));
+            extras.putString(CAMERA_OR_MEDIA, "cam");
+            intent.putExtras(extras);
+            startActivity(intent);
+            }
+        });
+
+        listView = (ListView)findViewById(R.id.listView);
+        showParagonsList(listView);
+    }
+
+    private void showParagonsList(ListView lv){
+        showParagons = true;
+        paragonFunctions.populateList(lv, null);
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(context, ParagonDetailsActivity.class);
+                intent.putExtra("item_id", Integer.toString(paragonFunctions.getParagonsArray().get(position).getDbId()));
+                startActivity(intent);
             }
         });
     }
 
+    private void showCardsList(ListView lv){
+        showParagons = false;
+        cardFunctions.populateList(lv, null);
+        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(context, ParagonDetailsActivity.class);
+                intent.putExtra("item_id", Integer.toString(paragonFunctions.getParagonsArray().get(position).getDbId()));
+                startActivity(intent);
+            }
+        });
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        if(showParagons == true){
+            if(paragonFunctions.getResetFilters()){
+                paragonFunctions.populateList(listView, null);
+            }else{
+                paragonFunctions.populateList(listView, paragonFunctions.getQuery());
+            }
+        }else{
+            cardFunctions.populateList(listView, null);
+        }
+
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        showFavorites = false;
+        favItem = menu.findItem(R.id.action_fav);
+        favItem.setIcon(R.drawable.ic_favorite_border_white_24dp);
+    }
 
     @Override
     public void onBackPressed() {
@@ -84,6 +148,15 @@ public class MainViewActivity extends AppCompatActivity
         }
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode == RESULT_FILTER){
+            Bundle extras = data.getExtras();
+            paragonFunctions.filterList(extras);
+        }
+
+    }
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
@@ -92,18 +165,12 @@ public class MainViewActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.paragons_tab) {
-            ParagonsFragment paragonsFragment = (ParagonsFragment)getFragmentManager().findFragmentByTag("PARAGONS_LIST");
-            if(paragonsFragment == null){
-                paragonsFragment = new ParagonsFragment();
-                getFragmentManager().beginTransaction().replace(R.id.fragmentView, paragonsFragment,
-                        "PARAGONS_LIST").commit();
+            if(showParagons == false){
+                showParagonsList(listView);
             }
         } else if (id == R.id.cards_tab) {
-            CardsFragment cardsFragment = (CardsFragment)getFragmentManager().findFragmentByTag("CARDS_LIST");
-            if(cardsFragment == null){
-                cardsFragment = new CardsFragment();
-                getFragmentManager().beginTransaction().replace(R.id.fragmentView, cardsFragment,
-                        "CARDS_LIST").commit();
+            if(showParagons == true){
+                showCardsList(listView);
             }
         }
 
@@ -111,5 +178,67 @@ public class MainViewActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+
+        this.menu = menu;
+
+        MenuItem searchItem = menu.findItem(R.id.action_search);
+        final MySearchView searchView = (MySearchView) MenuItemCompat.getActionView(searchItem);
+        searchView.setSubmitButtonEnabled(true);
+        searchView.setOnQueryTextListener(new MySearchView.OnQueryTextListener(){
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                paragonFunctions.search(listView, searchView.getQuery().toString());
+                return false;
+            }
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
+
+        searchView.setOnSearchViewCollapsedEventListener(new MySearchView.OnSearchViewCollapsedEventListener() {
+            @Override
+            public void onSearchViewCollapsed() {
+                paragonFunctions.populateList(listView, null);
+            }
+        });
+
+        MenuItem filterItem = menu.findItem(R.id.action_filter);
+        filterItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent intent = new Intent(context, ParagonsFilterActivity.class);
+                startActivityForResult(intent, 0);
+                return false;
+            }
+        });
+
+        favItem = menu.findItem(R.id.action_fav);
+        favItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener(){
+            @Override
+            public boolean onMenuItemClick(MenuItem item){
+
+                if(showFavorites == false){
+                    favItem.setIcon(R.drawable.ic_favorite_white_24dp);
+                    String query = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " +
+                            ParagonContract.Paragon.FAVORITED + " = 'yes'";
+                    paragonFunctions.populateList(listView, query);
+                    showFavorites = true;
+                }else {
+                    favItem.setIcon(R.drawable.ic_favorite_border_white_24dp);
+                    paragonFunctions.populateList(listView, null);
+                    showFavorites = false;
+                }
+
+                return false;
+            }
+        });
+        return true;
+    }
+
 
 }

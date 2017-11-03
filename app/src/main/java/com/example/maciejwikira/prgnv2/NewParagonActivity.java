@@ -1,5 +1,6 @@
 package com.example.maciejwikira.prgnv2;
 
+import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -13,6 +14,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -33,7 +36,9 @@ public class NewParagonActivity extends AppCompatActivity {
     private String mCurrentPhotoPath;
     private Uri mUri;
     private ParagonFunctions paragonFunctions;
+    private CardFunctions cardFunctions;
     private TextRecognitionFunctions textRecognitionFunctions;
+    private boolean showParagons;
 
     //funkcja onCreate - inicjalizacja obiektów interfejsu użytkownika i wywołanie funkcji aktywności
     @Override
@@ -48,27 +53,52 @@ public class NewParagonActivity extends AppCompatActivity {
         dateField = (EditText) findViewById(R.id.dateField);
         addToDBBtn = (Button)findViewById(R.id.addToDBButton);
         paragonFunctions = new ParagonFunctions(context);
+        cardFunctions = new CardFunctions(context);
         textRecognitionFunctions = new TextRecognitionFunctions(context);
         //Obsługa kliknięcia przycisku dodającego dane do bazy
         addToDBBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ContentValues cv = new ContentValues();
-                cv.put("name", nameField.getText().toString()); //nazwa wpisu
-                cv.put("category", categoryField.getText().toString().toLowerCase()); //kategoria wpisu
-                cv.put("date", dateField.getText().toString()); //data paragonu
-                cv.put("value", Double.parseDouble(valueField.getText().toString().replaceAll("," , "\\.")));   //wartość paragonu
-                cv.put("img", textRecognitionFunctions.getImgToSave());   //ścieżka absolutna do zdjęcia paragonu
-                cv.put("text", textRecognitionFunctions.getPrgnText());
-                cv.put("favorited", "no");
-                paragonFunctions.addParagon(cv);
+                if(showParagons == true){
+                    ContentValues cv = new ContentValues();
+                    cv.put("name", nameField.getText().toString()); //nazwa wpisu
+                    cv.put("category", categoryField.getText().toString().toLowerCase()); //kategoria wpisu
+                    cv.put("date", dateField.getText().toString()); //data paragonu
+                    cv.put("value", Double.parseDouble(valueField.getText().toString().replaceAll("," , "\\.")));   //wartość paragonu
+                    cv.put("img", textRecognitionFunctions.getImgToSave());   //ścieżka absolutna do zdjęcia paragonu
+                    cv.put("text", textRecognitionFunctions.getPrgnText());
+                    cv.put("favorited", "no");
+                    paragonFunctions.addParagon(cv);
+                }else{
+                    ContentValues cv = new ContentValues();
+                    cv.put("name", nameField.getText().toString()); //nazwa wpisu
+                    cv.put("category", categoryField.getText().toString().toLowerCase()); //kategoria wpisu
+                    cv.put("expiration", dateField.getText().toString()); //data paragonu
+                    cv.put("img", getRealPathFromURI(activeUri));
+                    cv.put("favorited", "no");
+                    cardFunctions.addCard(cv);
+                }
             }
         });
+
         Intent intent = getIntent();
-        if(intent.getStringExtra(MainViewActivity.CAMERA_OR_MEDIA).equals("cam")){
+        Bundle extras = intent.getExtras();
+
+        if(Boolean.getBoolean(extras.getString(MainViewActivity.CARDS_OR_PARAGONS))){
+            showParagons = true;
+        }else {
+            showParagons = false;
+            TextView valueView = (TextView)findViewById(R.id.textView8);
+            TextView dateView = (TextView)findViewById(R.id.textView7);
+            dateView.setText("Data wygaśnięcia");
+            valueView.setVisibility(View.INVISIBLE);
+            valueField.setVisibility(View.INVISIBLE);
+        }
+
+        if(extras.getString(MainViewActivity.CAMERA_OR_MEDIA).equals("cam")){
             takePhoto();
-        }else if(intent.getStringExtra(MainViewActivity.CAMERA_OR_MEDIA).equals("media")) {
-            openGallery();  //wywołanie funkcji otwierającej galerię w celu wyborania zdjęcia paragonu
+        }else if(extras.getString(MainViewActivity.CAMERA_OR_MEDIA).equals("media")) {
+            openGallery();
         }
     }
 
@@ -109,13 +139,21 @@ public class NewParagonActivity extends AppCompatActivity {
             Context context = getApplicationContext();
             activeUri = data.getData(); //pobierz uri obrazu z danych zwróconych przez aktywność i zapisz do zmiennej
             //searchForValues(getRealPathFromURI(activeUri), context);
-            textRecognitionFunctions.searchForValues(activeUri,getRealPathFromURI(activeUri), context);
+            if(showParagons == true){
+                textRecognitionFunctions.searchForValues(activeUri,getRealPathFromURI(activeUri), context);
+            }
         }else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK){
-            Context context = getApplicationContext();
-            textRecognitionFunctions.searchForValues(mUri, mCurrentPhotoPath, context);
+            activeUri = mUri;
+            if(showParagons == true){
+                Context context = getApplicationContext();
+                textRecognitionFunctions.searchForValues(mUri, mCurrentPhotoPath, context);
+            }
         }
-        valueField.setText(textRecognitionFunctions.getParagonValue());
-        dateField.setText(textRecognitionFunctions.getParagonDate());
+
+        if(showParagons == true) {
+            valueField.setText(textRecognitionFunctions.getParagonValue());
+            dateField.setText(textRecognitionFunctions.getParagonDate());
+        }
     }
 
     //Pozyskanie absolutnej sciezki do pliku na podstawie Uri

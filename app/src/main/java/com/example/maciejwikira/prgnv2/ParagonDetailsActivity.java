@@ -25,6 +25,7 @@ public class ParagonDetailsActivity extends AppCompatActivity {
     private String selection;
     private String[] selectionArgs;
     private String[] cols;
+    private String id;
 
     private TextView nameTextView;
     private TextView categoryTextView;
@@ -54,7 +55,7 @@ public class ParagonDetailsActivity extends AppCompatActivity {
         };
 
         Intent intent = getIntent();
-        final String id = intent.getStringExtra("item_id");
+        id = intent.getStringExtra("item_id");
 
         selection = ParagonContract.Paragon._ID + " = ?";
 
@@ -96,7 +97,7 @@ public class ParagonDetailsActivity extends AppCompatActivity {
         goToEditButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), EditParagonActivity.class);
+                Intent intent = new Intent(getApplicationContext(), ParagonEditActivity.class);
                 intent.putExtra("item_id", id);
                 startActivity(intent);
             }

@@ -10,12 +10,6 @@
         app:actionViewClass="com.example.maciejwikira.prgnv2.MySearchView"  />
 
     <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
-        app:showAsAction="never"/>
-
-    <item
         android:id="@+id/action_fav"
         android:orderInCategory="102"
         android:title="Favorites"

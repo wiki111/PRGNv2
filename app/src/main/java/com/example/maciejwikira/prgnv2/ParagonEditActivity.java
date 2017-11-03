@@ -16,7 +16,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
-public class EditParagonActivity extends AppCompatActivity {
+public class ParagonEditActivity extends AppCompatActivity {
 
     private ParagonDbHelper mDbHelper;
     private SQLiteDatabase db;
@@ -76,7 +76,7 @@ public class EditParagonActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(EditParagonActivity.this, R.style.myDialog));
+                AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(ParagonEditActivity.this, R.style.myDialog));
                 builder.setMessage("Czy na pewno chcesz zmienić ten paragon ?").setTitle("Edycja paragonu.");
                 builder.setPositiveButton("Tak", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {

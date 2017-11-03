@@ -21,7 +21,7 @@ import android.widget.Toast;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class FilterParagonsActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
+public class ParagonsFilterActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
 
     private SQLiteOpenHelper mDbHelper;
     private SQLiteDatabase db;
@@ -77,7 +77,7 @@ public class FilterParagonsActivity extends AppCompatActivity implements Adapter
                 extras.putString("Chosen_To_Date", editToDate.getText().toString());
                 extras.putString("Reset", "false");
                 resultIntent.putExtras(extras);
-                setResult(Activity.RESULT_OK, resultIntent);
+                setResult(MainViewActivity.RESULT_FILTER, resultIntent);
                 finish();
             }
         });
@@ -90,7 +90,7 @@ public class FilterParagonsActivity extends AppCompatActivity implements Adapter
                 Bundle extras = new Bundle();
                 extras.putString("Reset", "true");
                 resultIntent.putExtras(extras);
-                setResult(Activity.RESULT_OK, resultIntent);
+                setResult(MainViewActivity.RESULT_FILTER, resultIntent);
                 finish();
             }
         });

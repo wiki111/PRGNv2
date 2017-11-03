@@ -42,12 +42,8 @@ public class Card {
         return this.img;
     }
 
-    public boolean isFavorited(){
-        if(favorited.equals("yes")){
-            return true;
-        }else {
-            return false;
-        }
+    public String isFavorited(){
+        return this.favorited;
     }
 
 }
