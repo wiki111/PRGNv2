@@ -38,10 +38,10 @@
         </provider>
 
         <activity
-            android:name=".ParagonsFilterActivity"
+            android:name=".FilterActivity"
             android:theme="@style/AppTheme.PopUpStyle" />
-        <activity android:name=".ParagonEditActivity" />
-        <activity android:name=".ParagonDetailsActivity" />
+        <activity android:name=".EditActivity" />
+        <activity android:name=".DetailsActivity" />
         <activity android:name=".DisplayPhotoActivity"
             android:theme="@style/AppTheme.PopUpStyle"></activity>
     </application>

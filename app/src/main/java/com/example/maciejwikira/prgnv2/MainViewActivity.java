@@ -1,7 +1,5 @@
 package com.example.maciejwikira.prgnv2;
 
-import android.app.Activity;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -19,6 +17,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.github.clans.fab.FloatingActionButton;
+import com.github.clans.fab.FloatingActionMenu;
 
 
 public class MainViewActivity extends AppCompatActivity
@@ -36,6 +35,7 @@ public class MainViewActivity extends AppCompatActivity
     private MenuItem favItem;
     private boolean showFavorites;
     private boolean showParagons;
+    private FloatingActionMenu fabMenu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +45,7 @@ public class MainViewActivity extends AppCompatActivity
         paragonFunctions = new ParagonFunctions(context);
         cardFunctions = new CardFunctions(context);
 
+        showParagons = true;
 
         setContentView(R.layout.activity_main_view2);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -58,6 +59,8 @@ public class MainViewActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        fabMenu = (FloatingActionMenu)findViewById(R.id.material_design_android_floating_action_menu);
 
         FloatingActionButton fabMedia = (FloatingActionButton)findViewById(R.id.material_design_floating_action_menu_item1);
         fabMedia.setOnClickListener(new View.OnClickListener() {
@@ -95,8 +98,11 @@ public class MainViewActivity extends AppCompatActivity
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(context, ParagonDetailsActivity.class);
-                intent.putExtra("item_id", Integer.toString(paragonFunctions.getParagonsArray().get(position).getDbId()));
+                Intent intent = new Intent(context, DetailsActivity.class);
+                Bundle extras = new Bundle();
+                extras.putBoolean(CARDS_OR_PARAGONS, showParagons);
+                extras.putString("item_id", Integer.toString(paragonFunctions.getParagonsArray().get(position).getDbId()));
+                intent.putExtras(extras);
                 startActivity(intent);
             }
         });
@@ -108,8 +114,11 @@ public class MainViewActivity extends AppCompatActivity
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(context, ParagonDetailsActivity.class);
-                intent.putExtra("item_id", Integer.toString(paragonFunctions.getParagonsArray().get(position).getDbId()));
+                Intent intent = new Intent(context, DetailsActivity.class);
+                Bundle extras = new Bundle();
+                extras.putBoolean(CARDS_OR_PARAGONS, showParagons);
+                extras.putString("item_id", Integer.toString(cardFunctions.getItemIds().get(position)));
+                intent.putExtras(extras);
                 startActivity(intent);
             }
         });
@@ -125,7 +134,12 @@ public class MainViewActivity extends AppCompatActivity
                 paragonFunctions.populateList(listView, paragonFunctions.getQuery());
             }
         }else{
-            cardFunctions.populateList(listView, null);
+            if(cardFunctions.getResetFilters()){
+                cardFunctions.populateList(listView, null);
+            }else {
+                cardFunctions.populateList(listView, cardFunctions.getQuery());
+            }
+
         }
 
     }
@@ -153,7 +167,10 @@ public class MainViewActivity extends AppCompatActivity
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode == RESULT_FILTER){
             Bundle extras = data.getExtras();
-            paragonFunctions.filterList(extras);
+            if(showParagons == true)
+                paragonFunctions.filterList(extras);
+            else
+                cardFunctions.filterList(extras);
         }
 
     }
@@ -167,10 +184,12 @@ public class MainViewActivity extends AppCompatActivity
         if (id == R.id.paragons_tab) {
             if(showParagons == false){
                 showParagonsList(listView);
+                fabMenu.setMenuButtonLabelText("Dodaj paragon");
             }
         } else if (id == R.id.cards_tab) {
             if(showParagons == true){
                 showCardsList(listView);
+                fabMenu.setMenuButtonLabelText("Dodaj kartę");
             }
         }
 
@@ -191,7 +210,12 @@ public class MainViewActivity extends AppCompatActivity
         searchView.setOnQueryTextListener(new MySearchView.OnQueryTextListener(){
             @Override
             public boolean onQueryTextSubmit(String query) {
-                paragonFunctions.search(listView, searchView.getQuery().toString());
+                if(showParagons == true){
+                    paragonFunctions.search(listView, searchView.getQuery().toString());
+                }else{
+                    cardFunctions.search(listView, searchView.getQuery().toString());
+                }
+
                 return false;
             }
             @Override
@@ -203,7 +227,10 @@ public class MainViewActivity extends AppCompatActivity
         searchView.setOnSearchViewCollapsedEventListener(new MySearchView.OnSearchViewCollapsedEventListener() {
             @Override
             public void onSearchViewCollapsed() {
-                paragonFunctions.populateList(listView, null);
+                if(showParagons == true)
+                    paragonFunctions.populateList(listView, null);
+                else
+                    cardFunctions.populateList(listView, null);
             }
         });
 
@@ -211,7 +238,10 @@ public class MainViewActivity extends AppCompatActivity
         filterItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Intent intent = new Intent(context, ParagonsFilterActivity.class);
+                Intent intent = new Intent(context, FilterActivity.class);
+                Bundle extras = new Bundle();
+                extras.putBoolean(CARDS_OR_PARAGONS, showParagons);
+                intent.putExtras(extras);
                 startActivityForResult(intent, 0);
                 return false;
             }
@@ -222,16 +252,29 @@ public class MainViewActivity extends AppCompatActivity
             @Override
             public boolean onMenuItemClick(MenuItem item){
 
-                if(showFavorites == false){
+                String query;
+
+                if(showFavorites == false) {
                     favItem.setIcon(R.drawable.ic_favorite_white_24dp);
-                    String query = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " +
-                            ParagonContract.Paragon.FAVORITED + " = 'yes'";
-                    paragonFunctions.populateList(listView, query);
                     showFavorites = true;
-                }else {
+                    if (showParagons == true) {
+                        query = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " +
+                        ParagonContract.Paragon.FAVORITED + " = 'yes'";
+                        paragonFunctions.populateList(listView, query);
+                    } else {
+                        query = "SELECT * FROM " + CardContract.Card.TABLE_NAME + " WHERE " +
+                        CardContract.Card.FAVORITED + " = 'yes'";
+                        cardFunctions.populateList(listView, query);
+
+                    }
+                }else{
                     favItem.setIcon(R.drawable.ic_favorite_border_white_24dp);
-                    paragonFunctions.populateList(listView, null);
                     showFavorites = false;
+                    if (showParagons == true) {
+                        paragonFunctions.populateList(listView, null);
+                    } else {
+                        cardFunctions.populateList(listView, null);
+                    }
                 }
 
                 return false;

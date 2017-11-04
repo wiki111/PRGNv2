@@ -198,11 +198,6 @@ public class ParagonFunctions {
 
     }
 
-    public void repopulateList(ListView lv){
-        paragonListAdapter = new ParagonListAdapter(context, R.layout.paragon_list_item, paragonsArray);
-        lv.setAdapter(paragonListAdapter);
-    }
-
     public void search(ListView lv, String query){
 
         mDbHelper = new ParagonDbHelper(context);

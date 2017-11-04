@@ -52,6 +52,12 @@ public class NewParagonActivity extends AppCompatActivity {
         valueField = (EditText) findViewById(R.id.valueField);
         dateField = (EditText) findViewById(R.id.dateField);
         addToDBBtn = (Button)findViewById(R.id.addToDBButton);
+
+        if(showParagons == true)
+            addToDBBtn.setText("Dodaj paragon");
+        else
+            addToDBBtn.setText("Dodaj kartę");
+
         paragonFunctions = new ParagonFunctions(context);
         cardFunctions = new CardFunctions(context);
         textRecognitionFunctions = new TextRecognitionFunctions(context);
