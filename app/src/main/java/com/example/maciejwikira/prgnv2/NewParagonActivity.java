@@ -53,10 +53,7 @@ public class NewParagonActivity extends AppCompatActivity {
         dateField = (EditText) findViewById(R.id.dateField);
         addToDBBtn = (Button)findViewById(R.id.addToDBButton);
 
-        if(showParagons == true)
-            addToDBBtn.setText("Dodaj paragon");
-        else
-            addToDBBtn.setText("Dodaj kartę");
+
 
         paragonFunctions = new ParagonFunctions(context);
         cardFunctions = new CardFunctions(context);
@@ -90,7 +87,7 @@ public class NewParagonActivity extends AppCompatActivity {
         Intent intent = getIntent();
         Bundle extras = intent.getExtras();
 
-        if(Boolean.getBoolean(extras.getString(MainViewActivity.CARDS_OR_PARAGONS))){
+        if(extras.getBoolean(MainViewActivity.CARDS_OR_PARAGONS)){
             showParagons = true;
         }else {
             showParagons = false;
@@ -100,6 +97,11 @@ public class NewParagonActivity extends AppCompatActivity {
             valueView.setVisibility(View.INVISIBLE);
             valueField.setVisibility(View.INVISIBLE);
         }
+
+        if(showParagons == true)
+            addToDBBtn.setText("Dodaj paragon");
+        else
+            addToDBBtn.setText("Dodaj kartę");
 
         if(extras.getString(MainViewActivity.CAMERA_OR_MEDIA).equals("cam")){
             takePhoto();

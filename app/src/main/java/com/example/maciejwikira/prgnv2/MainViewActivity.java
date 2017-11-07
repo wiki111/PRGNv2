@@ -68,7 +68,7 @@ public class MainViewActivity extends AppCompatActivity
             public void onClick(View v) {
             Intent intent = new Intent(getApplicationContext(), NewParagonActivity.class);
             Bundle extras = new Bundle();
-            extras.putString(CARDS_OR_PARAGONS, Boolean.toString(showParagons));
+            extras.putBoolean(CARDS_OR_PARAGONS, showParagons);
             extras.putString(CAMERA_OR_MEDIA, "media");
             intent.putExtras(extras);
             startActivity(intent);
@@ -81,7 +81,7 @@ public class MainViewActivity extends AppCompatActivity
             public void onClick(View v) {
             Intent intent = new Intent(getApplicationContext(), NewParagonActivity.class);
             Bundle extras = new Bundle();
-            extras.putString(CARDS_OR_PARAGONS, Boolean.toString(showParagons));
+            extras.putBoolean(CARDS_OR_PARAGONS, showParagons);
             extras.putString(CAMERA_OR_MEDIA, "cam");
             intent.putExtras(extras);
             startActivity(intent);
