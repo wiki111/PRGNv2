@@ -19,6 +19,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -44,6 +48,34 @@ public class NewParagonActivity extends AppCompatActivity {
     private CardFunctions cardFunctions;
     private TextRecognitionFunctions textRecognitionFunctions;
     private boolean showParagons;
+
+    private BaseLoaderCallback mLoaderCallback = new
+            BaseLoaderCallback(this) {
+                @Override
+                //This is the callback method called once the OpenCV
+                // manager is connected
+                public void onManagerConnected(int status) {
+                    switch (status) {
+                        //Once the OpenCV manager is successfully connected we can enable the
+                        // camera interaction with the defined OpenCV camera view
+                        case LoaderCallbackInterface.SUCCESS:
+                        {
+                            Log.i("PRGN : ", "OpenCV loaded successfully");
+                        } break;
+                        default:
+                        {
+                            super.onManagerConnected(status);
+                        } break;
+                    }
+                }
+            };
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_13, this,
+                mLoaderCallback);
+    }
 
     //funkcja onCreate - inicjalizacja obiektów interfejsu użytkownika i wywołanie funkcji aktywności
     @Override
