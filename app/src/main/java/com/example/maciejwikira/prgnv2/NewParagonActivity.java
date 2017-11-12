@@ -5,21 +5,26 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Random;
 
 
 public class NewParagonActivity extends AppCompatActivity {
@@ -146,16 +151,21 @@ public class NewParagonActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK && requestCode == 100) {
             Context context = getApplicationContext();
             activeUri = data.getData(); //pobierz uri obrazu z danych zwróconych przez aktywność i zapisz do zmiennej
+            activeUri = saveImage(activeUri);
             //searchForValues(getRealPathFromURI(activeUri), context);
             if(showParagons == true){
-                textRecognitionFunctions.searchForValues(activeUri,getRealPathFromURI(activeUri), context);
+                textRecognitionFunctions.searchForValues(activeUri,mCurrentPhotoPath, context);
             }
         }else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK){
-            activeUri = mUri;
+            activeUri = saveImage(mUri);
             if(showParagons == true){
                 Context context = getApplicationContext();
-                textRecognitionFunctions.searchForValues(mUri, mCurrentPhotoPath, context);
+                textRecognitionFunctions.searchForValues(activeUri, mCurrentPhotoPath, context);
             }
+        }
+
+        if(activeUri == null){
+            finish();
         }
 
         if(showParagons == true) {
@@ -192,6 +202,63 @@ public class NewParagonActivity extends AppCompatActivity {
         // Save a file: path for use with ACTION_VIEW intents
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
+    }
+
+    /* Checks if external storage is available for read and write */
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+    /* Checks if external storage is available to at least read */
+    public boolean isExternalStorageReadable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state) ||
+                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+    private Uri saveImage(Uri activeUri){
+        Uri uri;
+        Bitmap bm;
+
+        bm = BitmapFactory.decodeFile(getRealPathFromURI(activeUri));
+
+        File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/Paragons");
+        if (!folder.exists()) {
+            if(folder.mkdir()){
+                Log.d("Paragon App : ", "Successfully created the parent dir:" + folder.getName());
+            }else{
+                Log.d("Paragon App : ", "Failed to create the parent dir:" + folder.getName());
+            }
+        }
+        Random generator = new Random();
+        int n = 10000;
+        n = generator.nextInt(n);
+        String fname = "Image-" + n + ".jpg";
+        File file = new File(folder, fname);
+
+        if(file.exists()){
+            file.delete();
+        }
+        try{
+            FileOutputStream out = new FileOutputStream(file);
+            bm.compress(Bitmap.CompressFormat.JPEG, 90, out);
+            out.flush();
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        mCurrentPhotoPath = file.getAbsolutePath();
+        uri = FileProvider.getUriForFile(this, "com.example.android.fileprovider", file);
+
+        return uri;
     }
 
 }
