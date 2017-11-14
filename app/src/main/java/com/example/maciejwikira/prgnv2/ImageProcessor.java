@@ -2,10 +2,12 @@ package com.example.maciejwikira.prgnv2;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 
+import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.opencv.highgui.Highgui;
@@ -41,7 +43,13 @@ public class ImageProcessor extends IntentService {
         Mat modifiedImage = new Mat();
         Imgproc.cvtColor(originalImage, modifiedImage, Imgproc.COLOR_RGB2GRAY);
         Imgproc.GaussianBlur(modifiedImage, modifiedImage, new Size(7,7), 0, 0);
-        Imgproc.equalizeHist(modifiedImage, modifiedImage);
+        Imgproc.adaptiveThreshold(modifiedImage, modifiedImage, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 41, 10);
+
+        /* Kod testowy
+        Bitmap testMap = Bitmap.createBitmap(modifiedImage.cols(),
+                modifiedImage.rows(),Bitmap.Config.RGB_565);
+        Utils.matToBitmap(modifiedImage, testMap);
+        */
 
         TextRecognitionFunctions textRecognitionFunctions = new TextRecognitionFunctions(this);
         textRecognitionFunctions.searchForValues(uri, path, this);
