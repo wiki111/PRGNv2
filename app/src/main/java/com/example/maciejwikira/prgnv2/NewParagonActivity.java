@@ -1,9 +1,10 @@
 package com.example.maciejwikira.prgnv2;
 
-import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -11,12 +12,15 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -48,6 +52,13 @@ public class NewParagonActivity extends AppCompatActivity {
     private CardFunctions cardFunctions;
     private TextRecognitionFunctions textRecognitionFunctions;
     private boolean showParagons;
+    private Intent mServiceIntent;
+    private ImageView pickedImageView;
+
+    private String imgToSave;
+    private String textFromImage;
+    private String receiptValue;
+    private String receiptDate;
 
     private BaseLoaderCallback mLoaderCallback = new
             BaseLoaderCallback(this) {
@@ -89,8 +100,7 @@ public class NewParagonActivity extends AppCompatActivity {
         valueField = (EditText) findViewById(R.id.valueField);
         dateField = (EditText) findViewById(R.id.dateField);
         addToDBBtn = (Button)findViewById(R.id.addToDBButton);
-
-
+        pickedImageView = (ImageView)findViewById(R.id.pickedImageView);
 
         paragonFunctions = new ParagonFunctions(context);
         cardFunctions = new CardFunctions(context);
@@ -105,8 +115,8 @@ public class NewParagonActivity extends AppCompatActivity {
                     cv.put("category", categoryField.getText().toString().toLowerCase()); //kategoria wpisu
                     cv.put("date", dateField.getText().toString()); //data paragonu
                     cv.put("value", Double.parseDouble(valueField.getText().toString().replaceAll("," , "\\.")));   //wartość paragonu
-                    cv.put("img", textRecognitionFunctions.getImgToSave());   //ścieżka absolutna do zdjęcia paragonu
-                    cv.put("text", textRecognitionFunctions.getPrgnText());
+                    cv.put("img", imgToSave);   //ścieżka absolutna do zdjęcia paragonu
+                    cv.put("text", textFromImage);
                     cv.put("favorited", "no");
                     paragonFunctions.addParagon(cv);
                 }else{
@@ -128,8 +138,8 @@ public class NewParagonActivity extends AppCompatActivity {
             showParagons = true;
         }else {
             showParagons = false;
-            TextView valueView = (TextView)findViewById(R.id.textView8);
-            TextView dateView = (TextView)findViewById(R.id.textView7);
+            TextView valueView = (TextView)findViewById(R.id.valTextView);
+            TextView dateView = (TextView)findViewById(R.id.dateTextView);
             dateView.setText("Data wygaśnięcia");
             valueView.setVisibility(View.INVISIBLE);
             valueField.setVisibility(View.INVISIBLE);
@@ -139,6 +149,10 @@ public class NewParagonActivity extends AppCompatActivity {
             addToDBBtn.setText("Dodaj paragon");
         else
             addToDBBtn.setText("Dodaj kartę");
+
+        IntentFilter intentFilter = new IntentFilter(Constants.BROADCAST_ACTION);
+        FixedImageReceiver fixedImageReceiver = new FixedImageReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(fixedImageReceiver, intentFilter);
 
         if(extras.getString(MainViewActivity.CAMERA_OR_MEDIA).equals("cam")){
             takePhoto();
@@ -175,35 +189,50 @@ public class NewParagonActivity extends AppCompatActivity {
         }
     }
 
-    //Funkcja wywoływana przy powrocie z zewnętrznej aktywności - wyboru zdjęcia lub wskazywania obszaru
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        // fragment kodu wykonywany, gdy następuje powrtót z aktywności wyboru zdjęcia paragonu
         if (resultCode == RESULT_OK && requestCode == 100) {
-            Context context = getApplicationContext();
-            activeUri = data.getData(); //pobierz uri obrazu z danych zwróconych przez aktywność i zapisz do zmiennej
-            activeUri = saveImage(activeUri);
+            activeUri = data.getData();
+            String path = getRealPathFromURI(activeUri);
+
+            processImage(this, activeUri, path);
+
+            Bitmap chosenImage = BitmapFactory.decodeFile(path);
+            pickedImageView.setImageBitmap(chosenImage);
+
+            //activeUri = saveImage(activeUri);
+            //mServiceIntent = new Intent(this, ImageProcessor.class);
+            //mServiceIntent.putExtra("path", mCurrentPhotoPath);
+            //this.startService(mServiceIntent);
             //searchForValues(getRealPathFromURI(activeUri), context);
-            if(showParagons == true){
-                textRecognitionFunctions.searchForValues(activeUri,mCurrentPhotoPath, context);
-            }
+            //if(showParagons == true){
+            //    textRecognitionFunctions.searchForValues(activeUri, path, context);
+            //}
         }else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK){
-            activeUri = saveImage(mUri);
-            if(showParagons == true){
-                Context context = getApplicationContext();
-                textRecognitionFunctions.searchForValues(activeUri, mCurrentPhotoPath, context);
-            }
+            //activeUri = saveImage(mUri);
+            Bitmap chosenImage = BitmapFactory.decodeFile(mCurrentPhotoPath);
+            pickedImageView.setImageBitmap(chosenImage);
+
+            //if(showParagons == true){
+             //   Context context = getApplicationContext();
+             //   textRecognitionFunctions.searchForValues(activeUri, mCurrentPhotoPath, context);
+            //}
         }
 
         if(activeUri == null){
             finish();
         }
+    }
 
-        if(showParagons == true) {
-            valueField.setText(textRecognitionFunctions.getParagonValue());
-            dateField.setText(textRecognitionFunctions.getParagonDate());
-        }
+    private void processImage(Context context, Uri uri, String path){
+        Bundle bundle = new Bundle();
+        bundle.putString(Constants.IMAGE_PATH, path);
+        bundle.putString(Constants.IMAGE_URI, uri.toString());
+
+        mServiceIntent = new Intent(context, ImageProcessor.class);
+        mServiceIntent.putExtras(bundle);
+        context.startService(mServiceIntent);
     }
 
     //Pozyskanie absolutnej sciezki do pliku na podstawie Uri
@@ -293,4 +322,30 @@ public class NewParagonActivity extends AppCompatActivity {
         return uri;
     }
 
+    private class FixedImageReceiver extends BroadcastReceiver{
+
+        private FixedImageReceiver(){
+
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Bundle extras = intent.getExtras();
+            imgToSave = extras.getString(Constants.IMAGE_PATH);
+            textFromImage = extras.getString(Constants.RECEIPT_TEXT);
+            receiptValue = extras.getString(Constants.RECEIPT_VAL);
+            receiptDate = extras.getString(Constants.RECEIPT_DATE);
+
+            valueField.setText(receiptValue);
+            dateField.setText(receiptDate);
+
+            ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
+            progressBar.setVisibility(View.GONE);
+
+            addToDBBtn.setVisibility(View.VISIBLE);
+        }
+    }
+
 }
+
+

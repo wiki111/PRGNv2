@@ -44,6 +44,9 @@
         <activity android:name=".DetailsActivity" />
         <activity android:name=".DisplayPhotoActivity"
             android:theme="@style/AppTheme.PopUpStyle"></activity>
+
+        <service android:name=".ImageProcessor"
+            android:exported="false" />
     </application>
 
 </manifest>

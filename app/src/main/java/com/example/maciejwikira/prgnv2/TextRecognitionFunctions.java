@@ -174,14 +174,14 @@ public class TextRecognitionFunctions {
         return this.prgnText;
     }
 
-    public String getParagonValue(){
+    public String getReceiptValue(){
         if(paragonValue != null)
             return this.paragonValue;
         else
             return "";
     }
 
-    public String getParagonDate(){
+    public String getReceiptDate(){
         if(paragonDate != null)
             return this.paragonDate;
         else
