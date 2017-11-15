@@ -12,4 +12,5 @@ public final class Constants {
     public static final String RECEIPT_VAL = "receipt_value";
     public static final String RECEIPT_DATE = "receipt_date";
     public static final String RECEIPT_TEXT = "receipt_text";
+    public static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 44;
 }

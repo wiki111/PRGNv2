@@ -42,6 +42,7 @@ public class TextRecognitionFunctions {
         this.context = context;
         paragonValue = null;
         paragonDate = null;
+        prgnText = "";
     }
 
     public void searchForValues(Uri activeUri,String realPath, Context context){
@@ -68,6 +69,27 @@ public class TextRecognitionFunctions {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void searchForValues(Uri activeUri,String realPath, Context context, Bitmap activeBitmap){
+        TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();
+            imgToSave = realPath;
+            Frame frame = new Frame.Builder().setBitmap(activeBitmap).build();
+
+            SparseArray<TextBlock> items = textRecognizer.detect(frame);
+
+            prgnText = "";
+            for(int i = 0; i < items.size(); i++){
+                TextBlock item = items.valueAt(i);
+                prgnText += item.getValue().toLowerCase();
+            }
+
+            if(valueFound == false) //jeśli nie znaleziono wartości
+                paragonValue = searchForTheValue(items);   // wyszukaj wartość w odczytanych danych
+
+            if(dateFound == false)  //jeśli nie znaleziono daty
+                paragonDate = searchForTheDate(items); //wyszukaj datę w odczytanych danych
+
     }
 
     //Funkcja wyszukująca wartość paragonu
@@ -188,4 +210,26 @@ public class TextRecognitionFunctions {
             return "";
     }
 
+    public void searchInBitmap(Bitmap bitmap){
+        TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();
+        Frame frame = new Frame.Builder().setBitmap(bitmap).build();
+
+        SparseArray<TextBlock> items = textRecognizer.detect(frame);
+        prgnText += "\n";
+        for(int i = 0; i < items.size(); i++){
+            TextBlock item = items.valueAt(i);
+            prgnText += item.getValue().toLowerCase();
+        }
+
+        if(valueFound == false) //jeśli nie znaleziono wartości
+            paragonValue = searchForTheValue(items);   // wyszukaj wartość w odczytanych danych
+
+        if(dateFound == false)  //jeśli nie znaleziono daty
+            paragonDate = searchForTheDate(items); //wyszukaj datę w odczytanych danych
+
+    }
+
+    public void setImgToSave(String realPath){
+        imgToSave = realPath;
+    }
 }

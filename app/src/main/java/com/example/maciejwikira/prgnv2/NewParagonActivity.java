@@ -1,16 +1,20 @@
 package com.example.maciejwikira.prgnv2;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
@@ -60,38 +64,29 @@ public class NewParagonActivity extends AppCompatActivity {
     private String receiptValue;
     private String receiptDate;
 
-    private BaseLoaderCallback mLoaderCallback = new
-            BaseLoaderCallback(this) {
-                @Override
-                //This is the callback method called once the OpenCV
-                // manager is connected
-                public void onManagerConnected(int status) {
-                    switch (status) {
-                        //Once the OpenCV manager is successfully connected we can enable the
-                        // camera interaction with the defined OpenCV camera view
-                        case LoaderCallbackInterface.SUCCESS:
-                        {
-                            Log.i("PRGN : ", "OpenCV loaded successfully");
-                        } break;
-                        default:
-                        {
-                            super.onManagerConnected(status);
-                        } break;
-                    }
-                }
-            };
-
-    @Override
-    public void onResume(){
-        super.onResume();
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_13, this,
-                mLoaderCallback);
-    }
-
     //funkcja onCreate - inicjalizacja obiektów interfejsu użytkownika i wywołanie funkcji aktywności
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (!OpenCVLoader.initDebug()) {
+            Log.e(this.getClass().getSimpleName(), "  OpenCVLoader.initDebug(), not working.");
+        } else {
+            Log.d(this.getClass().getSimpleName(), "  OpenCVLoader.initDebug(), working.");
+        }
+
+        if (ContextCompat.checkSelfPermission( this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+
+
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        Constants.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+        }
+
+
+
         setContentView(R.layout.activity_new_prgn);
         final Context context = getApplicationContext();    //zapisanie kontekstu do zmiennej
         //inicjalizacja elementów interfejsu użytkownika
@@ -161,6 +156,28 @@ public class NewParagonActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case Constants.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+    }
+
     //Funkcja otwierająca galerię w celu wbrania zdjęcia paragonu
     private void openGallery(){
         Intent gallery = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
@@ -201,23 +218,13 @@ public class NewParagonActivity extends AppCompatActivity {
             Bitmap chosenImage = BitmapFactory.decodeFile(path);
             pickedImageView.setImageBitmap(chosenImage);
 
-            //activeUri = saveImage(activeUri);
-            //mServiceIntent = new Intent(this, ImageProcessor.class);
-            //mServiceIntent.putExtra("path", mCurrentPhotoPath);
-            //this.startService(mServiceIntent);
-            //searchForValues(getRealPathFromURI(activeUri), context);
-            //if(showParagons == true){
-            //    textRecognitionFunctions.searchForValues(activeUri, path, context);
-            //}
         }else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK){
-            //activeUri = saveImage(mUri);
+
+            processImage(this, mUri, mCurrentPhotoPath);
+
             Bitmap chosenImage = BitmapFactory.decodeFile(mCurrentPhotoPath);
             pickedImageView.setImageBitmap(chosenImage);
 
-            //if(showParagons == true){
-             //   Context context = getApplicationContext();
-             //   textRecognitionFunctions.searchForValues(activeUri, mCurrentPhotoPath, context);
-            //}
         }
 
         if(activeUri == null){
