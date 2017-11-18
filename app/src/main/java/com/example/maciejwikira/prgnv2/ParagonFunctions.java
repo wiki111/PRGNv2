@@ -41,13 +41,6 @@ public class ParagonFunctions {
         query = null;
     }
 
-    public ParagonFunctions(Context context, ArrayList<Paragon> paragonsArray){
-        this.context = context;
-        this.paragonsArray = paragonsArray;
-        resetFilters = true;
-        query = null;
-    }
-
     public void addParagon(ContentValues cv){
         try{
             mDbHelper = new ParagonDbHelper(context);

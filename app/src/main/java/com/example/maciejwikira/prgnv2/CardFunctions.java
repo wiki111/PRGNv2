@@ -26,6 +26,7 @@ public class CardFunctions {
     private boolean resetFilters;
     private String query;
     private String chosenCategory;
+
     public CardFunctions(Context context){
         this.context = context;
         itemIds = new ArrayList<Integer>();
