@@ -101,7 +101,7 @@ public class MainViewActivity extends AppCompatActivity
                 Intent intent = new Intent(context, DetailsActivity.class);
                 Bundle extras = new Bundle();
                 extras.putBoolean(CARDS_OR_PARAGONS, showParagons);
-                extras.putString("item_id", Integer.toString(paragonFunctions.getParagonsArray().get(position).getDbId()));
+                extras.putString("item_id", Integer.toString(paragonFunctions.getItemIds().get(position)));
                 intent.putExtras(extras);
                 startActivity(intent);
             }

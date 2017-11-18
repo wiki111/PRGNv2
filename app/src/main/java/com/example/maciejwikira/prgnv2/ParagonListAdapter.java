@@ -21,48 +21,39 @@ import java.util.List;
  * Created by Maciej on 2017-10-21.
  */
 
-public class ParagonListAdapter extends ArrayAdapter{
+public class ParagonListAdapter extends SimpleCursorAdapter{
 
-    private ArrayList<Paragon> items;
     private LayoutInflater inflater;
+    private int layout;
 
-    public ParagonListAdapter(Context context, int textViewResourceId, ArrayList<Paragon> objects) {
-        super(context, textViewResourceId, objects);
-        this.items = objects;
+    public ParagonListAdapter(Context context, int layout, Cursor c, String[] from, int[] to, int flags) {
+        super(context, layout, c, from, to, flags);
+        this.inflater = LayoutInflater.from(context);
+        this.layout = layout;
     }
 
     @Override
-    public int getCount(){
-        int count = items.size();
-        return count;
+    public View newView (Context context, Cursor cursor, ViewGroup parent){
+        return inflater.inflate(layout, null);
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent){
+    public void bindView(View view, Context context, Cursor cursor){
+        super.bindView(view, context, cursor);
 
-        View v;
-        if (convertView == null) {
-            inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        ImageView imageView = (ImageView) view.findViewById(R.id.photoView);
+        TextView nameView = (TextView) view.findViewById(R.id.nameTextView);
+        TextView categoryView = (TextView) view.findViewById(R.id.categoryTextView);
+        TextView dateView = (TextView) view.findViewById(R.id.dateView);
+        TextView valueView = (TextView) view.findViewById(R.id.valueTextView);
 
-            v = inflater.inflate(R.layout.paragon_list_item, null);
-        }else
-           v = convertView;
-
-
-        ImageView imageView = (ImageView) v.findViewById(R.id.photoView);
-        TextView nameView = (TextView) v.findViewById(R.id.nameTextView);
-        TextView categoryView = (TextView) v.findViewById(R.id.categoryTextView);
-        TextView dateView = (TextView) v.findViewById(R.id.dateView);
-        TextView valueView = (TextView) v.findViewById(R.id.valueTextView);
-
-        Bitmap image = BitmapFactory.decodeFile(items.get(position).getImg());
+        Bitmap image = BitmapFactory.decodeFile(cursor.getString(cursor.getColumnIndex(ParagonContract.Paragon.IMAGE_PATH)));
         imageView.setImageBitmap(image);
 
-        nameView.setText("Nazwa: " + items.get(position).getName());
-        categoryView.setText("Kategoria: " + items.get(position).getCategory());
-        dateView.setText("Data: " + items.get(position).getDate());
-        valueView.setText("Wartość: " + items.get(position).getValue());
+        nameView.setText("Nazwa: " + cursor.getString(cursor.getColumnIndex(ParagonContract.Paragon.NAME)));
+        categoryView.setText("Kategoria: " + cursor.getString(cursor.getColumnIndex(ParagonContract.Paragon.CATEGORY)));
+        dateView.setText("Data: " + cursor.getString(cursor.getColumnIndex(ParagonContract.Paragon.DATE)));
+        valueView.setText("Wartość: " + cursor.getString(cursor.getColumnIndex(ParagonContract.Paragon.VALUE)));
 
-        return v;
     }
 }

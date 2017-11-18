@@ -19,7 +19,6 @@ import java.util.regex.Pattern;
 
 public class ParagonFunctions {
 
-    private ArrayList<Paragon> paragonsArray;
     private SQLiteDatabase db;
     private ParagonDbHelper mDbHelper;
     private ParagonListAdapter paragonListAdapter;
@@ -32,11 +31,12 @@ public class ParagonFunctions {
     private String chosenCategory;
     private String chosenFromDate;
     private String chosenToDate;
+    private ArrayList<Integer> itemIds;
 
 
     public ParagonFunctions(Context context){
         this.context = context;
-        paragonsArray = new ArrayList<Paragon>();
+        itemIds = new ArrayList<>();
         resetFilters = true;
         query = null;
     }
@@ -150,7 +150,8 @@ public class ParagonFunctions {
                 "value",
                 "date",
                 "img",
-                "text"
+                "text",
+                "favorited"
         };
 
         Cursor c;
@@ -162,30 +163,37 @@ public class ParagonFunctions {
         }
 
         try{
-            paragonsArray.clear();
+            itemIds.clear();
 
             //fill array with paragon objects created from database data
             while(c.moveToNext()){
-
-                paragonsArray.add(new Paragon(
-                        c.getInt(c.getColumnIndex("_id")),
-                        c.getString(c.getColumnIndex("name")),
-                        c.getString(c.getColumnIndex("category")),
-                        c.getString(c.getColumnIndex("value")),
-                        c.getString(c.getColumnIndex("date")),
-                        c.getString(c.getColumnIndex("img")),
-                        c.getString(c.getColumnIndex("text")),
-                        "no"
-                ));
-
+                itemIds.add(c.getInt(c.getColumnIndex(ParagonContract.Paragon._ID)));
             }
 
+            String[] from = new String[]{
+                    ParagonContract.Paragon.NAME,
+                    ParagonContract.Paragon.CATEGORY,
+                    ParagonContract.Paragon.DATE,
+                    ParagonContract.Paragon.VALUE,
+                    ParagonContract.Paragon.IMAGE_PATH,
+                    ParagonContract.Paragon.CONTENT,
+                    ParagonContract.Paragon.FAVORITED
+            };
+
+            int[] to = new int[]{
+                    R.id.nameTextView,
+                    R.id.categoryTextView,
+                    R.id.dateView,
+                    R.id.photoView
+            };
+
+            c.moveToFirst();
+
             //finally get and set adapter
-            paragonListAdapter = new ParagonListAdapter(context, R.layout.paragon_list_item, paragonsArray);
+            paragonListAdapter = new ParagonListAdapter(context, R.layout.paragon_list_item, c, from, to, 0);
             lv.setAdapter(paragonListAdapter);
 
         }finally {
-            c.close();
             db.close();
         }
 
@@ -206,49 +214,45 @@ public class ParagonFunctions {
                 "text"
         };
 
-        String itemContent;
-        String itemNameContent;
+        String dbQuery = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " + ParagonContract.Paragon.NAME +
+                " LIKE '" + query + "' OR " + ParagonContract.Paragon.CONTENT + " LIKE '%" + query + "%'";
 
         Cursor c;
-        int text_index;
-        int title_index;
-        ArrayList<Paragon> searchResults = new ArrayList<Paragon>();
-        Matcher matchName, matchContent;
-        Pattern pattern = Pattern.compile(query.toLowerCase());
 
-        c = db.query(true, ParagonContract.Paragon.TABLE_NAME, cols,null, null, null, null, null, null);
+        c = db.rawQuery(dbQuery, null);
 
         try {
-            while (c.moveToNext()) {
+            itemIds.clear();
 
-                title_index = c.getColumnIndex(ParagonContract.Paragon.NAME);
-                itemNameContent = c.getString(title_index).toLowerCase();
-                matchName = pattern.matcher(itemNameContent);
-                text_index = c.getColumnIndex(ParagonContract.Paragon.CONTENT);
-                itemContent = c.getString(text_index);
-                itemContent.toLowerCase();
-                matchContent = pattern.matcher(itemContent);
-                if(matchName.find() || matchContent.find()){
-                    searchResults.add(new Paragon(
-                            c.getInt(c.getColumnIndex("_id")),
-                            c.getString(c.getColumnIndex("name")),
-                            c.getString(c.getColumnIndex("category")),
-                            c.getString(c.getColumnIndex("value")),
-                            c.getString(c.getColumnIndex("date")),
-                            c.getString(c.getColumnIndex("img")),
-                            c.getString(c.getColumnIndex("text")),
-                            "no"
-                    ));
-                }
+            while(c.moveToNext()){
+                itemIds.add(c.getInt(c.getColumnIndex(ParagonContract.Paragon._ID)));
             }
+
+            String[] from = new String[]{
+                    ParagonContract.Paragon.NAME,
+                    ParagonContract.Paragon.CATEGORY,
+                    ParagonContract.Paragon.DATE,
+                    ParagonContract.Paragon.VALUE,
+                    ParagonContract.Paragon.IMAGE_PATH,
+                    ParagonContract.Paragon.CONTENT,
+                    ParagonContract.Paragon.FAVORITED
+            };
+
+            int[] to = new int[]{
+                    R.id.nameTextView,
+                    R.id.categoryTextView,
+                    R.id.dateView,
+                    R.id.photoView
+            };
+
+            c.moveToFirst();
+
+            //finally get and set adapter
+            paragonListAdapter = new ParagonListAdapter(context, R.layout.paragon_list_item, c, from, to, 0);
+            lv.setAdapter(paragonListAdapter);
         } finally {
-            c.close();
             db.close();
         }
-
-        ParagonListAdapter paragonListAdapter = new ParagonListAdapter(context, R.layout.paragon_list_item, searchResults);
-        lv.setAdapter(paragonListAdapter);
-
     }
 
     public void filterList(Bundle extras){
@@ -304,9 +308,8 @@ public class ParagonFunctions {
         return this.query;
     }
 
-    public ArrayList<Paragon> getParagonsArray(){
-        return this.paragonsArray;
+    public ArrayList<Integer> getItemIds(){
+        return this.itemIds;
     }
-
 
 }
