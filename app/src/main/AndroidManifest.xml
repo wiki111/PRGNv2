@@ -26,7 +26,6 @@
             </intent-filter>
         </activity>
 
-
         <provider
             android:name="android.support.v4.content.FileProvider"
             android:authorities="com.example.android.fileprovider"
@@ -42,11 +41,15 @@
             android:theme="@style/AppTheme.PopUpStyle" />
         <activity android:name=".EditActivity" />
         <activity android:name=".DetailsActivity" />
-        <activity android:name=".DisplayPhotoActivity"
-            android:theme="@style/AppTheme.PopUpStyle"></activity>
+        <activity
+            android:name=".DisplayPhotoActivity"
+            android:theme="@style/AppTheme.PopUpStyle" />
 
-        <service android:name=".ImageProcessor"
+        <service
+            android:name=".ImageProcessor"
             android:exported="false" />
+
+        <activity android:name=".ChoosePointsActivity"></activity>
     </application>
 
 </manifest>

@@ -150,6 +150,8 @@ public class CardFunctions {
         }
 
         try{
+            itemIds.clear();
+
             while(c.moveToNext()){
                 itemIds.add(c.getInt(c.getColumnIndex(CardContract.Card._ID)));
             }
@@ -214,53 +216,42 @@ public class CardFunctions {
         mDbHelper = new ParagonDbHelper(context);
         db = mDbHelper.getReadableDatabase();
 
-        String[] cols = new String[]{
-                "_id",
-                "name",
-                "category",
-                "expiration",
-                "img"
-        };
-
-        String itemNameContent;
+        String dbQuery = "SELECT * FROM " + CardContract.Card.TABLE_NAME + " WHERE " + CardContract.Card.NAME +
+                " LIKE '%" + query + "%'";
 
         Cursor c;
-        int title_index;
-        String idsToGet = "(";
-        ArrayList<Integer> matchingIds = new ArrayList<Integer>();
-        Matcher matchName;
-        Pattern pattern = Pattern.compile(query.toLowerCase());
 
-        c = db.query(true, CardContract.Card.TABLE_NAME, cols,null, null, null, null, null, null);
+        c = db.rawQuery(dbQuery, null);
 
         try {
-            while (c.moveToNext()) {
+            itemIds.clear();
 
-                title_index = c.getColumnIndex(CardContract.Card.NAME);
-                itemNameContent = c.getString(title_index).toLowerCase();
-                matchName = pattern.matcher(itemNameContent);
-                if(matchName.find()){
-                    matchingIds.add(c.getInt(c.getColumnIndex(CardContract.Card._ID)));
-                }
+            while (c.moveToNext()) {
+                itemIds.add(c.getInt(c.getColumnIndex(CardContract.Card._ID)));
             }
+
+            String[] from = new String[]{
+                    CardContract.Card.NAME,
+                    CardContract.Card.CATEGORY,
+                    CardContract.Card.EXPIRATION_DATE,
+                    CardContract.Card.IMAGE_PATH
+            };
+
+            int[] to = new int[]{
+                    R.id.nameTextView,
+                    R.id.categoryTextView,
+                    R.id.dateView,
+                    R.id.photoView
+            };
+
+            c.moveToFirst();
+
+            cardListAdapter = new CardListAdapter(context, R.layout.paragon_list_item, c, from, to, 0);
+            lv.setAdapter(cardListAdapter);
+
         } finally {
-            c.close();
             db.close();
         }
-
-        for(int i = 0; i < matchingIds.size(); i++){
-            if(i == matchingIds.size() - 1){
-                idsToGet += matchingIds.get(i) + " )";
-            }else{
-                idsToGet += matchingIds.get(i) + ", ";
-            }
-        }
-
-        String refinedQuery = "SELECT * FROM " + CardContract.Card.TABLE_NAME + " WHERE " +
-                CardContract.Card._ID + " IN " + idsToGet;
-
-        populateList(lv, refinedQuery);
-
 
     }
 

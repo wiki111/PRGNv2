@@ -204,16 +204,6 @@ public class ParagonFunctions {
         mDbHelper = new ParagonDbHelper(context);
         db = mDbHelper.getReadableDatabase();
 
-        String[] cols = new String[]{
-                "_id",
-                "name",
-                "category",
-                "value",
-                "date",
-                "img",
-                "text"
-        };
-
         String dbQuery = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " + ParagonContract.Paragon.NAME +
                 " LIKE '" + query + "' OR " + ParagonContract.Paragon.CONTENT + " LIKE '%" + query + "%'";
 
@@ -242,6 +232,7 @@ public class ParagonFunctions {
                     R.id.nameTextView,
                     R.id.categoryTextView,
                     R.id.dateView,
+                    R.id.valTextView,
                     R.id.photoView
             };
 

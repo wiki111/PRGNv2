@@ -41,6 +41,9 @@ import java.util.Random;
 
 public class NewParagonActivity extends AppCompatActivity {
 
+    static final int REQUEST_TAKE_PHOTO = 1;
+    static final int REQUEST_GET_RECEIPT = 2;
+
     //Deklaracja elementów interfejsu :
     private EditText nameField;
     private EditText categoryField;
@@ -48,8 +51,7 @@ public class NewParagonActivity extends AppCompatActivity {
     private EditText dateField;
     private Button addToDBBtn;
     private Uri activeUri;
-    static final int REQUEST_IMAGE_CAPTURE = 1;
-    static final int REQUEST_TAKE_PHOTO = 1;
+
     private String mCurrentPhotoPath;
     private Uri mUri;
     private ParagonFunctions paragonFunctions;
@@ -213,12 +215,18 @@ public class NewParagonActivity extends AppCompatActivity {
             activeUri = data.getData();
             String path = getRealPathFromURI(activeUri);
 
-            processImage(this, activeUri, path);
+            Intent intent = new Intent(getApplicationContext(), ChoosePointsActivity.class);
+            Bundle bundle = new Bundle();
+            bundle.putString(Constants.IMAGE_PATH, path);
+            intent.putExtras(bundle);
+            startActivityForResult(intent, REQUEST_GET_RECEIPT);
+
+           // processImage(this, activeUri, path);
 
             Bitmap chosenImage = BitmapFactory.decodeFile(path);
             pickedImageView.setImageBitmap(chosenImage);
 
-        }else if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK){
+        }else if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK){
 
             processImage(this, mUri, mCurrentPhotoPath);
 
