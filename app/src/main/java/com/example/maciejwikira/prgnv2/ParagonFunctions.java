@@ -32,6 +32,7 @@ public class ParagonFunctions {
     private String chosenFromDate;
     private String chosenToDate;
     private ArrayList<Integer> itemIds;
+    private  Toast toast;
 
 
     public ParagonFunctions(Context context){
@@ -78,11 +79,11 @@ public class ParagonFunctions {
             cursor.close();
 
             //Wyświetlenie potwierdzenia pomyślnego wykonania operacji
-            Toast toast = Toast.makeText(context, "Huraaa! Paragon dodano pomyślnie." , Toast.LENGTH_LONG);
+            toast = Toast.makeText(context, "Huraaa! Paragon dodano pomyślnie." , Toast.LENGTH_LONG);
             toast.show();
         }catch (Exception e){
             //Wyświetlenie komunikatu błędu w wypadku jego wystąpienia
-            Toast toast = Toast.makeText(context, "Ups, coś poszło nie tak... Może spróbuj jeszcze raz ?" + e.toString(), Toast.LENGTH_LONG);
+            toast = Toast.makeText(context, "Ups, coś poszło nie tak... Może spróbuj jeszcze raz ?" + e.toString(), Toast.LENGTH_LONG);
             toast.show();
         }finally {
             db.close();

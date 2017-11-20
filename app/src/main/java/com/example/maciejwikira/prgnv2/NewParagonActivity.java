@@ -60,6 +60,7 @@ public class NewParagonActivity extends AppCompatActivity {
     private boolean showParagons;
     private Intent mServiceIntent;
     private ImageView pickedImageView;
+    private ProgressBar progressBar;
 
     private String imgToSave;
     private String textFromImage;
@@ -228,11 +229,20 @@ public class NewParagonActivity extends AppCompatActivity {
 
         }else if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK){
 
-            processImage(this, mUri, mCurrentPhotoPath);
+            Intent intent = new Intent(getApplicationContext(), ChoosePointsActivity.class);
+            Bundle bundle = new Bundle();
+            bundle.putString(Constants.IMAGE_PATH, mCurrentPhotoPath);
+            intent.putExtras(bundle);
+            startActivityForResult(intent, REQUEST_GET_RECEIPT);
+
+            //processImage(this, mUri, mCurrentPhotoPath);
 
             Bitmap chosenImage = BitmapFactory.decodeFile(mCurrentPhotoPath);
             pickedImageView.setImageBitmap(chosenImage);
 
+        }else if(requestCode == REQUEST_GET_RECEIPT){
+            Bundle bundle = data.getExtras();
+            processImage(this,  Uri.parse(bundle.getString(Constants.IMAGE_URI)), bundle.getString(Constants.IMAGE_PATH));
         }
 
         if(activeUri == null){
@@ -280,63 +290,6 @@ public class NewParagonActivity extends AppCompatActivity {
         return image;
     }
 
-    /* Checks if external storage is available for read and write */
-    public boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            return true;
-        }
-        return false;
-    }
-
-    /* Checks if external storage is available to at least read */
-    public boolean isExternalStorageReadable() {
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state) ||
-                Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-            return true;
-        }
-        return false;
-    }
-
-    private Uri saveImage(Uri activeUri){
-        Uri uri;
-        Bitmap bm;
-
-        bm = BitmapFactory.decodeFile(getRealPathFromURI(activeUri));
-
-        File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/Paragons");
-        if (!folder.exists()) {
-            if(folder.mkdir()){
-                Log.d("Paragon App : ", "Successfully created the parent dir:" + folder.getName());
-            }else{
-                Log.d("Paragon App : ", "Failed to create the parent dir:" + folder.getName());
-            }
-        }
-        Random generator = new Random();
-        int n = 10000;
-        n = generator.nextInt(n);
-        String fname = "Image-" + n + ".jpg";
-        File file = new File(folder, fname);
-
-        if(file.exists()){
-            file.delete();
-        }
-        try{
-            FileOutputStream out = new FileOutputStream(file);
-            bm.compress(Bitmap.CompressFormat.JPEG, 90, out);
-            out.flush();
-            out.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        mCurrentPhotoPath = file.getAbsolutePath();
-        uri = FileProvider.getUriForFile(this, "com.example.android.fileprovider", file);
-
-        return uri;
-    }
-
     private class FixedImageReceiver extends BroadcastReceiver{
 
         private FixedImageReceiver(){
@@ -354,7 +307,7 @@ public class NewParagonActivity extends AppCompatActivity {
             valueField.setText(receiptValue);
             dateField.setText(receiptDate);
 
-            ProgressBar progressBar = (ProgressBar)findViewById(R.id.progressBar);
+            progressBar = (ProgressBar)findViewById(R.id.progressBar);
             progressBar.setVisibility(View.GONE);
 
             addToDBBtn.setVisibility(View.VISIBLE);

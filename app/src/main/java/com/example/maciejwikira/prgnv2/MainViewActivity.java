@@ -147,6 +147,7 @@ public class MainViewActivity extends AppCompatActivity
     @Override
     public void onPause(){
         super.onPause();
+        fabMenu.hideMenu(true);
         showFavorites = false;
         favItem = menu.findItem(R.id.action_fav);
         favItem.setIcon(R.drawable.ic_favorite_border_white_24dp);

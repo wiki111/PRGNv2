@@ -38,7 +38,7 @@ public class ImageProcessor extends IntentService {
     private String receiptDate;
 
     public ImageProcessor(){
-        super("ImageFixerService");
+        super("ImageProcessor");
     }
 
     @Override
@@ -52,7 +52,6 @@ public class ImageProcessor extends IntentService {
         Imgproc.cvtColor(originalImage, originalImage, Imgproc.COLOR_BGR2RGB);
 
         Mat modifiedImage = new Mat();
-        Mat threshholded = new Mat();
         Imgproc.cvtColor(originalImage, modifiedImage, Imgproc.COLOR_RGB2GRAY);
         Imgproc.GaussianBlur(modifiedImage, modifiedImage, new Size(7,7), 0, 0);
         Imgproc.adaptiveThreshold(modifiedImage, modifiedImage, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 31, 7);

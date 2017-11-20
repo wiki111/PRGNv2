@@ -1,12 +1,17 @@
 package com.example.maciejwikira.prgnv2;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
+import android.os.Environment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -29,11 +34,14 @@ import org.opencv.highgui.Highgui;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.utils.Converters;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class ChoosePointsActivity extends AppCompatActivity {
 
@@ -45,9 +53,8 @@ public class ChoosePointsActivity extends AppCompatActivity {
     private ImageView sourceImageView;
     private Button getPointsBtn;
     private int padding;
-    private float ratioX;
-    private float ratioY;
-
+    private String path;
+    private Uri uri;
     private boolean bitmapSet;
 
     @Override
@@ -60,7 +67,8 @@ public class ChoosePointsActivity extends AppCompatActivity {
 
     private void init(){
         bitmapSet = false;
-
+        uri = null;
+        path = null;
 
         frameLayout = (FrameLayout)findViewById(R.id.frame_layout);
         cpv = (ChoosePointsView) findViewById(R.id.choosePointsView);
@@ -124,8 +132,6 @@ public class ChoosePointsActivity extends AppCompatActivity {
                 Mat originalImage = Highgui.imread(originalPath);
                 Imgproc.cvtColor(originalImage, originalImage, Imgproc.COLOR_BGR2RGB);
 
-
-
                 ArrayList<Point> rect = new ArrayList<Point>();
 
                 Point tl = new Point((double) x1, (double) y1);
@@ -138,13 +144,15 @@ public class ChoosePointsActivity extends AppCompatActivity {
                 rect.add(bl);
                 rect.add(br);
 
-                for( Point point : rect){
-                    Core.circle(originalImage, point, 16, new Scalar(255,0,0), 10, 8, 0);
-                }
+                /* kod testowy
+                    for( Point point : rect){
+                        Core.circle(originalImage, point, 16, new Scalar(255,0,0), 10, 8, 0);
+                    }
 
-                Bitmap origin = Bitmap.createBitmap(originalImage.cols(),
-                        originalImage.rows(),Bitmap.Config.RGB_565);
-                Utils.matToBitmap(originalImage, origin);
+                    Bitmap origin = Bitmap.createBitmap(originalImage.cols(),
+                            originalImage.rows(),Bitmap.Config.RGB_565);
+                    Utils.matToBitmap(originalImage, origin);
+                */
 
                 Double widthA = Math.sqrt(Math.pow((br.x - bl.x), 2) + Math.pow((br.y - bl.y), 2));
                 Double widthB = Math.sqrt(Math.pow((tr.x - tl.x), 2) + Math.pow((tr.y - tl.y), 2));
@@ -172,7 +180,15 @@ public class ChoosePointsActivity extends AppCompatActivity {
                         corrected.rows(),Bitmap.Config.RGB_565);
                 Utils.matToBitmap(corrected, bitMap);
 
-                int cokolwiek = 0;
+                saveImage(bitMap);
+
+                Intent intent = new Intent();
+                Bundle extras = new Bundle();
+                extras.putString(Constants.IMAGE_PATH, path);
+                extras.putString(Constants.IMAGE_URI, uri.toString());
+                intent.putExtras(extras);
+                setResult(NewParagonActivity.REQUEST_GET_RECEIPT, intent);
+                finish();
             }
         });
     }
@@ -201,6 +217,39 @@ public class ChoosePointsActivity extends AppCompatActivity {
         }else {
             return b;
         }
+    }
+
+    private void saveImage(Bitmap bitmap){
+
+        File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/Receipts");
+        if(!folder.exists()){
+            if(folder.mkdir()){
+                Log.d("Paragon App : ", "Successfully created the parent dir:" + folder.getName());
+            }else {
+                Log.d("Paragon App : ", "Failed to create the parent dir:" + folder.getName());
+            }
+        }
+
+        Random generator = new Random();
+        int n = 10000;
+        n = generator.nextInt(n);
+        String fname = "Image-" + n + ".jpg";
+        File file = new File(folder, fname);
+
+        if(file.exists()){
+            file.delete();
+        }
+        try{
+            FileOutputStream out = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+            out.flush();
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        path = file.getAbsolutePath();
+        uri = FileProvider.getUriForFile(this, "com.example.android.fileprovider", file);
     }
 
 }
