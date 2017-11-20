@@ -147,7 +147,7 @@ public class MainViewActivity extends AppCompatActivity
     @Override
     public void onPause(){
         super.onPause();
-        fabMenu.hideMenu(true);
+        fabMenu.close(true);
         showFavorites = false;
         favItem = menu.findItem(R.id.action_fav);
         favItem.setIcon(R.drawable.ic_favorite_border_white_24dp);
@@ -244,7 +244,7 @@ public class MainViewActivity extends AppCompatActivity
                 extras.putBoolean(CARDS_OR_PARAGONS, showParagons);
                 intent.putExtras(extras);
                 startActivityForResult(intent, 0);
-                return false;
+                return true;
             }
         });
 
