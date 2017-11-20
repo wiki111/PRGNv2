@@ -19,7 +19,7 @@ import android.widget.Toast;
 
 public class DetailsActivity extends AppCompatActivity {
 
-    private ParagonDbHelper mDbHelper;
+    private ReceiptDbHelper mDbHelper;
     private SQLiteDatabase db;
     private Cursor c;
     private String selection;
@@ -39,7 +39,7 @@ public class DetailsActivity extends AppCompatActivity {
 
     private boolean showParagons;
 
-    private ParagonFunctions pf;
+    private ReceiptFunctions pf;
     private CardFunctions cf;
 
     @Override
@@ -47,7 +47,7 @@ public class DetailsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
 
-        mDbHelper = new ParagonDbHelper(getApplicationContext());
+        mDbHelper = new ReceiptDbHelper(getApplicationContext());
         db = mDbHelper.getWritableDatabase();
 
         paragonCols = new String[]{
@@ -69,7 +69,7 @@ public class DetailsActivity extends AppCompatActivity {
         };
 
 
-        pf = new ParagonFunctions(getApplicationContext());
+        pf = new ReceiptFunctions(getApplicationContext());
         cf = new CardFunctions(getApplicationContext());
 
         Intent intent = getIntent();
@@ -79,9 +79,9 @@ public class DetailsActivity extends AppCompatActivity {
 
 
        if(showParagons == true) {
-           selection = ParagonContract.Paragon._ID + " = ?";
+           selection = ReceiptContract.Paragon._ID + " = ?";
            selectionArgs = new String[]{ id };
-           c = db.query(ParagonContract.Paragon.TABLE_NAME, paragonCols, selection, selectionArgs, null, null, null);
+           c = db.query(ReceiptContract.Paragon.TABLE_NAME, paragonCols, selection, selectionArgs, null, null, null);
        }else{
            selection = CardContract.Card._ID + " = ?";
            selectionArgs = new String[]{ id };
@@ -127,13 +127,13 @@ public class DetailsActivity extends AppCompatActivity {
                 Toast toast;
 
                 if(showParagons == true) {
-                    contentValues.put(ParagonContract.Paragon.NAME, nameTextView.getText().toString());
-                    contentValues.put(ParagonContract.Paragon.CATEGORY, categoryTextView.getText().toString());
-                    contentValues.put(ParagonContract.Paragon.DATE, dateTextView.getText().toString());
-                    contentValues.put(ParagonContract.Paragon.VALUE, valueTextView.getText().toString());
-                    contentValues.put(ParagonContract.Paragon.IMAGE_PATH, c.getString(c.getColumnIndex(ParagonContract.Paragon.IMAGE_PATH)));
-                    contentValues.put(ParagonContract.Paragon.CONTENT, c.getString(c.getColumnIndex(ParagonContract.Paragon.CONTENT)));
-                    contentValues.put(ParagonContract.Paragon.FAVORITED, "yes");
+                    contentValues.put(ReceiptContract.Paragon.NAME, nameTextView.getText().toString());
+                    contentValues.put(ReceiptContract.Paragon.CATEGORY, categoryTextView.getText().toString());
+                    contentValues.put(ReceiptContract.Paragon.DATE, dateTextView.getText().toString());
+                    contentValues.put(ReceiptContract.Paragon.VALUE, valueTextView.getText().toString());
+                    contentValues.put(ReceiptContract.Paragon.IMAGE_PATH, c.getString(c.getColumnIndex(ReceiptContract.Paragon.IMAGE_PATH)));
+                    contentValues.put(ReceiptContract.Paragon.CONTENT, c.getString(c.getColumnIndex(ReceiptContract.Paragon.CONTENT)));
+                    contentValues.put(ReceiptContract.Paragon.FAVORITED, "yes");
                     pf.updateParagon(id, contentValues);
                     toast = Toast.makeText(getApplicationContext(), "Paragon dodano do ulubionych", Toast.LENGTH_SHORT);
                 }else{
@@ -165,7 +165,7 @@ public class DetailsActivity extends AppCompatActivity {
                 builder.setPositiveButton("Tak", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         if(showParagons == true)
-                            db.delete(ParagonContract.Paragon.TABLE_NAME, selection, selectionArgs);
+                            db.delete(ReceiptContract.Paragon.TABLE_NAME, selection, selectionArgs);
                         else
                             db.delete(CardContract.Card.TABLE_NAME, selection, selectionArgs);
                         finish();
@@ -189,13 +189,13 @@ public class DetailsActivity extends AppCompatActivity {
                 Toast toast;
 
                 if(showParagons == true) {
-                    contentValues.put(ParagonContract.Paragon.NAME, nameTextView.getText().toString());
-                    contentValues.put(ParagonContract.Paragon.CATEGORY, categoryTextView.getText().toString());
-                    contentValues.put(ParagonContract.Paragon.DATE, dateTextView.getText().toString());
-                    contentValues.put(ParagonContract.Paragon.VALUE, valueTextView.getText().toString());
-                    contentValues.put(ParagonContract.Paragon.IMAGE_PATH, c.getString(c.getColumnIndex(ParagonContract.Paragon.IMAGE_PATH)));
-                    contentValues.put(ParagonContract.Paragon.CONTENT, c.getString(c.getColumnIndex(ParagonContract.Paragon.CONTENT)));
-                    contentValues.put(ParagonContract.Paragon.FAVORITED, "no");
+                    contentValues.put(ReceiptContract.Paragon.NAME, nameTextView.getText().toString());
+                    contentValues.put(ReceiptContract.Paragon.CATEGORY, categoryTextView.getText().toString());
+                    contentValues.put(ReceiptContract.Paragon.DATE, dateTextView.getText().toString());
+                    contentValues.put(ReceiptContract.Paragon.VALUE, valueTextView.getText().toString());
+                    contentValues.put(ReceiptContract.Paragon.IMAGE_PATH, c.getString(c.getColumnIndex(ReceiptContract.Paragon.IMAGE_PATH)));
+                    contentValues.put(ReceiptContract.Paragon.CONTENT, c.getString(c.getColumnIndex(ReceiptContract.Paragon.CONTENT)));
+                    contentValues.put(ReceiptContract.Paragon.FAVORITED, "no");
                     pf.updateParagon(id, contentValues);
                     toast = Toast.makeText(getApplicationContext(), "Paragon usunięto z ulubionych", Toast.LENGTH_SHORT);
                 }else{
@@ -217,7 +217,7 @@ public class DetailsActivity extends AppCompatActivity {
     @Override
     protected void onResume(){
         if(showParagons == true) {
-            c = db.query(ParagonContract.Paragon.TABLE_NAME, paragonCols, selection, selectionArgs, null, null, null);
+            c = db.query(ReceiptContract.Paragon.TABLE_NAME, paragonCols, selection, selectionArgs, null, null, null);
         }else {
             c = db.query(CardContract.Card.TABLE_NAME, cardCols, selection, selectionArgs, null, null, null);
         }
@@ -237,18 +237,18 @@ public class DetailsActivity extends AppCompatActivity {
 
     private void setViewContents(){
         if(showParagons == true){
-            nameTextView.setText(c.getString(c.getColumnIndex(ParagonContract.Paragon.NAME)));
-            categoryTextView.setText(c.getString(c.getColumnIndex(ParagonContract.Paragon.CATEGORY)));
-            dateTextView.setText(c.getString(c.getColumnIndex(ParagonContract.Paragon.DATE)));
-            valueTextView.setText(c.getString(c.getColumnIndex(ParagonContract.Paragon.VALUE)));
-            bitmapPath = c.getString(c.getColumnIndex(ParagonContract.Paragon.IMAGE_PATH));
+            nameTextView.setText(c.getString(c.getColumnIndex(ReceiptContract.Paragon.NAME)));
+            categoryTextView.setText(c.getString(c.getColumnIndex(ReceiptContract.Paragon.CATEGORY)));
+            dateTextView.setText(c.getString(c.getColumnIndex(ReceiptContract.Paragon.DATE)));
+            valueTextView.setText(c.getString(c.getColumnIndex(ReceiptContract.Paragon.VALUE)));
+            bitmapPath = c.getString(c.getColumnIndex(ReceiptContract.Paragon.IMAGE_PATH));
             paragonPhoto = BitmapFactory.decodeFile(bitmapPath);
             paragonPhotoDetailsView.setImageBitmap(paragonPhoto);
         }else {
             nameTextView.setText(c.getString(c.getColumnIndex(CardContract.Card.NAME)));
             categoryTextView.setText(c.getString(c.getColumnIndex(CardContract.Card.CATEGORY)));
             dateTextView.setText(c.getString(c.getColumnIndex(CardContract.Card.EXPIRATION_DATE)));
-            bitmapPath = c.getString(c.getColumnIndex(ParagonContract.Paragon.IMAGE_PATH));
+            bitmapPath = c.getString(c.getColumnIndex(ReceiptContract.Paragon.IMAGE_PATH));
             paragonPhoto = BitmapFactory.decodeFile(bitmapPath);
             paragonPhotoDetailsView.setImageBitmap(paragonPhoto);
 

@@ -9,8 +9,6 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by Maciej on 2017-11-02.
@@ -20,7 +18,7 @@ public class CardFunctions {
 
     private Context context;
     private SQLiteDatabase db;
-    private ParagonDbHelper mDbHelper;
+    private ReceiptDbHelper mDbHelper;
     private ArrayList<Integer> itemIds;
     private CardListAdapter cardListAdapter;
     private boolean resetFilters;
@@ -34,7 +32,7 @@ public class CardFunctions {
 
     public void addCard(ContentValues cv){
         try{
-            mDbHelper = new ParagonDbHelper(context);
+            mDbHelper = new ReceiptDbHelper(context);
             db = mDbHelper.getWritableDatabase();
 
             String[] projection = {
@@ -85,7 +83,7 @@ public class CardFunctions {
         Cursor cursor = null;
 
         try{
-            mDbHelper = new ParagonDbHelper(context);
+            mDbHelper = new ReceiptDbHelper(context);
             db = mDbHelper.getWritableDatabase();
 
             String[] projection = {
@@ -129,7 +127,7 @@ public class CardFunctions {
 
     public void populateList(ListView lv, String query){
         //get reference do the database
-        mDbHelper = new ParagonDbHelper(context);
+        mDbHelper = new ReceiptDbHelper(context);
         db = mDbHelper.getWritableDatabase();
 
         //declare what to get from db
@@ -173,7 +171,7 @@ public class CardFunctions {
             c.moveToFirst();
 
             //finally get and set adapter
-            cardListAdapter = new CardListAdapter(context, R.layout.paragon_list_item, c, from, to, 0);
+            cardListAdapter = new CardListAdapter(context, R.layout.receipt_list_item, c, from, to, 0);
             lv.setAdapter(cardListAdapter);
 
         }finally {
@@ -213,7 +211,7 @@ public class CardFunctions {
 
     public void search(ListView lv, String query){
 
-        mDbHelper = new ParagonDbHelper(context);
+        mDbHelper = new ReceiptDbHelper(context);
         db = mDbHelper.getReadableDatabase();
 
         String dbQuery = "SELECT * FROM " + CardContract.Card.TABLE_NAME + " WHERE " + CardContract.Card.NAME +
@@ -246,7 +244,7 @@ public class CardFunctions {
 
             c.moveToFirst();
 
-            cardListAdapter = new CardListAdapter(context, R.layout.paragon_list_item, c, from, to, 0);
+            cardListAdapter = new CardListAdapter(context, R.layout.receipt_list_item, c, from, to, 0);
             lv.setAdapter(cardListAdapter);
 
         } finally {

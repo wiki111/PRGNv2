@@ -11,10 +11,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".NewParagonActivity" />
+        <activity android:name=".NewRecordActivity" />
+
         <activity
             android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
             android:theme="@style/Base.Theme.AppCompat" />
+
         <activity
             android:name=".MainViewActivity"
             android:label="PRGN"
@@ -39,8 +41,11 @@
         <activity
             android:name=".FilterActivity"
             android:theme="@style/AppTheme.PopUpStyle" />
+
         <activity android:name=".EditActivity" />
+
         <activity android:name=".DetailsActivity" />
+
         <activity
             android:name=".DisplayPhotoActivity"
             android:theme="@style/AppTheme.PopUpStyle" />
@@ -50,6 +55,7 @@
             android:exported="false" />
 
         <activity android:name=".ChoosePointsActivity"></activity>
+
     </application>
 
 </manifest>

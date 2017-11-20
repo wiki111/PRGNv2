@@ -18,7 +18,7 @@ import android.widget.ImageView;
 
 public class EditActivity extends AppCompatActivity {
 
-    private ParagonDbHelper mDbHelper;
+    private ReceiptDbHelper mDbHelper;
     private SQLiteDatabase db;
     private Cursor c;
     private boolean showParagons;
@@ -32,7 +32,7 @@ public class EditActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
 
-        mDbHelper = new ParagonDbHelper(getApplicationContext());
+        mDbHelper = new ReceiptDbHelper(getApplicationContext());
         db = mDbHelper.getWritableDatabase();
 
         paragonCols = new String[]{
@@ -62,9 +62,9 @@ public class EditActivity extends AppCompatActivity {
         showParagons = extras.getBoolean(MainViewActivity.CARDS_OR_PARAGONS);
 
         if(showParagons == true) {
-            selection = ParagonContract.Paragon._ID + " = ?";
+            selection = ReceiptContract.Paragon._ID + " = ?";
             selectionArgs = new String[]{ item_id };
-            c = db.query(ParagonContract.Paragon.TABLE_NAME, paragonCols, selection, selectionArgs, null, null, null);
+            c = db.query(ReceiptContract.Paragon.TABLE_NAME, paragonCols, selection, selectionArgs, null, null, null);
         }else{
             selection = CardContract.Card._ID + " = ?";
             selectionArgs = new String[]{ item_id };
@@ -80,11 +80,11 @@ public class EditActivity extends AppCompatActivity {
         ImageView paragonPhotoView = (ImageView)findViewById(R.id.paragonPhotoView);
 
         if(showParagons == true) {
-            nameEdit.setText(c.getString(c.getColumnIndex(ParagonContract.Paragon.NAME)));
-            categoryEdit.setText(c.getString(c.getColumnIndex(ParagonContract.Paragon.CATEGORY)));
-            dateEdit.setText(c.getString(c.getColumnIndex(ParagonContract.Paragon.DATE)));
-            valueEdit.setText(c.getString(c.getColumnIndex(ParagonContract.Paragon.VALUE)));
-            Bitmap paragonPhoto = BitmapFactory.decodeFile(c.getString(c.getColumnIndex(ParagonContract.Paragon.IMAGE_PATH)));
+            nameEdit.setText(c.getString(c.getColumnIndex(ReceiptContract.Paragon.NAME)));
+            categoryEdit.setText(c.getString(c.getColumnIndex(ReceiptContract.Paragon.CATEGORY)));
+            dateEdit.setText(c.getString(c.getColumnIndex(ReceiptContract.Paragon.DATE)));
+            valueEdit.setText(c.getString(c.getColumnIndex(ReceiptContract.Paragon.VALUE)));
+            Bitmap paragonPhoto = BitmapFactory.decodeFile(c.getString(c.getColumnIndex(ReceiptContract.Paragon.IMAGE_PATH)));
             paragonPhotoView.setImageBitmap(paragonPhoto);
 
         }else {
@@ -96,7 +96,7 @@ public class EditActivity extends AppCompatActivity {
 
             valueEdit.setVisibility(View.INVISIBLE);
         }
-        final ParagonFunctions paragonFunctions = new ParagonFunctions(getApplicationContext());
+        final ReceiptFunctions receiptFunctions = new ReceiptFunctions(getApplicationContext());
         final CardFunctions cardFunctions = new CardFunctions(getApplicationContext());
 
         Button updateButton = (Button)findViewById(R.id.updateButton);
@@ -115,14 +115,14 @@ public class EditActivity extends AppCompatActivity {
                         ContentValues cv = new ContentValues();
 
                         if(showParagons == true){
-                            cv.put(ParagonContract.Paragon.NAME, nameEdit.getText().toString());
-                            cv.put(ParagonContract.Paragon.CATEGORY, categoryEdit.getText().toString().toLowerCase());
-                            cv.put(ParagonContract.Paragon.DATE, dateEdit.getText().toString());
-                            cv.put(ParagonContract.Paragon.VALUE, valueEdit.getText().toString());
-                            cv.put(ParagonContract.Paragon.IMAGE_PATH, c.getString(c.getColumnIndex(ParagonContract.Paragon.IMAGE_PATH)));
-                            cv.put(ParagonContract.Paragon.CONTENT, c.getString(c.getColumnIndex(ParagonContract.Paragon.CONTENT)));
-                            cv.put(ParagonContract.Paragon.FAVORITED, c.getString(c.getColumnIndex(ParagonContract.Paragon.FAVORITED)));
-                            paragonFunctions.updateParagon(item_id, cv);
+                            cv.put(ReceiptContract.Paragon.NAME, nameEdit.getText().toString());
+                            cv.put(ReceiptContract.Paragon.CATEGORY, categoryEdit.getText().toString().toLowerCase());
+                            cv.put(ReceiptContract.Paragon.DATE, dateEdit.getText().toString());
+                            cv.put(ReceiptContract.Paragon.VALUE, valueEdit.getText().toString());
+                            cv.put(ReceiptContract.Paragon.IMAGE_PATH, c.getString(c.getColumnIndex(ReceiptContract.Paragon.IMAGE_PATH)));
+                            cv.put(ReceiptContract.Paragon.CONTENT, c.getString(c.getColumnIndex(ReceiptContract.Paragon.CONTENT)));
+                            cv.put(ReceiptContract.Paragon.FAVORITED, c.getString(c.getColumnIndex(ReceiptContract.Paragon.FAVORITED)));
+                            receiptFunctions.updateParagon(item_id, cv);
                         }else{
                             cv.put(CardContract.Card.NAME, nameEdit.getText().toString());
                             cv.put(CardContract.Card.CATEGORY, categoryEdit.getText().toString().toLowerCase());

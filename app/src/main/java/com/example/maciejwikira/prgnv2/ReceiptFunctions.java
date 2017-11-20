@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,11 +16,11 @@ import java.util.regex.Pattern;
  * Created by Maciej on 2017-10-30.
  */
 
-public class ParagonFunctions {
+public class ReceiptFunctions {
 
     private SQLiteDatabase db;
-    private ParagonDbHelper mDbHelper;
-    private ParagonListAdapter paragonListAdapter;
+    private ReceiptDbHelper mDbHelper;
+    private ReceiptListAdapter receiptListAdapter;
     private Context context;
     private boolean resetFilters;
     private Pattern datePattern = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");
@@ -35,7 +34,7 @@ public class ParagonFunctions {
     private  Toast toast;
 
 
-    public ParagonFunctions(Context context){
+    public ReceiptFunctions(Context context){
         this.context = context;
         itemIds = new ArrayList<>();
         resetFilters = true;
@@ -44,19 +43,19 @@ public class ParagonFunctions {
 
     public void addParagon(ContentValues cv){
         try{
-            mDbHelper = new ParagonDbHelper(context);
+            mDbHelper = new ReceiptDbHelper(context);
             db = mDbHelper.getWritableDatabase();
 
             String[] projection = {
-                    ParagonContract.Categories._ID,
-                    ParagonContract.Categories.CATEGORY_NAME
+                    ReceiptContract.Categories._ID,
+                    ReceiptContract.Categories.CATEGORY_NAME
             };
 
-            String selection = ParagonContract.Categories.CATEGORY_NAME + " = ?";
+            String selection = ReceiptContract.Categories.CATEGORY_NAME + " = ?";
             String[] selectionArgs = { cv.get("category").toString().toLowerCase() };
 
             Cursor cursor = db.query(
-                    ParagonContract.Categories.TABLE_NAME,
+                    ReceiptContract.Categories.TABLE_NAME,
                     projection,
                     selection,
                     selectionArgs,
@@ -68,12 +67,12 @@ public class ParagonFunctions {
             cursor.moveToFirst();
 
             if((cursor != null) && (cursor.getCount() > 0)){
-                db.insert(ParagonContract.Paragon.TABLE_NAME, null, cv); //dodanie rekordu do bazy danych
+                db.insert(ReceiptContract.Paragon.TABLE_NAME, null, cv); //dodanie rekordu do bazy danych
             }else{
                 ContentValues newCategoryValue = new ContentValues();
-                newCategoryValue.put(ParagonContract.Categories.CATEGORY_NAME,  cv.get("category").toString().toLowerCase() );
-                db.insert(ParagonContract.Categories.TABLE_NAME, null, newCategoryValue);
-                db.insert(ParagonContract.Paragon.TABLE_NAME, null, cv); //dodanie rekordu do bazy danych
+                newCategoryValue.put(ReceiptContract.Categories.CATEGORY_NAME,  cv.get("category").toString().toLowerCase() );
+                db.insert(ReceiptContract.Categories.TABLE_NAME, null, newCategoryValue);
+                db.insert(ReceiptContract.Paragon.TABLE_NAME, null, cv); //dodanie rekordu do bazy danych
             }
 
             cursor.close();
@@ -95,24 +94,24 @@ public class ParagonFunctions {
         Cursor cursor = null;
 
         try{
-            mDbHelper = new ParagonDbHelper(context);
+            mDbHelper = new ReceiptDbHelper(context);
             db = mDbHelper.getWritableDatabase();
 
             String[] projection = {
-                    ParagonContract.Categories._ID,
-                    ParagonContract.Categories.CATEGORY_NAME
+                    ReceiptContract.Categories._ID,
+                    ReceiptContract.Categories.CATEGORY_NAME
             };
 
-            String selection = ParagonContract.Categories.CATEGORY_NAME + " = ?";
+            String selection = ReceiptContract.Categories.CATEGORY_NAME + " = ?";
             String[] selectionArgs = { cv.get("category").toString().toLowerCase() };
 
-            String selectedParagon = ParagonContract.Paragon._ID + " = ?";
+            String selectedParagon = ReceiptContract.Paragon._ID + " = ?";
             String[] args = new String[]{
                     item_id
             };
 
             cursor = db.query(
-                    ParagonContract.Categories.TABLE_NAME,
+                    ReceiptContract.Categories.TABLE_NAME,
                     projection,
                     selection,
                     selectionArgs,
@@ -124,12 +123,12 @@ public class ParagonFunctions {
             cursor.moveToFirst();
 
             if((cursor != null) && (cursor.getCount() > 0)){
-                db.update(ParagonContract.Paragon.TABLE_NAME, cv, selectedParagon, args); //dodanie rekordu do bazy danych
+                db.update(ReceiptContract.Paragon.TABLE_NAME, cv, selectedParagon, args); //dodanie rekordu do bazy danych
             }else{
                 ContentValues newCategoryValue = new ContentValues();
-                newCategoryValue.put(ParagonContract.Categories.CATEGORY_NAME, cv.get("category").toString().toLowerCase());
-                db.insert(ParagonContract.Categories.TABLE_NAME, null, newCategoryValue);
-                db.update(ParagonContract.Paragon.TABLE_NAME, cv, selectedParagon, args);
+                newCategoryValue.put(ReceiptContract.Categories.CATEGORY_NAME, cv.get("category").toString().toLowerCase());
+                db.insert(ReceiptContract.Categories.TABLE_NAME, null, newCategoryValue);
+                db.update(ReceiptContract.Paragon.TABLE_NAME, cv, selectedParagon, args);
             }
         }finally {
             cursor.close();
@@ -140,7 +139,7 @@ public class ParagonFunctions {
     public void populateList(ListView lv, String query){
 
         //get reference do the database
-        mDbHelper = new ParagonDbHelper(context);
+        mDbHelper = new ReceiptDbHelper(context);
         db = mDbHelper.getWritableDatabase();
 
         //declare what to get from db
@@ -158,7 +157,7 @@ public class ParagonFunctions {
         Cursor c;
 
         if(query == null){
-            c = db.query(true, ParagonContract.Paragon.TABLE_NAME, cols,null, null, null, null, null, null);
+            c = db.query(true, ReceiptContract.Paragon.TABLE_NAME, cols,null, null, null, null, null, null);
         }else{
             c = db.rawQuery(query, null);
         }
@@ -168,17 +167,17 @@ public class ParagonFunctions {
 
             //fill array with paragon objects created from database data
             while(c.moveToNext()){
-                itemIds.add(c.getInt(c.getColumnIndex(ParagonContract.Paragon._ID)));
+                itemIds.add(c.getInt(c.getColumnIndex(ReceiptContract.Paragon._ID)));
             }
 
             String[] from = new String[]{
-                    ParagonContract.Paragon.NAME,
-                    ParagonContract.Paragon.CATEGORY,
-                    ParagonContract.Paragon.DATE,
-                    ParagonContract.Paragon.VALUE,
-                    ParagonContract.Paragon.IMAGE_PATH,
-                    ParagonContract.Paragon.CONTENT,
-                    ParagonContract.Paragon.FAVORITED
+                    ReceiptContract.Paragon.NAME,
+                    ReceiptContract.Paragon.CATEGORY,
+                    ReceiptContract.Paragon.DATE,
+                    ReceiptContract.Paragon.VALUE,
+                    ReceiptContract.Paragon.IMAGE_PATH,
+                    ReceiptContract.Paragon.CONTENT,
+                    ReceiptContract.Paragon.FAVORITED
             };
 
             int[] to = new int[]{
@@ -191,8 +190,8 @@ public class ParagonFunctions {
             c.moveToFirst();
 
             //finally get and set adapter
-            paragonListAdapter = new ParagonListAdapter(context, R.layout.paragon_list_item, c, from, to, 0);
-            lv.setAdapter(paragonListAdapter);
+            receiptListAdapter = new ReceiptListAdapter(context, R.layout.receipt_list_item, c, from, to, 0);
+            lv.setAdapter(receiptListAdapter);
 
         }finally {
             db.close();
@@ -202,11 +201,11 @@ public class ParagonFunctions {
 
     public void search(ListView lv, String query){
 
-        mDbHelper = new ParagonDbHelper(context);
+        mDbHelper = new ReceiptDbHelper(context);
         db = mDbHelper.getReadableDatabase();
 
-        String dbQuery = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " + ParagonContract.Paragon.NAME +
-                " LIKE '" + query + "' OR " + ParagonContract.Paragon.CONTENT + " LIKE '%" + query + "%'";
+        String dbQuery = "SELECT * FROM " + ReceiptContract.Paragon.TABLE_NAME + " WHERE " + ReceiptContract.Paragon.NAME +
+                " LIKE '" + query + "' OR " + ReceiptContract.Paragon.CONTENT + " LIKE '%" + query + "%'";
 
         Cursor c;
 
@@ -216,17 +215,17 @@ public class ParagonFunctions {
             itemIds.clear();
 
             while(c.moveToNext()){
-                itemIds.add(c.getInt(c.getColumnIndex(ParagonContract.Paragon._ID)));
+                itemIds.add(c.getInt(c.getColumnIndex(ReceiptContract.Paragon._ID)));
             }
 
             String[] from = new String[]{
-                    ParagonContract.Paragon.NAME,
-                    ParagonContract.Paragon.CATEGORY,
-                    ParagonContract.Paragon.DATE,
-                    ParagonContract.Paragon.VALUE,
-                    ParagonContract.Paragon.IMAGE_PATH,
-                    ParagonContract.Paragon.CONTENT,
-                    ParagonContract.Paragon.FAVORITED
+                    ReceiptContract.Paragon.NAME,
+                    ReceiptContract.Paragon.CATEGORY,
+                    ReceiptContract.Paragon.DATE,
+                    ReceiptContract.Paragon.VALUE,
+                    ReceiptContract.Paragon.IMAGE_PATH,
+                    ReceiptContract.Paragon.CONTENT,
+                    ReceiptContract.Paragon.FAVORITED
             };
 
             int[] to = new int[]{
@@ -240,8 +239,8 @@ public class ParagonFunctions {
             c.moveToFirst();
 
             //finally get and set adapter
-            paragonListAdapter = new ParagonListAdapter(context, R.layout.paragon_list_item, c, from, to, 0);
-            lv.setAdapter(paragonListAdapter);
+            receiptListAdapter = new ReceiptListAdapter(context, R.layout.receipt_list_item, c, from, to, 0);
+            lv.setAdapter(receiptListAdapter);
         } finally {
             db.close();
         }
@@ -260,8 +259,8 @@ public class ParagonFunctions {
                 if(chosenCategory.equals("Brak Kategorii")){
                     query = null;
                 }else{
-                    query = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " +
-                            ParagonContract.Paragon.CATEGORY + " = '" + chosenCategory + "'";
+                    query = "SELECT * FROM " + ReceiptContract.Paragon.TABLE_NAME + " WHERE " +
+                            ReceiptContract.Paragon.CATEGORY + " = '" + chosenCategory + "'";
                 }
             }else{
                 matcherFrom = datePattern.matcher(chosenFromDate);
@@ -270,18 +269,18 @@ public class ParagonFunctions {
                     String from = "'" + chosenFromDate + "'";
                     String to = "'" + chosenToDate + "'";
                     if(!chosenCategory.equals("Brak Kategorii")){
-                        query = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " + ParagonContract.Paragon.CATEGORY + " = '" + chosenCategory + "' AND " + ParagonContract.Paragon.DATE + " >= " + from
-                                + " AND " + ParagonContract.Paragon.DATE + " <= " + to;
+                        query = "SELECT * FROM " + ReceiptContract.Paragon.TABLE_NAME + " WHERE " + ReceiptContract.Paragon.CATEGORY + " = '" + chosenCategory + "' AND " + ReceiptContract.Paragon.DATE + " >= " + from
+                                + " AND " + ReceiptContract.Paragon.DATE + " <= " + to;
                     }else{
-                        query = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " + ParagonContract.Paragon.DATE + " >= " + from
-                                + " AND " + ParagonContract.Paragon.DATE + " <= " + to;
+                        query = "SELECT * FROM " + ReceiptContract.Paragon.TABLE_NAME + " WHERE " + ReceiptContract.Paragon.DATE + " >= " + from
+                                + " AND " + ReceiptContract.Paragon.DATE + " <= " + to;
                     }
                 }else{
                     Toast tst = Toast.makeText(context, "Nieprawidłowa data - spróbuj jeszcze raz.", Toast.LENGTH_LONG);
                     tst.show();
                     if(!chosenCategory.equals("Brak Kategorii")){
-                        query = "SELECT * FROM " + ParagonContract.Paragon.TABLE_NAME + " WHERE " +
-                                ParagonContract.Paragon.CATEGORY + " = '" + chosenCategory + "'";
+                        query = "SELECT * FROM " + ReceiptContract.Paragon.TABLE_NAME + " WHERE " +
+                                ReceiptContract.Paragon.CATEGORY + " = '" + chosenCategory + "'";
                     }else{
                         query = null;
                     }

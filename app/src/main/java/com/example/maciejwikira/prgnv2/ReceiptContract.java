@@ -6,8 +6,8 @@ import android.provider.BaseColumns;
  * Created by Maciej on 2017-10-17.
  */
 
-public final class ParagonContract {
-    private ParagonContract(){}
+public final class ReceiptContract {
+    private ReceiptContract(){}
 
     public static class Paragon implements BaseColumns {
         public static final String TABLE_NAME = "paragons";

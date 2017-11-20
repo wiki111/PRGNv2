@@ -27,19 +27,15 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Random;
 
 
-public class NewParagonActivity extends AppCompatActivity {
+public class NewRecordActivity extends AppCompatActivity {
 
     static final int REQUEST_TAKE_PHOTO = 1;
     static final int REQUEST_GET_RECEIPT = 2;
@@ -54,7 +50,7 @@ public class NewParagonActivity extends AppCompatActivity {
 
     private String mCurrentPhotoPath;
     private Uri mUri;
-    private ParagonFunctions paragonFunctions;
+    private ReceiptFunctions receiptFunctions;
     private CardFunctions cardFunctions;
     private TextRecognitionFunctions textRecognitionFunctions;
     private boolean showParagons;
@@ -100,7 +96,7 @@ public class NewParagonActivity extends AppCompatActivity {
         addToDBBtn = (Button)findViewById(R.id.addToDBButton);
         pickedImageView = (ImageView)findViewById(R.id.pickedImageView);
 
-        paragonFunctions = new ParagonFunctions(context);
+        receiptFunctions = new ReceiptFunctions(context);
         cardFunctions = new CardFunctions(context);
         textRecognitionFunctions = new TextRecognitionFunctions(context);
         //Obsługa kliknięcia przycisku dodającego dane do bazy
@@ -116,7 +112,7 @@ public class NewParagonActivity extends AppCompatActivity {
                     cv.put("img", imgToSave);   //ścieżka absolutna do zdjęcia paragonu
                     cv.put("text", textFromImage);
                     cv.put("favorited", "no");
-                    paragonFunctions.addParagon(cv);
+                    receiptFunctions.addParagon(cv);
                 }else{
                     ContentValues cv = new ContentValues();
                     cv.put("name", nameField.getText().toString()); //nazwa wpisu

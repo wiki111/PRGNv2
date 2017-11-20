@@ -30,7 +30,7 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_filter_paragons);
+        setContentView(R.layout.activity_filter_receipt);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -47,7 +47,7 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
 
         showParagons = bundle.getBoolean(MainViewActivity.CARDS_OR_PARAGONS);
 
-        mDbHelper = new ParagonDbHelper(this);
+        mDbHelper = new ReceiptDbHelper(this);
         db = mDbHelper.getReadableDatabase();
 
         int[] to = new int[]{
@@ -56,14 +56,14 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
 
         if(showParagons == true){
             cols = new String[]{
-                    ParagonContract.Categories._ID,
-                    ParagonContract.Categories.CATEGORY_NAME
+                    ReceiptContract.Categories._ID,
+                    ReceiptContract.Categories.CATEGORY_NAME
             };
 
             from = new String[]{
-                    ParagonContract.Categories.CATEGORY_NAME
+                    ReceiptContract.Categories.CATEGORY_NAME
             };
-            c = db.query(true, ParagonContract.Categories.TABLE_NAME, cols, null,null,null,null,null,null);
+            c = db.query(true, ReceiptContract.Categories.TABLE_NAME, cols, null,null,null,null,null,null);
         }else {
             cols = new String[]{
                     CardContract.Card_Categories._ID,
@@ -155,9 +155,9 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
         String[] selectionArgs;
 
         if(showParagons == true){
-            selection = ParagonContract.Categories._ID + " = ?";
+            selection = ReceiptContract.Categories._ID + " = ?";
             selectionArgs = new String[]{ Long.toString(id) };
-            c = db.query(ParagonContract.Categories.TABLE_NAME, cols,selection,selectionArgs,null,null,null);
+            c = db.query(ReceiptContract.Categories.TABLE_NAME, cols,selection,selectionArgs,null,null,null);
         }else {
             selection = CardContract.Card_Categories._ID + " = ?";
             selectionArgs = new String[]{ Long.toString(id) };
@@ -167,7 +167,7 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
 
         while(c.moveToNext()){
             if(showParagons == true)
-                chosenCategory = c.getString(c.getColumnIndex(ParagonContract.Categories.CATEGORY_NAME));
+                chosenCategory = c.getString(c.getColumnIndex(ReceiptContract.Categories.CATEGORY_NAME));
             else
                 chosenCategory = c.getString(c.getColumnIndex(CardContract.Card_Categories.CATEGORY_NAME));
         }

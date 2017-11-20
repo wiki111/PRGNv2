@@ -7,7 +7,7 @@
         android:orderInCategory="101"
         android:title="Search"
         app:showAsAction="always|collapseActionView"
-        app:actionViewClass="com.example.maciejwikira.prgnv2.MySearchView"  />
+        app:actionViewClass="android.support.v7.widget.SearchView"  />
 
     <item
         android:id="@+id/action_fav"
