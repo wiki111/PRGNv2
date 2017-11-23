@@ -35,6 +35,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+/*
+    Aktywność wyboru konturów paragonu na zdjęciu. Zdjęcie jest przycinane, oraz poprawiana jest
+    perspektywa, tak by w efekcie obraz paragonu wyglądał jak skan.
+ */
 public class ChoosePointsActivity extends AppCompatActivity {
 
     private ChoosePointsView cpv;

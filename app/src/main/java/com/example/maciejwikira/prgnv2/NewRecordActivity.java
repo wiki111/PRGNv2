@@ -212,32 +212,37 @@ public class NewRecordActivity extends AppCompatActivity {
             activeUri = data.getData();
             String path = getRealPathFromURI(activeUri);
 
-            Intent intent = new Intent(getApplicationContext(), ChoosePointsActivity.class);
-            Bundle bundle = new Bundle();
-            bundle.putString(Constants.IMAGE_PATH, path);
-            intent.putExtras(bundle);
-            startActivityForResult(intent, REQUEST_GET_RECEIPT);
+            if(showParagons == true){
+                Intent intent = new Intent(getApplicationContext(), ChoosePointsActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putString(Constants.IMAGE_PATH, path);
+                intent.putExtras(bundle);
+                startActivityForResult(intent, REQUEST_GET_RECEIPT);
+            }else{
+                Bitmap chosenImage = BitmapFactory.decodeFile(path);
+                pickedImageView.setImageBitmap(chosenImage);
+            }
 
-           // processImage(this, activeUri, path);
-
-            Bitmap chosenImage = BitmapFactory.decodeFile(path);
-            pickedImageView.setImageBitmap(chosenImage);
 
         }else if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK){
 
-            Intent intent = new Intent(getApplicationContext(), ChoosePointsActivity.class);
-            Bundle bundle = new Bundle();
-            bundle.putString(Constants.IMAGE_PATH, mCurrentPhotoPath);
-            intent.putExtras(bundle);
-            startActivityForResult(intent, REQUEST_GET_RECEIPT);
-
-            //processImage(this, mUri, mCurrentPhotoPath);
-
-            Bitmap chosenImage = BitmapFactory.decodeFile(mCurrentPhotoPath);
-            pickedImageView.setImageBitmap(chosenImage);
+            if(showParagons == true){
+                Intent intent = new Intent(getApplicationContext(), ChoosePointsActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putString(Constants.IMAGE_PATH, mCurrentPhotoPath);
+                intent.putExtras(bundle);
+                startActivityForResult(intent, REQUEST_GET_RECEIPT);
+            }else{
+                activeUri = mUri;
+                Bitmap chosenImage = BitmapFactory.decodeFile(mCurrentPhotoPath);
+                pickedImageView.setImageBitmap(chosenImage);
+            }
 
         }else if(requestCode == REQUEST_GET_RECEIPT){
             Bundle bundle = data.getExtras();
+            activeUri = Uri.parse(bundle.getString(Constants.IMAGE_URI));
+            Bitmap chosenImage = BitmapFactory.decodeFile(bundle.getString(Constants.IMAGE_PATH));
+            pickedImageView.setImageBitmap(chosenImage);
             processImage(this,  Uri.parse(bundle.getString(Constants.IMAGE_URI)), bundle.getString(Constants.IMAGE_PATH));
         }
 
