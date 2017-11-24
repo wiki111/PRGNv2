@@ -6,10 +6,13 @@ import android.provider.BaseColumns;
  * Created by Maciej on 2017-10-17.
  */
 
+// Klasa definiuje kolumny tabeli dotyczących paragonów w bazie danych, oraz polecenia SQL pozwalające
+// na stworzenie, inicjalizację i usuwanie tabel.
 public final class ReceiptContract {
     private ReceiptContract(){}
 
-    public static class Paragon implements BaseColumns {
+    // Tabela danych paragonów
+    public static class Receipt implements BaseColumns {
         public static final String TABLE_NAME = "paragons";
         public static final String NAME = "name";
         public static final String CATEGORY = "category";
@@ -20,20 +23,21 @@ public final class ReceiptContract {
         public static final String FAVORITED = "favorited";
 
         public static final String SQL_CREATE_PARAGONS =
-                "CREATE TABLE IF NOT EXISTS " + Paragon.TABLE_NAME + " (" +
-                    Paragon._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    Paragon.NAME + " TEXT," +
-                    Paragon.CATEGORY + " TEXT," +
-                    Paragon.DATE +  " DATE," +
-                    Paragon.VALUE + " REAL," +
-                    Paragon.IMAGE_PATH + " TEXT," +
-                    Paragon.CONTENT + " TEXT," +
-                    Paragon.FAVORITED + " TEXT," +
-                    "FOREIGN KEY (" + Paragon.CATEGORY + ") REFERENCES categories(" + Categories.CATEGORY_NAME + "))";
+                "CREATE TABLE IF NOT EXISTS " + Receipt.TABLE_NAME + " (" +
+                    Receipt._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    Receipt.NAME + " TEXT," +
+                    Receipt.CATEGORY + " TEXT," +
+                    Receipt.DATE +  " DATE," +
+                    Receipt.VALUE + " REAL," +
+                    Receipt.IMAGE_PATH + " TEXT," +
+                    Receipt.CONTENT + " TEXT," +
+                    Receipt.FAVORITED + " TEXT," +
+                    "FOREIGN KEY (" + Receipt.CATEGORY + ") REFERENCES categories(" + Categories.CATEGORY_NAME + "))";
 
-        public static final String SQL_DELETE_PARAGONS = "DROP TABLE IF EXISTS " + Paragon.TABLE_NAME;
+        public static final String SQL_DELETE_PARAGONS = "DROP TABLE IF EXISTS " + Receipt.TABLE_NAME;
     }
 
+    // Tabela kategorii paragonów
     public static class Categories implements BaseColumns{
         public static final String TABLE_NAME = "categories";
         public static final String CATEGORY_NAME = "category_name";

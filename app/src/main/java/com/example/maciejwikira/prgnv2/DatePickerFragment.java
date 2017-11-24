@@ -9,6 +9,7 @@ import android.widget.EditText;
 
 import java.util.Calendar;
 
+// Fragment obsługujący wybór daty przez użytkownika
 public class DatePickerFragment extends DialogFragment
         implements DatePickerDialog.OnDateSetListener {
 
@@ -20,30 +21,36 @@ public class DatePickerFragment extends DialogFragment
         int month = c.get(Calendar.MONTH);
         int day = c.get(Calendar.DAY_OF_MONTH);
 
-        // Create a new instance of DatePickerDialog and return it
+        // Stworzenie nowej instancji DatePickerDialog i zwrócenie go
         return new DatePickerDialog(getActivity(), this, year, month, day);
     }
 
     public void onDateSet(DatePicker view, int year, int month, int day) {
+
+        // Pobierz uchwyt do pola daty w interfejsie użytkownika
         Bundle arg = getArguments();
         int id = arg.getInt("Field_ID");
         EditText field = (EditText) getActivity().findViewById(id);
 
+        // Deklaracja zmiennych
         String monthText;
         String dayText;
 
+        // Formatowanie miesiąca
         if(month + 1 < 10 ){
             monthText = "-0" + Integer.toString(month + 1);
         }else{
             monthText = "-" + Integer.toString(month + 1);
         }
 
+        // Formatowanie dnia
         if(day < 10){
             dayText = "-0" + Integer.toString(day);
         }else{
             dayText = "-" + Integer.toString(day);
         }
 
+        // Ustawienie zawartości pola daty w interfejsie użytkownika
         field.setText(Integer.toString(year) + monthText + dayText);
     }
 }

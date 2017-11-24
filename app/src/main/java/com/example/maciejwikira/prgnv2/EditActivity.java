@@ -16,15 +16,17 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+// Aktywność obsługuje edycję wpisu - paragonu lub karty
 public class EditActivity extends AppCompatActivity {
 
+    // Deklaracje zmiennych
     private ReceiptDbHelper mDbHelper;
     private SQLiteDatabase db;
     private Cursor c;
-    private boolean showParagons;
+    private boolean showReceipts;
     private String selection;
     private String[] selectionArgs;
-    private String[] paragonCols;
+    private String[] receiptCols;
     private String[] cardCols;
 
     @Override
@@ -32,59 +34,67 @@ public class EditActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
 
+        // Inicjalizacja połączenia z bazą danych
         mDbHelper = new ReceiptDbHelper(getApplicationContext());
         db = mDbHelper.getWritableDatabase();
 
-        paragonCols = new String[]{
-                "_id",
-                "name",
-                "category",
-                "value",
-                "date",
-                "img",
-                "text",
-                "favorited"
+        // Kolumny tabeli paragonów z których zostaną pobrane dane
+        receiptCols = new String[]{
+                ReceiptContract.Receipt._ID,
+                ReceiptContract.Receipt.NAME,
+                ReceiptContract.Receipt.CATEGORY,
+                ReceiptContract.Receipt.VALUE,
+                ReceiptContract.Receipt.DATE,
+                ReceiptContract.Receipt.IMAGE_PATH,
+                ReceiptContract.Receipt.CONTENT,
+                ReceiptContract.Receipt.FAVORITED
         };
 
+        // Kolumny tabeli kart z których zostaną pobrane dane
         cardCols = new String[]{
-                "_id",
-                "name",
-                "category",
-                "expiration",
-                "img",
-                "favorited"
+                CardContract.Card._ID,
+                CardContract.Card.NAME,
+                CardContract.Card.CATEGORY,
+                CardContract.Card.EXPIRATION_DATE,
+                CardContract.Card.IMAGE_PATH,
+                CardContract.Card.FAVORITED
         };
 
 
+        // Pobranie id elementu i trybu aplikacji (tryb paragonów lub kart)
         Intent intent = getIntent();
         Bundle extras = intent.getExtras();
         final String item_id = extras.getString("item_id");
-        showParagons = extras.getBoolean(MainViewActivity.CARDS_OR_PARAGONS);
+        showReceipts = extras.getBoolean(MainViewActivity.CARDS_OR_PARAGONS);
 
-        if(showParagons == true) {
-            selection = ReceiptContract.Paragon._ID + " = ?";
+        // Wykonanie zapytania do odpowiedniej tabeli bazy danych w zależności od trybu aplikacji
+        if(showReceipts == true) {
+            selection = ReceiptContract.Receipt._ID + " = ?";
             selectionArgs = new String[]{ item_id };
-            c = db.query(ReceiptContract.Paragon.TABLE_NAME, paragonCols, selection, selectionArgs, null, null, null);
+            c = db.query(ReceiptContract.Receipt.TABLE_NAME, receiptCols, selection, selectionArgs, null, null, null);
         }else{
             selection = CardContract.Card._ID + " = ?";
             selectionArgs = new String[]{ item_id };
             c = db.query(CardContract.Card.TABLE_NAME, cardCols, selection, selectionArgs, null, null, null);
         }
-        c.moveToFirst();
+
+        // Przesunięcie pozycji kursora na pierwszy element
         c.moveToFirst();
 
+        // Deklaracje elementów interfejsu
         final EditText nameEdit = (EditText)findViewById(R.id.nameEdit);
         final EditText categoryEdit = (EditText)findViewById(R.id.categoryEdit);
         final EditText dateEdit = (EditText)findViewById(R.id.dateEdit);
         final EditText valueEdit = (EditText)findViewById(R.id.valueEdit);
         ImageView paragonPhotoView = (ImageView)findViewById(R.id.paragonPhotoView);
 
-        if(showParagons == true) {
-            nameEdit.setText(c.getString(c.getColumnIndex(ReceiptContract.Paragon.NAME)));
-            categoryEdit.setText(c.getString(c.getColumnIndex(ReceiptContract.Paragon.CATEGORY)));
-            dateEdit.setText(c.getString(c.getColumnIndex(ReceiptContract.Paragon.DATE)));
-            valueEdit.setText(c.getString(c.getColumnIndex(ReceiptContract.Paragon.VALUE)));
-            Bitmap paragonPhoto = BitmapFactory.decodeFile(c.getString(c.getColumnIndex(ReceiptContract.Paragon.IMAGE_PATH)));
+        // Ustawienie zawartości pól i widoków interfejsu użytkownika
+        if(showReceipts == true) {
+            nameEdit.setText(c.getString(c.getColumnIndex(ReceiptContract.Receipt.NAME)));
+            categoryEdit.setText(c.getString(c.getColumnIndex(ReceiptContract.Receipt.CATEGORY)));
+            dateEdit.setText(c.getString(c.getColumnIndex(ReceiptContract.Receipt.DATE)));
+            valueEdit.setText(c.getString(c.getColumnIndex(ReceiptContract.Receipt.VALUE)));
+            Bitmap paragonPhoto = BitmapFactory.decodeFile(c.getString(c.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH)));
             paragonPhotoView.setImageBitmap(paragonPhoto);
 
         }else {
@@ -96,32 +106,39 @@ public class EditActivity extends AppCompatActivity {
 
             valueEdit.setVisibility(View.INVISIBLE);
         }
+
+        // Deklaracja klas obsługujących przetwarzanie danych związanych z kartami i
+        // paragonami.
         final ReceiptFunctions receiptFunctions = new ReceiptFunctions(getApplicationContext());
         final CardFunctions cardFunctions = new CardFunctions(getApplicationContext());
 
+        // Przycisk powoduje nadpisanie danych o konkretnym elemencie w bazie danych
         Button updateButton = (Button)findViewById(R.id.updateButton);
         updateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
+                // Ostrzeżenie - użytkownik proszony jest o potwierdzenie operacji
                 AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(EditActivity.this, R.style.myDialog));
-                if(showParagons == true)
+                if(showReceipts == true)
                     builder.setMessage("Czy na pewno chcesz zmienić ten paragon ?").setTitle("Edycja paragonu.");
                 else
                     builder.setMessage("Czy na pewno chcesz zmienić tą kartę lojalnościową ?").setTitle("Edycja karty.");
+                // Jeśli użytkownik potwierdzi operację wpis w bazie danych jest aktualizowany za pomocą wartości znajdujących się
+                // obecnie w odpowiednich polach interfejsu.
                 builder.setPositiveButton("Tak", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
 
                         ContentValues cv = new ContentValues();
 
-                        if(showParagons == true){
-                            cv.put(ReceiptContract.Paragon.NAME, nameEdit.getText().toString());
-                            cv.put(ReceiptContract.Paragon.CATEGORY, categoryEdit.getText().toString().toLowerCase());
-                            cv.put(ReceiptContract.Paragon.DATE, dateEdit.getText().toString());
-                            cv.put(ReceiptContract.Paragon.VALUE, valueEdit.getText().toString());
-                            cv.put(ReceiptContract.Paragon.IMAGE_PATH, c.getString(c.getColumnIndex(ReceiptContract.Paragon.IMAGE_PATH)));
-                            cv.put(ReceiptContract.Paragon.CONTENT, c.getString(c.getColumnIndex(ReceiptContract.Paragon.CONTENT)));
-                            cv.put(ReceiptContract.Paragon.FAVORITED, c.getString(c.getColumnIndex(ReceiptContract.Paragon.FAVORITED)));
+                        if(showReceipts == true){
+                            cv.put(ReceiptContract.Receipt.NAME, nameEdit.getText().toString());
+                            cv.put(ReceiptContract.Receipt.CATEGORY, categoryEdit.getText().toString().toLowerCase());
+                            cv.put(ReceiptContract.Receipt.DATE, dateEdit.getText().toString());
+                            cv.put(ReceiptContract.Receipt.VALUE, valueEdit.getText().toString());
+                            cv.put(ReceiptContract.Receipt.IMAGE_PATH, c.getString(c.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH)));
+                            cv.put(ReceiptContract.Receipt.CONTENT, c.getString(c.getColumnIndex(ReceiptContract.Receipt.CONTENT)));
+                            cv.put(ReceiptContract.Receipt.FAVORITED, c.getString(c.getColumnIndex(ReceiptContract.Receipt.FAVORITED)));
                             receiptFunctions.updateParagon(item_id, cv);
                         }else{
                             cv.put(CardContract.Card.NAME, nameEdit.getText().toString());
@@ -138,10 +155,12 @@ public class EditActivity extends AppCompatActivity {
 
                 builder.setNegativeButton("Nie", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
+                        // W przeciwnym wypadku nic się nie dzieje
                     }
                 });
 
                 AlertDialog dialog = builder.create();
+                // Wyświetlenie okna z prośbą o potwierdzenie operacji.
                 dialog.show();
             }
         });
@@ -150,9 +169,10 @@ public class EditActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy(){
-        super.onDestroy();
+        // Przy zniszczeniu aktywności zamknij kursor i połączenie z bazą danych
         c.close();
         db.close();
+        super.onDestroy();
     }
 
 }

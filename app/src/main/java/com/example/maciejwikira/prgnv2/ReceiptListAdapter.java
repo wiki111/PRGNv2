@@ -15,9 +15,13 @@ import android.widget.TextView;
  * Created by Maciej on 2017-10-21.
  */
 
+// Klasa mapuje dane o paragonach pobrane z kolumn tabeli w bazie danych na odpowiednie elementy
+// interfejsu użytkownika.
 public class ReceiptListAdapter extends SimpleCursorAdapter{
 
+    // Obiekt tworzący widok z podanego zasobu
     private LayoutInflater inflater;
+    // id zasobu zawierającego definicję widoku
     private int layout;
 
     public ReceiptListAdapter(Context context, int layout, Cursor c, String[] from, int[] to, int flags) {
@@ -26,28 +30,33 @@ public class ReceiptListAdapter extends SimpleCursorAdapter{
         this.layout = layout;
     }
 
+    // Każdy nowy element listy jest tworzony przez obiekt LayoutInflater z zasobu o podanym ID
     @Override
     public View newView (Context context, Cursor cursor, ViewGroup parent){
         return inflater.inflate(layout, null);
     }
 
+    // Metoda mapuje dane do elementów interfejsu
     @Override
     public void bindView(View view, Context context, Cursor cursor){
         super.bindView(view, context, cursor);
 
+        // Deklaracje elementów interfejsu
         ImageView imageView = (ImageView) view.findViewById(R.id.photoView);
         TextView nameView = (TextView) view.findViewById(R.id.nameTextView);
         TextView categoryView = (TextView) view.findViewById(R.id.categoryTextView);
         TextView dateView = (TextView) view.findViewById(R.id.dateView);
         TextView valueView = (TextView) view.findViewById(R.id.valueTextView);
 
-        Bitmap image = BitmapFactory.decodeFile(cursor.getString(cursor.getColumnIndex(ReceiptContract.Paragon.IMAGE_PATH)));
+        // Wyświetlenie bitmapy na interfejsie użytkownika
+        Bitmap image = BitmapFactory.decodeFile(cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH)));
         imageView.setImageBitmap(image);
 
-        nameView.setText("Nazwa: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Paragon.NAME)));
-        categoryView.setText("Kategoria: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Paragon.CATEGORY)));
-        dateView.setText("Data: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Paragon.DATE)));
-        valueView.setText("Wartość: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Paragon.VALUE)));
+        // Ustawienie zawartości pól interfejsu
+        nameView.setText("Nazwa: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.NAME)));
+        categoryView.setText("Kategoria: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.CATEGORY)));
+        dateView.setText("Data: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.DATE)));
+        valueView.setText("Wartość: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.VALUE)));
 
     }
 }

@@ -376,8 +376,8 @@ public class MainViewActivity extends AppCompatActivity
                     // Jeśli aplikacja jest w trybie paragonów wyświetl listę ulubionych paragonów.
                     // Analogicznie, jeśli aplikacja jest w trybie kart lojalnościowych.
                     if (showReceipts == true) {
-                        query = "SELECT * FROM " + ReceiptContract.Paragon.TABLE_NAME + " WHERE " +
-                        ReceiptContract.Paragon.FAVORITED + " = 'yes'";
+                        query = "SELECT * FROM " + ReceiptContract.Receipt.TABLE_NAME + " WHERE " +
+                        ReceiptContract.Receipt.FAVORITED + " = 'yes'";
                         receiptFunctions.populateList(listView, query);
                     } else {
                         query = "SELECT * FROM " + CardContract.Card.TABLE_NAME + " WHERE " +

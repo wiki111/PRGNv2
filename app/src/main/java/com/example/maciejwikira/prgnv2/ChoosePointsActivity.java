@@ -263,9 +263,9 @@ public class ChoosePointsActivity extends AppCompatActivity {
         // Jeśli lokalizacja nie istnieje, stwórz ją.
         if(!folder.exists()){
             if(folder.mkdir()){
-                Log.d("Paragon App : ", "Successfully created the parent dir:" + folder.getName());
+                Log.d("Receipt App : ", "Successfully created the parent dir:" + folder.getName());
             }else {
-                Log.d("Paragon App : ", "Failed to create the parent dir:" + folder.getName());
+                Log.d("Receipt App : ", "Failed to create the parent dir:" + folder.getName());
             }
         }
 

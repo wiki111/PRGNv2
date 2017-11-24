@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.widget.ImageView;
 
+// Aktywność wykonuje bardzo proste zadanie  - wyświetla zdjęcie paragonu lub karty.
 public class DisplayPhotoActivity extends AppCompatActivity {
 
     @Override

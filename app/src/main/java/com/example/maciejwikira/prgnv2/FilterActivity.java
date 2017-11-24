@@ -15,8 +15,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 
+// Aktywność obsługuje filtrowanie listy paragonów
 public class FilterActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
 
+    // Deklaracja zmiennych
     private SQLiteOpenHelper mDbHelper;
     private SQLiteDatabase db;
     private Cursor c;
@@ -32,28 +34,33 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_filter_receipt);
 
+        // Pobranie parametrów wyświetlania okna
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
+        // Zapisanie wysokości i szerokości wyświetlania okna
         int width = displayMetrics.widthPixels;
         int height = displayMetrics.heightPixels;
 
+        // Wyświetlenie aktywności na 80% dostępnej powierzchni - aktywność jest wyświetlana
+        // jako nakładka na poprzednią aktywność, co nadaje jej wygląd wyskakującego okienka
+        // (pop-up'u)
         getWindow().setLayout((int)(width*0.8), (int)(height*0.6));
 
+        // Deklaracja listy rozwijanej pozwalajacej na wybór porządanej aktywności
         Spinner spinner = (Spinner)findViewById(R.id.categorySpinner);
 
+        // Pobranie obecnego trybu aplikacji (paragony lub karty)
         Intent intent = getIntent();
         Bundle bundle = intent.getExtras();
-
         showParagons = bundle.getBoolean(MainViewActivity.CARDS_OR_PARAGONS);
 
+        // Inicjalizacja połączenia z bazą danych
         mDbHelper = new ReceiptDbHelper(this);
         db = mDbHelper.getReadableDatabase();
 
-        int[] to = new int[]{
-                R.id.categoryName
-        };
-
+        // Jeśli aplikacja jest w trybie wyświetlania paragonów pobierz kategorie paragonów.
+        // W przeciwnym razie pobierz kategorie kart.
         if(showParagons == true){
             cols = new String[]{
                     ReceiptContract.Categories._ID,
@@ -76,11 +83,18 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
             c = db.query(true, CardContract.Card_Categories.TABLE_NAME, cols, null,null,null,null,null,null);
         }
 
+        // Id elementu interfejsu do którego mają być mapowane nazwy kategorii pobrane z bazy danych
+        int[] to = new int[]{
+                R.id.categoryName
+        };
 
+        // Zapełnienie listy rozwijanej nazwami kategorii pobranymi z bazy danych
         SimpleCursorAdapter simpleCursorAdapter = new SimpleCursorAdapter(this, R.layout.category_spinner_item, c, from, to, 0);
         spinner.setAdapter(simpleCursorAdapter);
         spinner.setOnItemSelectedListener(this);
 
+        // Przycisk powoduje zwrócenie przez aktywność parametrów filtrowania i zakończenie
+        // aktywności.
         Button filterButton =(Button)findViewById(R.id.filterButton);
         filterButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -99,6 +113,8 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
             }
         });
 
+        // Przycisk powoduje zresetowanie obecnych parametrów filtrowania i zakończenie działania
+        // aktywności
         Button resertButton = (Button)findViewById(R.id.resetButton);
         resertButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -112,6 +128,9 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
             }
         });
 
+        // Ustawienie nasłuchiwania na zdarzenie przyciśnięcia pola wyboru daty. Przyciśnięcie
+        // powoduje wyświetlenie dialogu wyboru daty. Jeśli aplikacja jest w trybie kart pole jest
+        // niewidoczne.
         editFromDate = (EditText)findViewById(R.id.editFromDate);
         if(showParagons == true){
             editFromDate.setOnClickListener(new View.OnClickListener() {
@@ -129,7 +148,9 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
         }
 
 
-
+        // Ustawienie nasłuchiwania na zdarzenie przyciśnięcia pola wyboru daty. Przyciśnięcie
+        // powoduje wyświetlenie dialogu wyboru daty. Jeśli aplikacja jest w trybie kart pole jest
+        // niewidoczne.
         editToDate = (EditText)findViewById(R.id.editToDate);
         if(showParagons == true){
             editToDate.setOnClickListener(new View.OnClickListener() {
@@ -148,12 +169,14 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
 
     }
 
+    // Metoda wywoływana gdy użytkownik wybierze kategorię z listy rozwijanej.
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
         String selection;
         String[] selectionArgs;
 
+        // Nazwa odpowiedniej kategorii jest pobierana z bazy danych.
         if(showParagons == true){
             selection = ReceiptContract.Categories._ID + " = ?";
             selectionArgs = new String[]{ Long.toString(id) };
@@ -164,7 +187,7 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
             c = db.query(CardContract.Card_Categories.TABLE_NAME, cols,selection,selectionArgs,null,null,null);
         }
 
-
+        // Ustawienie obecnie wybranej kategorii.
         while(c.moveToNext()){
             if(showParagons == true)
                 chosenCategory = c.getString(c.getColumnIndex(ReceiptContract.Categories.CATEGORY_NAME));
@@ -180,9 +203,10 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
+        // Zamknięcie połączenia z bazą danych i kursora.
         c.close();
         db.close();
+        super.onDestroy();
     }
 
 }

@@ -18,8 +18,11 @@ import java.util.regex.Pattern;
  * Created by Maciej on 2017-10-31.
  */
 
+
+// Klasa realizuje rozpoznawanie i pobieranie tekstu z podanego obrazu
 public class TextRecognitionFunctions {
 
+    //Deklaracje zmiennych
     private Context context;
 
     private Bitmap activeBitmap;
@@ -38,58 +41,13 @@ public class TextRecognitionFunctions {
     //Wzór do wyszukiwania daty :
     private Pattern theDate = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");
 
+    // Kontruktor
     public TextRecognitionFunctions(Context context){
+        // Inicjalizacja podstawowych zmiennych
         this.context = context;
         paragonValue = null;
         paragonDate = null;
         prgnText = "";
-    }
-
-    public void searchForValues(Uri activeUri,String realPath, Context context){
-        TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();    //inicjalizacja obiektu odpowiedzialnego za rozpoznawanie tekstu
-        try {
-            activeBitmap = MediaStore.Images.Media.getBitmap(context.getContentResolver(), activeUri); //pobranie obrazu na podstawie pozyskanego uri
-            imgToSave = realPath;  //zapis ścieżki absolutnej do obrazu do zmiennej
-            Frame frame = new Frame.Builder().setBitmap(activeBitmap).build();  //inicjalizacja obiektu przechowywującego obraz, z którego sczytywane są dane
-
-            SparseArray<TextBlock> items = textRecognizer.detect(frame);    //sczytywanie danych z obrazu i zapis do tablicy
-
-            prgnText = "";
-            for(int i = 0; i < items.size(); i++){
-                TextBlock item = items.valueAt(i);
-                prgnText += item.getValue().toLowerCase();
-            }
-
-            if(valueFound == false) //jeśli nie znaleziono wartości
-                paragonValue = searchForTheValue(items);   // wyszukaj wartość w odczytanych danych
-
-            if(dateFound == false)  //jeśli nie znaleziono daty
-                paragonDate = searchForTheDate(items); //wyszukaj datę w odczytanych danych
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void searchForValues(Uri activeUri,String realPath, Context context, Bitmap activeBitmap){
-        TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();
-            imgToSave = realPath;
-            Frame frame = new Frame.Builder().setBitmap(activeBitmap).build();
-
-            SparseArray<TextBlock> items = textRecognizer.detect(frame);
-
-            prgnText = "";
-            for(int i = 0; i < items.size(); i++){
-                TextBlock item = items.valueAt(i);
-                prgnText += item.getValue().toLowerCase();
-            }
-
-            if(valueFound == false) //jeśli nie znaleziono wartości
-                paragonValue = searchForTheValue(items);   // wyszukaj wartość w odczytanych danych
-
-            if(dateFound == false)  //jeśli nie znaleziono daty
-                paragonDate = searchForTheDate(items); //wyszukaj datę w odczytanych danych
-
     }
 
     //Funkcja wyszukująca wartość paragonu
@@ -188,21 +146,24 @@ public class TextRecognitionFunctions {
         return foundDate;    //zwróć znalezioną datę
     }
 
+    // Metoda typu GET pozwala na pobranie ścieżki do przetwarzanego obrazu
     public String getImgToSave(){
         return this.imgToSave;
     }
 
+    // Metoda typu GET pozwala na pobranie tekstu sczytanego z paragonu
     public String getPrgnText(){
         return this.prgnText;
     }
 
+    // Metoda typu GET pozwalająca na pobranie znalezionej wartości paragonu
     public String getReceiptValue(){
         if(paragonValue != null)
             return this.paragonValue;
         else
             return "";
     }
-
+    // Metoda typu GET pozwalająca na pobranie znalezionej daty paragonu
     public String getReceiptDate(){
         if(paragonDate != null)
             return this.paragonDate;
@@ -210,10 +171,16 @@ public class TextRecognitionFunctions {
             return "";
     }
 
+    // Metoda wyszukuje tekst w podanym obrazie
     public void searchInBitmap(Bitmap bitmap){
+
+        // Inicjalizacja obiektu rozpoznającego tekst
         TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();
+
+        // Inicjalizacja obszaru rozpoznawania
         Frame frame = new Frame.Builder().setBitmap(bitmap).build();
 
+        // Zapisanie sczytanego tekstu
         SparseArray<TextBlock> items = textRecognizer.detect(frame);
         prgnText += "\n";
         for(int i = 0; i < items.size(); i++){
@@ -229,6 +196,7 @@ public class TextRecognitionFunctions {
 
     }
 
+    // Metoda typu SET pozwalająca na ustawienie ścieżki przetwarzanego obrazu
     public void setImgToSave(String realPath){
         imgToSave = realPath;
     }
