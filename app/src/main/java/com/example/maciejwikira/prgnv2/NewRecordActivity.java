@@ -130,7 +130,7 @@ public class NewRecordActivity extends AppCompatActivity {
 
         // Ustawienie odpowiednich zmiennych i elementów interfejsu użytkownika w zależności od
         // trybu aplikacji
-        if(extras.getBoolean(MainViewActivity.CARDS_OR_PARAGONS)){
+        if(extras.getBoolean(MainViewActivity.CARDS_OR_RECEIPTS)){
             showParagons = true;
             addToDBBtn.setText("Dodaj paragon");
             // Incjalizacja obiektu przetwarzającego dane o paragonach

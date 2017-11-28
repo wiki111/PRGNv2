@@ -53,7 +53,7 @@ public class FilterActivity extends AppCompatActivity implements AdapterView.OnI
         // Pobranie obecnego trybu aplikacji (paragony lub karty)
         Intent intent = getIntent();
         Bundle bundle = intent.getExtras();
-        showParagons = bundle.getBoolean(MainViewActivity.CARDS_OR_PARAGONS);
+        showParagons = bundle.getBoolean(MainViewActivity.CARDS_OR_RECEIPTS);
 
         // Inicjalizacja połączenia z bazą danych
         mDbHelper = new ReceiptDbHelper(this);

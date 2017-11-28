@@ -65,7 +65,7 @@ public class EditActivity extends AppCompatActivity {
         Intent intent = getIntent();
         Bundle extras = intent.getExtras();
         final String item_id = extras.getString("item_id");
-        showReceipts = extras.getBoolean(MainViewActivity.CARDS_OR_PARAGONS);
+        showReceipts = extras.getBoolean(MainViewActivity.CARDS_OR_RECEIPTS);
 
         // Wykonanie zapytania do odpowiedniej tabeli bazy danych w zależności od trybu aplikacji
         if(showReceipts == true) {

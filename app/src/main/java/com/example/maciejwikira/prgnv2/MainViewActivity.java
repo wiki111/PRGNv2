@@ -37,7 +37,7 @@ public class MainViewActivity extends AppCompatActivity
     public static final String CAMERA_OR_MEDIA = "CAMERA_OR_MEDIA";
 
     // Klucz wartości oznaczającej jakie dane są uwzględniane - paragony lub karty lojalnościowe
-    public static final String CARDS_OR_PARAGONS = "CARDS_OR_PARAGONS";
+    public static final String CARDS_OR_RECEIPTS = "CARDS_OR_RECEIPTS";
 
     // Klucz identyfikujący kod powrotu z aktywności filtrowania elementów listy
     public static final int RESULT_FILTER = 110;
@@ -115,7 +115,7 @@ public class MainViewActivity extends AppCompatActivity
             public void onClick(View v) {
             Intent intent = new Intent(getApplicationContext(), NewRecordActivity.class);
             Bundle extras = new Bundle();
-            extras.putBoolean(CARDS_OR_PARAGONS, showReceipts);
+            extras.putBoolean(CARDS_OR_RECEIPTS, showReceipts);
             extras.putString(CAMERA_OR_MEDIA, "media");
             intent.putExtras(extras);
             startActivity(intent);
@@ -131,7 +131,7 @@ public class MainViewActivity extends AppCompatActivity
             public void onClick(View v) {
             Intent intent = new Intent(getApplicationContext(), NewRecordActivity.class);
             Bundle extras = new Bundle();
-            extras.putBoolean(CARDS_OR_PARAGONS, showReceipts);
+            extras.putBoolean(CARDS_OR_RECEIPTS, showReceipts);
             extras.putString(CAMERA_OR_MEDIA, "cam");
             intent.putExtras(extras);
             startActivity(intent);
@@ -166,7 +166,7 @@ public class MainViewActivity extends AppCompatActivity
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(context, DetailsActivity.class);
                 Bundle extras = new Bundle();
-                extras.putBoolean(CARDS_OR_PARAGONS, showReceipts);
+                extras.putBoolean(CARDS_OR_RECEIPTS, showReceipts);
                 extras.putString("item_id", Integer.toString(receiptFunctions.getItemIds().get(position)));
                 intent.putExtras(extras);
                 startActivity(intent);
@@ -183,7 +183,7 @@ public class MainViewActivity extends AppCompatActivity
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(context, DetailsActivity.class);
                 Bundle extras = new Bundle();
-                extras.putBoolean(CARDS_OR_PARAGONS, showReceipts);
+                extras.putBoolean(CARDS_OR_RECEIPTS, showReceipts);
                 extras.putString("item_id", Integer.toString(cardFunctions.getItemIds().get(position)));
                 intent.putExtras(extras);
                 startActivity(intent);
@@ -353,7 +353,7 @@ public class MainViewActivity extends AppCompatActivity
                 // o trybie działania aplikacji.
                 Intent intent = new Intent(context, FilterActivity.class);
                 Bundle extras = new Bundle();
-                extras.putBoolean(CARDS_OR_PARAGONS, showReceipts);
+                extras.putBoolean(CARDS_OR_RECEIPTS, showReceipts);
                 intent.putExtras(extras);
                 startActivityForResult(intent, 0);
                 return true;

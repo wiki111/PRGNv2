@@ -34,8 +34,7 @@ public class TextRecognitionFunctions {
     private String paragonDate;
     private Matcher match;
     //Wzory do wyszukiwania wartości zakupu :
-    private Pattern wholeValue = Pattern.compile("suma pln");
-    private Pattern wholeValue2 = Pattern.compile("suma pln \\d+,\\d+");
+    private Pattern wholeValue2 = Pattern.compile("(s\\w*ma|su\\w*|\\w*uma)(\\s*)(pln|\\w*ln|pl\\w*)(\\s*)\\d+(,|\\.)\\d+");
     private Pattern wholeValue3 = Pattern.compile("([0-9]+,[0-9]+ pln)(.*?)");
     private Pattern theValue = Pattern.compile("([0-9]+(,|\\.)[0-9]+)");
     //Wzór do wyszukiwania daty :
@@ -56,7 +55,19 @@ public class TextRecognitionFunctions {
         String val = "";    //inicjalizacja zmiennej przechowującej znalezioną wartość
         String foundVal;    //zmienna tymczasowa przechowująca wartość
 
-        //Pętla przeszukująca każdą linię sczytanego z obrazu tekstu
+        match = wholeValue2.matcher(prgnText.toLowerCase());
+        if(match.find() && valueFound == false){
+            valueFound = true;
+            foundVal = match.group().substring(0);  //zapisz pierwsze wystąpienie wyszukiwanej wartości do zmiennej
+
+            //pozyskanie wartości zakupu jako liczby ze znalezionego wyrażenia
+            match = theValue.matcher(foundVal);
+            match.find();
+            val = match.group().substring(0);
+        }
+
+
+      /*  //Pętla przeszukująca każdą linię sczytanego z obrazu tekstu
         for (int i = 0; i < items.size(); ++i) {
 
             TextBlock item = items.valueAt(i);  //pobranie linii tekstu
@@ -73,22 +84,6 @@ public class TextRecognitionFunctions {
                 match.find();
                 val = match.group().substring(0);
 
-
-            }
-
-            //Sprawdzanie, czy linia pasuje do danego wzorca
-            match = wholeValue.matcher(item.getValue().toLowerCase());
-            if(match.matches() && valueFound == false){
-
-                valueFound = true;
-                i = i+1;
-                item = items.valueAt(i);
-
-                match = theValue.matcher(item.getValue().toLowerCase());
-
-                if(match.find()){
-                    val = match.group().substring(0);
-                }
 
             }
 
@@ -116,6 +111,8 @@ public class TextRecognitionFunctions {
             }
 
         }
+
+        */
 
         return val;
     }
@@ -180,11 +177,20 @@ public class TextRecognitionFunctions {
         // Inicjalizacja obszaru rozpoznawania
         Frame frame = new Frame.Builder().setBitmap(bitmap).build();
 
+
+
         // Zapisanie sczytanego tekstu
         SparseArray<TextBlock> items = textRecognizer.detect(frame);
         prgnText += "\n";
         for(int i = 0; i < items.size(); i++){
             TextBlock item = items.valueAt(i);
+            match = wholeValue2.matcher(item.getValue().toLowerCase());
+            if(match.find() && valueFound == false){
+                valueFound = true;
+                match = theValue.matcher(item.getValue().toLowerCase());
+                match.find();
+                paragonValue = match.group().substring(0);
+            }
             prgnText += item.getValue().toLowerCase();
         }
 

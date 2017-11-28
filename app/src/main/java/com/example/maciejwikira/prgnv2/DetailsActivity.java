@@ -79,7 +79,7 @@ public class DetailsActivity extends AppCompatActivity {
         Intent intent = getIntent();
         Bundle extras = intent.getExtras();
         id = extras.getString("item_id");
-        showReceipts = extras.getBoolean(MainViewActivity.CARDS_OR_PARAGONS);
+        showReceipts = extras.getBoolean(MainViewActivity.CARDS_OR_RECEIPTS);
 
 
         // Jeśli aplikacja jest w trybie paragonów wykonaj zapytanie które spowoduje zwrócenie
@@ -127,7 +127,7 @@ public class DetailsActivity extends AppCompatActivity {
                 Intent intent = new Intent(getApplicationContext(), EditActivity.class);
                 Bundle extras = new Bundle();
                 // Przekazanie trybu aplikacji, oraz id elementu
-                extras.putBoolean(MainViewActivity.CARDS_OR_PARAGONS, showReceipts);
+                extras.putBoolean(MainViewActivity.CARDS_OR_RECEIPTS, showReceipts);
                 extras.putString("item_id", id);
                 intent.putExtras(extras);
                 startActivity(intent);
