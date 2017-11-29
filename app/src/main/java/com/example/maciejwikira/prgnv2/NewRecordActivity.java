@@ -8,11 +8,15 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.constraint.ConstraintLayout;
+import android.support.transition.Visibility;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
@@ -20,11 +24,19 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import org.opencv.android.OpenCVLoader;
@@ -32,10 +44,11 @@ import org.opencv.android.OpenCVLoader;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 // Aktywność pozwala na dodanie nowego wpisu do bazy danych
-public class NewRecordActivity extends AppCompatActivity {
+public class NewRecordActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
 
     // Deklaracja stałych identyfikatorów
     static final int REQUEST_TAKE_PHOTO = 1;
@@ -43,9 +56,10 @@ public class NewRecordActivity extends AppCompatActivity {
 
     //Deklaracja elementów interfejsu :
     private EditText nameField;
-    private EditText categoryField;
+    private Spinner catSpinner;
     private EditText valueField;
     private EditText dateField;
+    private EditText dscField;
     private Button addToDBBtn;
     private Uri activeUri;
 
@@ -63,6 +77,14 @@ public class NewRecordActivity extends AppCompatActivity {
     private String textFromImage;
     private String receiptValue;
     private String receiptDate;
+
+    private SQLiteOpenHelper mDbHelper;
+    private SQLiteDatabase db;
+    private String[] catCols;
+    private Cursor catCursor;
+    private ArrayList<String> categories;
+    private String chosenCategory;
+    private ArrayAdapter<String> catAdapter;
 
     //funkcja onCreate - inicjalizacja obiektów interfejsu użytkownika i wywołanie funkcji aktywności
     @Override
@@ -92,11 +114,18 @@ public class NewRecordActivity extends AppCompatActivity {
         final Context context = getApplicationContext();
         //Inicjalizacja elementów interfejsu użytkownika
         nameField = (EditText)findViewById(R.id.nameField);
-        categoryField = (EditText) findViewById(R.id.categoryField);
+        catSpinner = (Spinner)findViewById(R.id.catSpinner);
         valueField = (EditText) findViewById(R.id.valueField);
         dateField = (EditText) findViewById(R.id.dateField);
         addToDBBtn = (Button)findViewById(R.id.addToDBButton);
         pickedImageView = (ImageView)findViewById(R.id.pickedImageView);
+        dscField = (EditText)findViewById(R.id.dscField);
+        dscField.setText(" ");
+
+        mDbHelper = new ReceiptDbHelper(this);
+        db = mDbHelper.getWritableDatabase();
+
+        categories = new ArrayList<>();
 
         //Obsługa kliknięcia przycisku dodającego dane do bazy
         addToDBBtn.setOnClickListener(new View.OnClickListener() {
@@ -104,21 +133,23 @@ public class NewRecordActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(showParagons == true){
                     ContentValues cv = new ContentValues();
-                    cv.put("name", nameField.getText().toString());
-                    cv.put("category", categoryField.getText().toString().toLowerCase());
-                    cv.put("date", dateField.getText().toString());
-                    cv.put("value", Double.parseDouble(valueField.getText().toString().replaceAll("," , "\\.")));
-                    cv.put("img", imgToSave);
-                    cv.put("text", textFromImage);
-                    cv.put("favorited", "no");
+                    cv.put(ReceiptContract.Receipt.NAME, nameField.getText().toString());
+                    cv.put(ReceiptContract.Receipt.CATEGORY, chosenCategory.toLowerCase());
+                    cv.put(ReceiptContract.Receipt.DATE, dateField.getText().toString().toLowerCase());
+                    cv.put(ReceiptContract.Receipt.VALUE, Double.parseDouble(valueField.getText().toString().replaceAll("," , "\\.")));
+                    cv.put(ReceiptContract.Receipt.IMAGE_PATH, imgToSave);
+                    cv.put(ReceiptContract.Receipt.CONTENT, textFromImage);
+                    cv.put(ReceiptContract.Receipt.FAVORITED, "no");
+                    cv.put(ReceiptContract.Receipt.DESCRIPTION, dscField.getText().toString());
                     receiptFunctions.addParagon(cv);
                 }else{
                     ContentValues cv = new ContentValues();
-                    cv.put("name", nameField.getText().toString());
-                    cv.put("category", categoryField.getText().toString().toLowerCase());
-                    cv.put("expiration", dateField.getText().toString());
-                    cv.put("img", getRealPathFromURI(activeUri));
-                    cv.put("favorited", "no");
+                    cv.put(CardContract.Card.NAME, nameField.getText().toString());
+                    cv.put(CardContract.Card.CATEGORY, chosenCategory.toLowerCase());
+                    cv.put(CardContract.Card.EXPIRATION_DATE, dateField.getText().toString());
+                    cv.put(CardContract.Card.IMAGE_PATH, getRealPathFromURI(activeUri));
+                    cv.put(CardContract.Card.FAVORITED, "no");
+                    cv.put(CardContract.Card.DESCRIPTION, dscField.getText().toString());
                     cardFunctions.addCard(cv);
                 }
             }
@@ -137,6 +168,14 @@ public class NewRecordActivity extends AppCompatActivity {
             receiptFunctions = new ReceiptFunctions(context);
             // Inicjalizacja obiektu rozpoznającego i sczytującego tekst z obrazu
             textRecognitionFunctions = new TextRecognitionFunctions(context);
+
+            catCols = new String[]{
+                    ReceiptContract.Categories._ID,
+                    ReceiptContract.Categories.CATEGORY_NAME
+            };
+
+            catCursor = db.query(true, ReceiptContract.Categories.TABLE_NAME, catCols, null,null,null,null,null,null);
+
         }else {
             showParagons = false;
             TextView valueView = (TextView)findViewById(R.id.valTextView);
@@ -147,8 +186,8 @@ public class NewRecordActivity extends AppCompatActivity {
             addToDBBtn.setText("Dodaj kartę");
 
             // Ukrycie niepotrzebnych elementow interfejsów
-            valueView.setVisibility(View.INVISIBLE);
-            valueField.setVisibility(View.INVISIBLE);
+            LinearLayout valRow = (LinearLayout)findViewById(R.id.valRow);
+            valRow.setVisibility(View.GONE);
 
             // Inicjalizacja obiektu przetwarzającego dane o kartach
             cardFunctions = new CardFunctions(context);
@@ -159,7 +198,23 @@ public class NewRecordActivity extends AppCompatActivity {
 
             // ... i ustaw przycisk pozwalający na dodanie nowego wpisu jako widoczny
             addToDBBtn.setVisibility(View.VISIBLE);
+
+            catCols = new String[]{
+                    CardContract.Card_Categories._ID,
+                    CardContract.Card_Categories.CATEGORY_NAME
+            };
+
+            catCursor = db.query(true, CardContract.Card_Categories.TABLE_NAME, catCols, null,null,null,null,null,null);
         }
+
+        while(catCursor.moveToNext()){
+            categories.add(catCursor.getString(catCursor.getColumnIndex(CardContract.Card_Categories.CATEGORY_NAME)));
+        }
+        categories.add(categories.size(), "Dodaj nową kategorię");
+
+        catAdapter = new ArrayAdapter<String>(context, R.layout.category_spinner_item, categories);
+        catSpinner.setAdapter(catAdapter);
+        catSpinner.setOnItemSelectedListener(this);
 
         // Rejestracja obiektu odbierającego zgłoszenia od obiektu przetwarzającego obraz
         IntentFilter intentFilter = new IntentFilter(Constants.BROADCAST_ACTION);
@@ -282,6 +337,7 @@ public class NewRecordActivity extends AppCompatActivity {
         }
     }
 
+
     // Metoda wywołuje przetwarzanie obrazu i wyszukiwanie tekstu w oddzielnym wątku
     private void processImage(Context context, Uri uri, String path){
 
@@ -328,6 +384,63 @@ public class NewRecordActivity extends AppCompatActivity {
         return image;
     }
 
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        chosenCategory = categories.get(position).toString().toLowerCase();
+
+        if(chosenCategory.equals("dodaj nową kategorię")){
+            showNewCatPopup(view);
+        }
+
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+        chosenCategory = "brak kategorii";
+    }
+
+    public void showNewCatPopup(View view){
+
+        ConstraintLayout mainLayout = (ConstraintLayout)findViewById(R.id.newRecMainLayout);
+
+        // inflate the layout of the popup window
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        View popupView = inflater.inflate(R.layout.new_category_popup, null);
+
+        // create the popup window
+        int width = LinearLayout.LayoutParams.WRAP_CONTENT;
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+        boolean focusable = true; // lets taps outside the popup also dismiss it
+        final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
+
+        // show the popup window
+        popupWindow.showAtLocation(mainLayout, Gravity.CENTER, 0, 0);
+
+        // dismiss the popup window when touched
+        popupView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                popupWindow.dismiss();
+                return true;
+            }
+        });
+
+        final EditText newCatName = (EditText)popupView.findViewById(R.id.newCatName);
+
+        Button addNewCatBtn = (Button)popupView.findViewById(R.id.addNewCatBtn);
+        addNewCatBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                chosenCategory = newCatName.getText().toString();
+                categories.add(0, newCatName.getText().toString());
+                catAdapter.notifyDataSetChanged();
+                ContentValues newCategoryValue = new ContentValues();
+                newCategoryValue.put(CardContract.Card_Categories.CATEGORY_NAME,  chosenCategory);
+                db.insert(CardContract.Card_Categories.TABLE_NAME, null, newCategoryValue);
+            }
+        });
+    }
+
     // Klasa pozwala na odebranie zgłoszenia od obiektu przetwarzającego obraz w oddzielnym wątku
     // gdy zakończy pracę
     private class FixedImageReceiver extends BroadcastReceiver{
@@ -355,6 +468,12 @@ public class NewRecordActivity extends AppCompatActivity {
             // ... i ustaw przycisk pozwalający na dodanie nowego wpisu jako widoczny
             addToDBBtn.setVisibility(View.VISIBLE);
         }
+    }
+
+    @Override
+    public void onDestroy(){
+        db.close();
+        super.onDestroy();
     }
 
 }

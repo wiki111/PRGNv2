@@ -24,6 +24,7 @@ public final class CardContract {
         public static final String EXPIRATION_DATE = "expiration";
         public static final String IMAGE_PATH = "img";
         public static final String FAVORITED = "favorited";
+        public static final String DESCRIPTION = "description";
 
         // Polecenie tworzące tabelę w bazie danych
         public static final String SQL_CREATE_CARDS =
@@ -34,6 +35,7 @@ public final class CardContract {
                         Card.EXPIRATION_DATE + " DATE, " +
                         Card.IMAGE_PATH + " TEXT, " +
                         Card.FAVORITED + " TEXT, " +
+                        Card.DESCRIPTION + " TEXT, " +
                         "FOREIGN KEY (" + Card.CATEGORY + ") REFERENCES card_categories(" +
                             Card_Categories.CATEGORY_NAME + "))";
 

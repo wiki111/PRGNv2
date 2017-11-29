@@ -21,6 +21,7 @@ public final class ReceiptContract {
         public static final String IMAGE_PATH = "img";
         public static final String CONTENT = "text";
         public static final String FAVORITED = "favorited";
+        public static final String DESCRIPTION = "description";
 
         public static final String SQL_CREATE_PARAGONS =
                 "CREATE TABLE IF NOT EXISTS " + Receipt.TABLE_NAME + " (" +
@@ -32,6 +33,7 @@ public final class ReceiptContract {
                     Receipt.IMAGE_PATH + " TEXT," +
                     Receipt.CONTENT + " TEXT," +
                     Receipt.FAVORITED + " TEXT," +
+                    Receipt.DESCRIPTION + " TEXT, " +
                     "FOREIGN KEY (" + Receipt.CATEGORY + ") REFERENCES categories(" + Categories.CATEGORY_NAME + "))";
 
         public static final String SQL_DELETE_PARAGONS = "DROP TABLE IF EXISTS " + Receipt.TABLE_NAME;
