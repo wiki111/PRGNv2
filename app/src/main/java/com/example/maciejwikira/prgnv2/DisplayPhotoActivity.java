@@ -1,6 +1,7 @@
 package com.example.maciejwikira.prgnv2;
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.Image;
@@ -19,7 +20,18 @@ public class DisplayPhotoActivity extends AppCompatActivity {
 
         ImageView image = (ImageView)findViewById(R.id.imageView2);
         Intent intent = getIntent();
-        Bitmap bmp = BitmapFactory.decodeFile((intent.getStringExtra("BitmapPath")));
+        Bundle bundle = intent.getExtras();
+        Bitmap bmp = BitmapFactory.decodeFile(bundle.getString("BitmapPath"));
+        Boolean showReceipts = bundle.getBoolean(MainViewActivity.CARDS_OR_RECEIPTS);
+
+        if(!showReceipts){
+            this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }
+
+
+
         image.setImageBitmap(bmp);
+
+
     }
 }

@@ -114,7 +114,10 @@ public class DetailsActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), DisplayPhotoActivity.class);
-                intent.putExtra("BitmapPath", bitmapPath);
+                Bundle extras = new Bundle();
+                extras.putString("BitmapPath", bitmapPath);
+                extras.putBoolean(MainViewActivity.CARDS_OR_RECEIPTS, showReceipts);
+                intent.putExtras(extras);
                 startActivity(intent);
             }
         });
@@ -220,7 +223,7 @@ public class DetailsActivity extends AppCompatActivity {
                     contentValues.put(ReceiptContract.Receipt.CONTENT, c.getString(c.getColumnIndex(ReceiptContract.Receipt.CONTENT)));
                     contentValues.put(ReceiptContract.Receipt.FAVORITED, "no");
                     pf.updateParagon(id, contentValues);
-                    toast = Toast.makeText(getApplicationContext(), "Receipt usunięto z ulubionych", Toast.LENGTH_SHORT);
+                    toast = Toast.makeText(getApplicationContext(), "Paragon usunięto z ulubionych", Toast.LENGTH_SHORT);
                 }else{
                     contentValues.put(CardContract.Card.NAME, nameTextView.getText().toString());
                     contentValues.put(CardContract.Card.CATEGORY, categoryTextView.getText().toString());
@@ -276,7 +279,7 @@ public class DetailsActivity extends AppCompatActivity {
             nameTextView.setText(c.getString(c.getColumnIndex(CardContract.Card.NAME)));
             categoryTextView.setText(c.getString(c.getColumnIndex(CardContract.Card.CATEGORY)));
             dateTextView.setText(c.getString(c.getColumnIndex(CardContract.Card.EXPIRATION_DATE)));
-            bitmapPath = c.getString(c.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH));
+            bitmapPath = c.getString(c.getColumnIndex(CardContract.Card.IMAGE_PATH));
             receiptPhoto = BitmapFactory.decodeFile(bitmapPath);
             receiptPhotoDetailsView.setImageBitmap(receiptPhoto);
 

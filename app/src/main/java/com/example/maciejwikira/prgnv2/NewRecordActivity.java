@@ -152,6 +152,13 @@ public class NewRecordActivity extends AppCompatActivity {
 
             // Inicjalizacja obiektu przetwarzającego dane o kartach
             cardFunctions = new CardFunctions(context);
+
+            // Usuń ikonę ładowania z interfejsu ...
+            progressBar = (ProgressBar)findViewById(R.id.progressBar);
+            progressBar.setVisibility(View.GONE);
+
+            // ... i ustaw przycisk pozwalający na dodanie nowego wpisu jako widoczny
+            addToDBBtn.setVisibility(View.VISIBLE);
         }
 
         // Rejestracja obiektu odbierającego zgłoszenia od obiektu przetwarzającego obraz
