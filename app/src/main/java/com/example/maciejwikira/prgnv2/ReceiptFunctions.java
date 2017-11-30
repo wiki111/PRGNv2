@@ -36,17 +36,15 @@ public class ReceiptFunctions {
     private  Toast toast;
 
 
-    // Konstruktor
+    // W konstruktorze następuje inicjalizacja listy przechowującej ID pobranych elementów
+    // oraz zmiennych resetFilters i query.
     public ReceiptFunctions(Context context){
         this.context = context;
-
-        // Inicjalizacja listy przechowującej ID pobranych elementów
         itemIds = new ArrayList<>();
-
-        // Lista paragonów nie jest domyślnie filtrowana
+        // Lista nie jest domyślnie filtrowana
         resetFilters = true;
-
-        // Domyślnie nie ma warunku dla wpisów pobieranych z bazy danych
+        // Domyślnie nie istnieje zapytanie do bazy danych -
+        // wyświetlane są wszystkie wpisy.
         query = null;
     }
 
@@ -57,21 +55,13 @@ public class ReceiptFunctions {
             mDbHelper = new ReceiptDbHelper(context);
             db = mDbHelper.getWritableDatabase();
 
-            // Deklaracja z których kolumn mają być pobrane dane
-            String[] projection = {
-                    ReceiptContract.Categories._ID,
-                    ReceiptContract.Categories.CATEGORY_NAME
-            };
-
-            // Określenie klauzuli where i jej parametrów
-            String selection = ReceiptContract.Categories.CATEGORY_NAME + " = ?";
             String[] selectionArgs = { cv.get("category").toString().toLowerCase() };
 
-            // Wykonanie zapytania do bazy danych - pobranie istniejących kategorii paragonów
+            // Inicjalizacja kursora i pobranie informacji z bazy danych
             Cursor cursor = db.query(
                     ReceiptContract.Categories.TABLE_NAME,
-                    projection,
-                    selection,
+                    Constants.receiptCategoriesProjection,
+                    Constants.receiptCategoriesSelection,
                     selectionArgs,
                     null,
                     null,
@@ -80,25 +70,34 @@ public class ReceiptFunctions {
 
             cursor.moveToFirst();
 
-            // Jeśli kategoria istnieje po prostu dodaj nowy paragon do bazy danych
             if((cursor != null) && (cursor.getCount() > 0)){
-                db.insert(ReceiptContract.Receipt.TABLE_NAME, null, cv); //dodanie rekordu do bazy danych
-                // W przeciwnym wypadku dodaj nową kategorię, a następnie dodaj nowy paragon do bazy danych.
+                db.insert(ReceiptContract.Receipt.TABLE_NAME, null, cv);
             }else{
                 ContentValues newCategoryValue = new ContentValues();
-                newCategoryValue.put(ReceiptContract.Categories.CATEGORY_NAME,  cv.get("category").toString().toLowerCase() );
-                db.insert(ReceiptContract.Categories.TABLE_NAME, null, newCategoryValue);
-                db.insert(ReceiptContract.Receipt.TABLE_NAME, null, cv); //dodanie rekordu do bazy danych
+                newCategoryValue.put(
+                        ReceiptContract.Categories.CATEGORY_NAME,
+                        cv.get("category").toString().toLowerCase()
+                );
+                db.insert(
+                        ReceiptContract.Categories.TABLE_NAME,
+                        null,
+                        newCategoryValue
+                );
+                db.insert(
+                        ReceiptContract.Receipt.TABLE_NAME,
+                        null,
+                        cv
+                );
             }
 
             cursor.close();
 
             //Wyświetlenie potwierdzenia pomyślnego wykonania operacji
-            toast = Toast.makeText(context, "Huraaa! Receipt dodano pomyślnie." , Toast.LENGTH_LONG);
+            toast = Toast.makeText(context, R.string.toast_add_new_receipt_success , Toast.LENGTH_LONG);
             toast.show();
         }catch (Exception e){
             //Wyświetlenie komunikatu błędu w wypadku jego wystąpienia
-            toast = Toast.makeText(context, "Ups, coś poszło nie tak... Może spróbuj jeszcze raz ?" + e.toString(), Toast.LENGTH_LONG);
+            toast = Toast.makeText(context, R.string.toast_add_new_failure + e.toString(), Toast.LENGTH_LONG);
             toast.show();
         }finally {
             // Zamknięcie połączenia z bazą danych
@@ -127,11 +126,7 @@ public class ReceiptFunctions {
             String selection = ReceiptContract.Categories.CATEGORY_NAME + " = ?";
             String[] selectionArgs = { cv.get("category").toString().toLowerCase() };
 
-            // Określenie klauzuli where i jej parametrów dla pobieranego paragonu
-            String selectedParagon = ReceiptContract.Receipt._ID + " = ?";
-            String[] args = new String[]{
-                    item_id
-            };
+
 
             // Pobranie listy kategorii
             cursor = db.query(
@@ -146,13 +141,22 @@ public class ReceiptFunctions {
 
             cursor.moveToFirst();
 
+            // Określenie klauzuli where i jej parametrów dla pobieranego paragonu
+            String selectedParagon = ReceiptContract.Receipt._ID + " = ?";
+            String[] args = new String[]{
+                    item_id
+            };
+
             // Jeśli kategoria istnieje po prostu zapisz nowe dane
             if((cursor != null) && (cursor.getCount() > 0)){
                 db.update(ReceiptContract.Receipt.TABLE_NAME, cv, selectedParagon, args); //dodanie rekordu do bazy danych
             }else{
                 // W przeciwnym wypadku dodaj nową kategorię, a następnie zapisz nowe dane paragonu.
                 ContentValues newCategoryValue = new ContentValues();
-                newCategoryValue.put(ReceiptContract.Categories.CATEGORY_NAME, cv.get("category").toString().toLowerCase());
+                newCategoryValue.put(
+                        ReceiptContract.Categories.CATEGORY_NAME,
+                        cv.get("category").toString().toLowerCase()
+                );
                 db.insert(ReceiptContract.Categories.TABLE_NAME, null, newCategoryValue);
                 db.update(ReceiptContract.Receipt.TABLE_NAME, cv, selectedParagon, args);
             }
@@ -223,7 +227,7 @@ public class ReceiptFunctions {
             c.moveToFirst();
 
             // Inicjalizacja i ustawienie adaptera listy
-            receiptListAdapter = new ReceiptListAdapter(context, R.layout.receipt_list_item, c, from, to, 0);
+            receiptListAdapter = new ReceiptListAdapter(context, R.layout.list_item, c, from, to, 0);
             lv.setAdapter(receiptListAdapter);
 
         }finally {
@@ -282,7 +286,7 @@ public class ReceiptFunctions {
             c.moveToFirst();
 
             //Zapełnienie listy wynikami wyszukiwania
-            receiptListAdapter = new ReceiptListAdapter(context, R.layout.receipt_list_item, c, from, to, 0);
+            receiptListAdapter = new ReceiptListAdapter(context, R.layout.list_item, c, from, to, 0);
             lv.setAdapter(receiptListAdapter);
         } finally {
             db.close();

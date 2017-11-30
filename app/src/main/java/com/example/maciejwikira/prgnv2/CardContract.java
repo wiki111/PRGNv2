@@ -58,7 +58,7 @@ public final class CardContract {
         // Polecenie wstawiające bazową kategorię do tabeli
         public static final String SQL_INSERT_EMPTY_CARD_CATEGORY = "INSERT INTO " +
                 Card_Categories.TABLE_NAME + " (" + Card_Categories.CATEGORY_NAME + ") " + "VALUES " +
-                "('Brak Kategorii')";
+                "('')";
 
         // Polecenie usuwające tabelę
         public static final String SQL_DELETE_CARD_CATEGORIES = "DROP TABLE IF EXISTS " +

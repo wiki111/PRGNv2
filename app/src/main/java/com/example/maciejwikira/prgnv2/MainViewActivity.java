@@ -207,13 +207,7 @@ public class MainViewActivity extends AppCompatActivity
                 receiptFunctions.populateList(listView, receiptFunctions.getQuery());
             }
         }else{
-            // Działanie analogiczne jak w przypadku wyświetlania listy paragonów powyżej.
-            if(cardFunctions.getResetFilters()){
                 cardFunctions.populateList(listView, null);
-            }else {
-                cardFunctions.populateList(listView, cardFunctions.getQuery());
-            }
-
         }
 
     }

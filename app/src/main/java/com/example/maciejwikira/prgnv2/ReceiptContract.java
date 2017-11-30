@@ -49,7 +49,7 @@ public final class ReceiptContract {
                 + Categories.CATEGORY_NAME + " TEXT)";
 
         public static final String SQL_INSERT_EMPTY_CATEGORY = "INSERT INTO " + Categories.TABLE_NAME
-                + " (" + Categories.CATEGORY_NAME + ") " + "VALUES ('Brak Kategorii')";
+                + " (" + Categories.CATEGORY_NAME + ") " + "VALUES ('')";
 
         public static final String SQL_DELETE_CATEGORIES = "DROP TABLE IF EXISTS " + Categories.TABLE_NAME;
     }
