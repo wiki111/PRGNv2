@@ -16,7 +16,6 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.constraint.ConstraintLayout;
-import android.support.transition.Visibility;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
@@ -38,6 +37,7 @@ import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.opencv.android.OpenCVLoader;
 
@@ -61,6 +61,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     private EditText dateField;
     private EditText dscField;
     private Button addToDBBtn;
+    private Button changePhotoBtn;
     private Uri activeUri;
 
     private String mCurrentPhotoPath;
@@ -68,7 +69,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     private ReceiptFunctions receiptFunctions;
     private CardFunctions cardFunctions;
     private TextRecognitionFunctions textRecognitionFunctions;
-    private boolean showParagons;
+    private boolean showReceipts;
     private Intent mServiceIntent;
     private ImageView pickedImageView;
     private ProgressBar progressBar;
@@ -86,19 +87,29 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     private String chosenCategory;
     private ArrayAdapter<String> catAdapter;
 
-    //funkcja onCreate - inicjalizacja obiektów interfejsu użytkownika i wywołanie funkcji aktywności
+    private DataHandler dataHandler;
+
+    private Toast toast;
+
+    private String categoryColumn;
+    private String[] projection;
+    private String selection;
+    private String categoriesTable;
+    private String itemTable;
+    private String isFavorited;
+    private String updateSelection;
+    private String itemId;
+
+    private boolean update;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // Inicjalizajca biblioteki OpenCV i przekazanie informacji o rezultacie operacji
         if (!OpenCVLoader.initDebug()) {
             Log.e(this.getClass().getSimpleName(), "  OpenCVLoader.initDebug(), not working.");
         } else {
             Log.d(this.getClass().getSimpleName(), "  OpenCVLoader.initDebug(), working.");
         }
-
-        // Uzyskanie od użytkownika pozwolenia na zapis w pamieciu urządzenia
         if (ContextCompat.checkSelfPermission( this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -107,125 +118,156 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                         Constants.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
         }
-
-        // Ustawienie widoku aktywności
         setContentView(R.layout.activity_new_prgn);
-        //Zapisanie kontekstu do zmiennej
         final Context context = getApplicationContext();
-        //Inicjalizacja elementów interfejsu użytkownika
         nameField = (EditText)findViewById(R.id.nameField);
         catSpinner = (Spinner)findViewById(R.id.catSpinner);
         valueField = (EditText) findViewById(R.id.valueField);
         dateField = (EditText) findViewById(R.id.dateField);
         addToDBBtn = (Button)findViewById(R.id.addToDBButton);
         pickedImageView = (ImageView)findViewById(R.id.pickedImageView);
+        progressBar = (ProgressBar)findViewById(R.id.progressBar);
         dscField = (EditText)findViewById(R.id.dscField);
         dscField.setText(" ");
+        isFavorited = "no";
+
+        changePhotoBtn = (Button)findViewById(R.id.changePhotoBtn);
+        changePhotoBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showChangePhotoPopup(v);
+                addToDBBtn.setVisibility(View.GONE);
+                progressBar.setVisibility(View.VISIBLE);
+            }
+        });
 
         mDbHelper = new ReceiptDbHelper(this);
         db = mDbHelper.getWritableDatabase();
 
         categories = new ArrayList<>();
 
-        //Obsługa kliknięcia przycisku dodającego dane do bazy
         addToDBBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(showParagons == true){
-                    ContentValues cv = new ContentValues();
+
+                ContentValues cv = new ContentValues();
+
+                if(showReceipts == true){
                     cv.put(ReceiptContract.Receipt.NAME, nameField.getText().toString());
                     cv.put(ReceiptContract.Receipt.CATEGORY, chosenCategory.toLowerCase());
                     cv.put(ReceiptContract.Receipt.DATE, dateField.getText().toString().toLowerCase());
                     cv.put(ReceiptContract.Receipt.VALUE, Double.parseDouble(valueField.getText().toString().replaceAll("," , "\\.")));
                     cv.put(ReceiptContract.Receipt.IMAGE_PATH, imgToSave);
                     cv.put(ReceiptContract.Receipt.CONTENT, textFromImage);
-                    cv.put(ReceiptContract.Receipt.FAVORITED, "no");
+                    cv.put(ReceiptContract.Receipt.FAVORITED, isFavorited);
                     cv.put(ReceiptContract.Receipt.DESCRIPTION, dscField.getText().toString());
-                    receiptFunctions.addParagon(cv);
                 }else{
-                    ContentValues cv = new ContentValues();
                     cv.put(CardContract.Card.NAME, nameField.getText().toString());
                     cv.put(CardContract.Card.CATEGORY, chosenCategory.toLowerCase());
                     cv.put(CardContract.Card.EXPIRATION_DATE, dateField.getText().toString());
                     cv.put(CardContract.Card.IMAGE_PATH, getRealPathFromURI(activeUri));
-                    cv.put(CardContract.Card.FAVORITED, "no");
+                    cv.put(CardContract.Card.FAVORITED, isFavorited);
                     cv.put(CardContract.Card.DESCRIPTION, dscField.getText().toString());
-                    cardFunctions.addCard(cv);
+                }
+
+                if(update){
+                    updateItem(itemId, cv);
+                }else{
+                    addItem(cv);
                 }
             }
         });
 
-        // Pobranie informacji o trybie aplikacji
         Intent intent = getIntent();
         Bundle extras = intent.getExtras();
 
-        // Ustawienie odpowiednich zmiennych i elementów interfejsu użytkownika w zależności od
-        // trybu aplikacji
-        if(extras.getBoolean(MainViewActivity.CARDS_OR_RECEIPTS)){
-            showParagons = true;
+        setShowReceipts(extras.getBoolean(MainViewActivity.CARDS_OR_RECEIPTS));
+        if(showReceipts){
             addToDBBtn.setText("Dodaj paragon");
-            // Incjalizacja obiektu przetwarzającego dane o paragonach
-            receiptFunctions = new ReceiptFunctions(context);
-            // Inicjalizacja obiektu rozpoznającego i sczytującego tekst z obrazu
             textRecognitionFunctions = new TextRecognitionFunctions(context);
-
-            catCols = new String[]{
-                    ReceiptContract.Categories._ID,
-                    ReceiptContract.Categories.CATEGORY_NAME
-            };
-
-            catCursor = db.query(true, ReceiptContract.Categories.TABLE_NAME, catCols, null,null,null,null,null,null);
-
+            catCursor = db.query(
+                    true,
+                    ReceiptContract.Categories.TABLE_NAME,
+                    Constants.receiptCategoriesProjection,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
         }else {
-            showParagons = false;
-            TextView valueView = (TextView)findViewById(R.id.valTextView);
             TextView dateView = (TextView)findViewById(R.id.dateTextView);
-
-            // Zmiana nazw elementów interfejsu
             dateView.setText("Data wygaśnięcia");
             addToDBBtn.setText("Dodaj kartę");
-
-            // Ukrycie niepotrzebnych elementow interfejsów
             LinearLayout valRow = (LinearLayout)findViewById(R.id.valRow);
             valRow.setVisibility(View.GONE);
-
-            // Inicjalizacja obiektu przetwarzającego dane o kartach
-            cardFunctions = new CardFunctions(context);
-
-            // Usuń ikonę ładowania z interfejsu ...
             progressBar = (ProgressBar)findViewById(R.id.progressBar);
             progressBar.setVisibility(View.GONE);
-
-            // ... i ustaw przycisk pozwalający na dodanie nowego wpisu jako widoczny
             addToDBBtn.setVisibility(View.VISIBLE);
-
-            catCols = new String[]{
-                    CardContract.Card_Categories._ID,
-                    CardContract.Card_Categories.CATEGORY_NAME
-            };
-
-            catCursor = db.query(true, CardContract.Card_Categories.TABLE_NAME, catCols, null,null,null,null,null,null);
+            catCursor = db.query(
+                    true,
+                    CardContract.Card_Categories.TABLE_NAME,
+                    Constants.cardCategoriesProjection,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
         }
 
         while(catCursor.moveToNext()){
-            categories.add(catCursor.getString(catCursor.getColumnIndex(CardContract.Card_Categories.CATEGORY_NAME)));
+            categories.add(
+                    catCursor.getString(
+                            catCursor.getColumnIndex(
+                                    CardContract.Card_Categories.CATEGORY_NAME
+                            )
+                    )
+            );
         }
         categories.add(categories.size(), "Dodaj nową kategorię");
-
-        catAdapter = new ArrayAdapter<String>(context, R.layout.category_spinner_item, categories);
+        catAdapter = new ArrayAdapter<>(context, R.layout.category_spinner_item, categories);
         catSpinner.setAdapter(catAdapter);
         catSpinner.setOnItemSelectedListener(this);
 
-        // Rejestracja obiektu odbierającego zgłoszenia od obiektu przetwarzającego obraz
         IntentFilter intentFilter = new IntentFilter(Constants.BROADCAST_ACTION);
         FixedImageReceiver fixedImageReceiver = new FixedImageReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(fixedImageReceiver, intentFilter);
 
-        // Uruchom wybór zdjęcia paragonu, lub kamerę w celu wykonania go.
-        if(extras.getString(MainViewActivity.CAMERA_OR_MEDIA).equals("cam")){
-            takePhoto();
-        }else if(extras.getString(MainViewActivity.CAMERA_OR_MEDIA).equals("media")) {
-            openGallery();
+
+        update = extras.getBoolean(Constants.UPDATE);
+        if(!update){
+            if(extras.getString(MainViewActivity.CAMERA_OR_MEDIA).equals("cam")){
+                takePhoto();
+            }else if(extras.getString(MainViewActivity.CAMERA_OR_MEDIA).equals("media")) {
+                openGallery();
+            }
+        }else{
+            ArrayList<String> data = extras.getStringArrayList(Constants.ITEM_DATA);
+            setContents(data);
+        }
+
+    }
+
+    public void setShowReceipts(boolean show){
+        if(show){
+            showReceipts = true;
+            categoryColumn = ReceiptContract.Receipt.CATEGORY;
+            projection = Constants.receiptCategoriesProjection;
+            selection = Constants.receiptCategoriesSelection;
+            categoriesTable = ReceiptContract.Categories.TABLE_NAME;
+            itemTable = ReceiptContract.Receipt.TABLE_NAME;
+            updateSelection = ReceiptContract.Receipt._ID + " = ?";
+        }else{
+            showReceipts = false;
+            categoryColumn = CardContract.Card.CATEGORY;
+            projection = Constants.cardCategoriesProjection;
+            selection = Constants.cardCategoriesSelection;
+            categoriesTable = CardContract.Card_Categories.TABLE_NAME;
+            itemTable = CardContract.Card.TABLE_NAME;
+            updateSelection = CardContract.Card._ID + " = ?";
         }
     }
 
@@ -277,76 +319,52 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        // Gdy zostanie wybrane zdjęcie z galerii
         if (resultCode == RESULT_OK && requestCode == 100) {
-
-            // Pobierz uri pliku
             activeUri = data.getData();
-            // Znajdź i zapisz rzeczywistą ścieżkę do pliku
             String path = getRealPathFromURI(activeUri);
-
-            // Jeśli aplikacja jest w trybie paragonów
-            if(showParagons == true){
-                // Wywołaj aktywność pozwalającą na wybór konturu paragonu na zdjęciu
+            if(showReceipts == true){
                 Intent intent = new Intent(getApplicationContext(), ChoosePointsActivity.class);
                 Bundle bundle = new Bundle();
                 bundle.putString(Constants.IMAGE_PATH, path);
                 intent.putExtras(bundle);
                 startActivityForResult(intent, REQUEST_GET_RECEIPT);
             }else{
-                // Wyświetl zdjęcia na interfejsie użytkownika
                 Bitmap chosenImage = BitmapFactory.decodeFile(path);
                 pickedImageView.setImageBitmap(chosenImage);
             }
-
-            // Jeśli nastąpił powrót z aktywności wyboru zdjęcia
         }else if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK){
-
-            // Jeśli aplikacja pracuje w trybie paragonów
-            if(showParagons == true){
-                // Wywołaj aktywność pozwalającą na zaznaczenie konturu paragonu
+            if(showReceipts == true){
                 Intent intent = new Intent(getApplicationContext(), ChoosePointsActivity.class);
                 Bundle bundle = new Bundle();
                 bundle.putString(Constants.IMAGE_PATH, mCurrentPhotoPath);
                 intent.putExtras(bundle);
                 startActivityForResult(intent, REQUEST_GET_RECEIPT);
             }else{
-                // W przeciwnym wypadku zapisz Uri pliku zdjęcia i wyświetl zdjęcie na interfejsie
                 activeUri = mUri;
                 Bitmap chosenImage = BitmapFactory.decodeFile(mCurrentPhotoPath);
                 pickedImageView.setImageBitmap(chosenImage);
             }
-
-            // Jeśli nastąpił powrót z aktywności wyboru konturów
         }else if(requestCode == REQUEST_GET_RECEIPT){
-            // Pobierz dane obrazu
             Bundle bundle = data.getExtras();
-            // Zapisz uri pliku obrazu
             activeUri = Uri.parse(bundle.getString(Constants.IMAGE_URI));
-            // Wyświetl obraz na interfejsie użytkownika
             Bitmap chosenImage = BitmapFactory.decodeFile(bundle.getString(Constants.IMAGE_PATH));
             pickedImageView.setImageBitmap(chosenImage);
-
-            // uruchom przetwarzanie obrazu i wyszukiwanie tekstu w oddzielnym wątku
-            processImage(this,  Uri.parse(bundle.getString(Constants.IMAGE_URI)), bundle.getString(Constants.IMAGE_PATH));
+            processImage(
+                    this,
+                    Uri.parse(bundle.getString(Constants.IMAGE_URI)),
+                    bundle.getString(Constants.IMAGE_PATH)
+            );
         }
 
-        // Jeśli nie zostało wybrane ani wykonane zdjęcie zakończ działanie aktywności
         if(activeUri == null){
             finish();
         }
     }
 
-
-    // Metoda wywołuje przetwarzanie obrazu i wyszukiwanie tekstu w oddzielnym wątku
     private void processImage(Context context, Uri uri, String path){
-
-        // Przekaż odpowiednie dane (ścieżkę i uri obrazu)
         Bundle bundle = new Bundle();
         bundle.putString(Constants.IMAGE_PATH, path);
         bundle.putString(Constants.IMAGE_URI, uri.toString());
-
-        // Uruchom przetwarzanie w nowym wątku
         mServiceIntent = new Intent(context, ImageProcessor.class);
         mServiceIntent.putExtras(bundle);
         context.startService(mServiceIntent);
@@ -365,21 +383,15 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         return cursor.getString(column_index);
     }
 
-    //Stworzenie pliku w ktorym zapisany zostanie obraz przechwycony przez kamere
     private File createImageFile() throws IOException {
-        // Stworzenie nazwy pliku
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
-
-        // Stworzenie pliku w lokalizacji Pictures w pamięci urządzenia
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         File image = File.createTempFile(
                 imageFileName,  /* prefix */
                 ".jpg",         /* suffix */
                 storageDir      /* directory */
         );
-
-        // Zapisanie ścieżki absolutnej do pliku
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
     }
@@ -387,7 +399,6 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         chosenCategory = categories.get(position).toString().toLowerCase();
-
         if(chosenCategory.equals("dodaj nową kategorię")){
             showNewCatPopup(view);
         }
@@ -402,21 +413,13 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     public void showNewCatPopup(View view){
 
         ConstraintLayout mainLayout = (ConstraintLayout)findViewById(R.id.newRecMainLayout);
-
-        // inflate the layout of the popup window
         LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
         View popupView = inflater.inflate(R.layout.new_category_popup, null);
-
-        // create the popup window
         int width = LinearLayout.LayoutParams.WRAP_CONTENT;
         int height = LinearLayout.LayoutParams.WRAP_CONTENT;
-        boolean focusable = true; // lets taps outside the popup also dismiss it
+        boolean focusable = true;
         final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
-
-        // show the popup window
         popupWindow.showAtLocation(mainLayout, Gravity.CENTER, 0, 0);
-
-        // dismiss the popup window when touched
         popupView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -432,40 +435,65 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             @Override
             public void onClick(View v) {
                 chosenCategory = newCatName.getText().toString();
-                categories.add(0, newCatName.getText().toString());
+                categories.add(newCatName.getText().toString());
                 catAdapter.notifyDataSetChanged();
                 ContentValues newCategoryValue = new ContentValues();
-                newCategoryValue.put(CardContract.Card_Categories.CATEGORY_NAME,  chosenCategory);
-                db.insert(CardContract.Card_Categories.TABLE_NAME, null, newCategoryValue);
+                newCategoryValue.put(projection[1],  chosenCategory);
+                db.insert(categoriesTable, null, newCategoryValue);
+                setCategoryText(chosenCategory);
             }
         });
     }
 
-    // Klasa pozwala na odebranie zgłoszenia od obiektu przetwarzającego obraz w oddzielnym wątku
-    // gdy zakończy pracę
+    public void showChangePhotoPopup(View view){
+
+        ConstraintLayout mainLayout = (ConstraintLayout)findViewById(R.id.newRecMainLayout);
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        View popupView = inflater.inflate(R.layout.change_photo_popup, null);
+        int width = LinearLayout.LayoutParams.WRAP_CONTENT;
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+        boolean focusable = true;
+        final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
+        popupWindow.showAtLocation(mainLayout, Gravity.CENTER, 0, 0);
+        popupView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                popupWindow.dismiss();
+                return true;
+            }
+        });
+
+        Button fromGallery = (Button)popupView.findViewById(R.id.fromGallery);
+        fromGallery.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openGallery();
+                popupWindow.dismiss();
+            }
+        });
+
+        Button fromCamera = (Button)popupView.findViewById(R.id.fromCamera);
+        fromCamera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                takePhoto();
+                popupWindow.dismiss();
+            }
+        });
+    }
+
     private class FixedImageReceiver extends BroadcastReceiver{
-
         private FixedImageReceiver(){}
-
-        // Gdy odebrane zostanie zgłoszenie
         @Override
         public void onReceive(Context context, Intent intent) {
-            // Pobierz i zapisz przekazane dane
             Bundle extras = intent.getExtras();
             imgToSave = extras.getString(Constants.IMAGE_PATH);
             textFromImage = extras.getString(Constants.RECEIPT_TEXT);
             receiptValue = extras.getString(Constants.RECEIPT_VAL);
             receiptDate = extras.getString(Constants.RECEIPT_DATE);
-
-            // Ustaw wartosci odpowiednich pól interfejsu użytkownika
             valueField.setText(receiptValue);
             dateField.setText(receiptDate);
-
-            // Usuń ikonę ładowania z interfejsu ...
-            progressBar = (ProgressBar)findViewById(R.id.progressBar);
             progressBar.setVisibility(View.GONE);
-
-            // ... i ustaw przycisk pozwalający na dodanie nowego wpisu jako widoczny
             addToDBBtn.setVisibility(View.VISIBLE);
         }
     }
@@ -474,6 +502,127 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     public void onDestroy(){
         db.close();
         super.onDestroy();
+    }
+
+    private void addItem(ContentValues itemData){
+        try{
+            checkCategory(db, itemData);
+            db.insert(itemTable, null, itemData);
+            String confirmationText;
+            if(showReceipts){
+                confirmationText = Integer.toString(R.string.toast_add_new_receipt_success);
+            }else{
+                confirmationText = Integer.toString(R.string.toast_add_new_card_success);
+            }
+            toast = Toast.makeText(
+                    getApplicationContext(),
+                    confirmationText,
+                    Toast.LENGTH_LONG
+            );
+            toast.show();
+            finish();
+        }catch (Exception e) {
+            toast = Toast.makeText(
+                    getApplicationContext(),
+                    R.string.toast_add_new_failure + e.toString(),
+                    Toast.LENGTH_LONG
+            );
+            toast.show();
+        }
+    }
+
+    private boolean checkCategory( SQLiteDatabase db, ContentValues itemData){
+
+        String categoryName = itemData.get(categoryColumn).toString().toLowerCase();
+        String[] selectionArgs = {categoryName};
+
+        Cursor cursor = db.query(
+                categoriesTable,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null
+        );
+
+        cursor.moveToFirst();
+
+        if((cursor != null) && (cursor.getCount() > 0)){
+            cursor.close();
+            return true;
+        }else{
+            insertNewCategory(db, categoryName);
+            cursor.close();
+            return false;
+        }
+
+    }
+
+    private void insertNewCategory(SQLiteDatabase db, String categoryName){
+        ContentValues newCategoryValue = new ContentValues();
+        newCategoryValue.put(
+                projection[1],
+                categoryName
+        );
+        db.insert(
+                categoriesTable,
+                null,
+                newCategoryValue
+        );
+    }
+
+    private void setContents(ArrayList<String> data){
+        if(showReceipts){
+            nameField.setText(data.get(0));
+            setCategoryText(data.get(1));
+            valueField.setText(data.get(2));
+            dateField.setText(data.get(3));
+            imgToSave = data.get(4);
+            textFromImage = data.get(5);
+            isFavorited = data.get(6);
+            dscField.setText(data.get(7));
+            itemId = data.get(8);
+            addToDBBtn.setText("Aktualizuj");
+        }else{
+            nameField.setText(data.get(0));
+            setCategoryText(data.get(1));
+            dateField.setText(data.get(2));
+            imgToSave = data.get(3);
+            isFavorited = data.get(4);
+            dscField.setText(data.get(5));
+            addToDBBtn.setText("Aktualizuj");
+        }
+
+        progressBar.setVisibility(View.GONE);
+        addToDBBtn.setVisibility(View.VISIBLE);
+        Bitmap chosenImage = BitmapFactory.decodeFile(imgToSave);
+        pickedImageView.setImageBitmap(chosenImage);
+
+
+    }
+
+    private void setCategoryText(String text){
+            for(int i = 0; i < catSpinner.getCount(); i++){
+                if(catSpinner.getAdapter().getItem(i).toString().toLowerCase().contains(text.toLowerCase())){
+                    catSpinner.setSelection(i);
+                }
+            }
+    }
+
+    private void updateItem(String id, ContentValues newItemData){
+        try{
+            db = mDbHelper.getWritableDatabase();
+            checkCategory(db, newItemData);
+            String[] item_id = {id};
+            db.update(itemTable, newItemData, updateSelection, item_id);
+        }catch (Exception e){
+            //Wyświetlenie komunikatu błędu w wypadku jego wystąpienia
+            toast = Toast.makeText(getApplicationContext(), R.string.toast_add_new_failure + e.toString(), Toast.LENGTH_LONG);
+            toast.show();
+        }finally {
+            db.close();
+        }
     }
 
 }

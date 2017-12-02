@@ -17,6 +17,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 // Aktywność obsługuje wyświetlanie szczegółów wpisu
 public class DetailsActivity extends AppCompatActivity {
 
@@ -24,22 +26,23 @@ public class DetailsActivity extends AppCompatActivity {
     private ReceiptDbHelper mDbHelper;
     private SQLiteDatabase db;
     private Cursor c;
-    private String selection;
     private String[] selectionArgs;
-    private String[] receiptCols;
-    private String[] cardCols;
     private String id;
     private TextView nameTextView;
     private TextView categoryTextView;
     private TextView dateTextView;
     private TextView valueTextView;
+    private TextView descriptionTextView;
     private ImageView receiptPhotoDetailsView;
+    private ImageView favoritedIconView;
     private String bitmapPath;
     private Bitmap receiptPhoto;
     private boolean showReceipts;
-    private ReceiptFunctions pf;
-    private CardFunctions cf;
-
+    private String[] projection;
+    private String selection;
+    private String favoritedColumn;
+    private String itemTable;
+    private Toast toast;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,31 +52,6 @@ public class DetailsActivity extends AppCompatActivity {
         mDbHelper = new ReceiptDbHelper(getApplicationContext());
         db = mDbHelper.getWritableDatabase();
 
-        // Kolumny tabeli paragonów z których ma zostać pobrana zawartość
-        receiptCols = new String[]{
-                ReceiptContract.Receipt._ID,
-                ReceiptContract.Receipt.NAME,
-                ReceiptContract.Receipt.CATEGORY,
-                ReceiptContract.Receipt.VALUE,
-                ReceiptContract.Receipt.DATE,
-                ReceiptContract.Receipt.IMAGE_PATH,
-                ReceiptContract.Receipt.CONTENT
-        };
-
-        // Kolumny tabeli kart z których ma zostać pobrana zawartość
-        cardCols = new String[]{
-                CardContract.Card._ID,
-                CardContract.Card.NAME,
-                CardContract.Card.CATEGORY,
-                CardContract.Card.EXPIRATION_DATE,
-                CardContract.Card.IMAGE_PATH
-        };
-
-
-        // Deklaracja klas obsługujących funkcje związanie z przetwarzaniem danych o
-        // paragonach i kartach
-        pf = new ReceiptFunctions(getApplicationContext());
-        cf = new CardFunctions(getApplicationContext());
 
         // Pobranie ID elementu do wyświetlenia i trybu aplikacji
         Intent intent = getIntent();
@@ -81,20 +59,10 @@ public class DetailsActivity extends AppCompatActivity {
         id = extras.getString("item_id");
         showReceipts = extras.getBoolean(MainViewActivity.CARDS_OR_RECEIPTS);
 
-
         // Jeśli aplikacja jest w trybie paragonów wykonaj zapytanie które spowoduje zwrócenie
         // danych elementu o podanym ID z tabeli paragonów. W przeciwnym razie pobierz odpowiednie
         // dane z tabeli kart.
-        if(showReceipts == true) {
-           selection = ReceiptContract.Receipt._ID + " = ?";
-           selectionArgs = new String[]{ id };
-           c = db.query(ReceiptContract.Receipt.TABLE_NAME, receiptCols, selection, selectionArgs, null, null, null);
-        }else{
-           selection = CardContract.Card._ID + " = ?";
-           selectionArgs = new String[]{ id };
-           c = db.query(CardContract.Card.TABLE_NAME, cardCols, selection, selectionArgs, null, null, null);
-        }
-
+        setShowReceipts(showReceipts);
         // Przesun kursor na pierwszą pozycję
         c.moveToFirst();
 
@@ -103,7 +71,9 @@ public class DetailsActivity extends AppCompatActivity {
         categoryTextView = (TextView) findViewById(R.id.categoryTextView);
         dateTextView = (TextView)findViewById(R.id.dateTextView);
         valueTextView = (TextView)findViewById(R.id.valueTextView);
+        descriptionTextView = (TextView)findViewById(R.id.descriptionTextView);
         receiptPhotoDetailsView = (ImageView)findViewById(R.id.paragonPhotoDetailsView);
+        favoritedIconView = (ImageView)findViewById(R.id.favoritedIconView);
 
         // Ustaw zawartość elementów interfejsu
         setViewContents();
@@ -127,11 +97,12 @@ public class DetailsActivity extends AppCompatActivity {
         goToEditButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), EditActivity.class);
+                Intent intent = new Intent(getApplicationContext(), NewRecordActivity.class);
                 Bundle extras = new Bundle();
-                // Przekazanie trybu aplikacji, oraz id elementu
                 extras.putBoolean(MainViewActivity.CARDS_OR_RECEIPTS, showReceipts);
                 extras.putString("item_id", id);
+                extras.putBoolean(Constants.UPDATE, true);
+                extras.putStringArrayList(Constants.ITEM_DATA, buildDataArray());
                 intent.putExtras(extras);
                 startActivity(intent);
             }
@@ -144,61 +115,30 @@ public class DetailsActivity extends AppCompatActivity {
             public void onClick(View v) {
                 ContentValues contentValues = new ContentValues();
                 Toast toast;
-
-                // Jeśli element jest paragonem, zaktualizuj wpis o danym ID w tabeli paragonów. W
-                // przeciwnym razie wykonaj analogiczną operację na tabeli kart.
-                if(showReceipts == true) {
-                    contentValues.put(ReceiptContract.Receipt.NAME, nameTextView.getText().toString());
-                    contentValues.put(ReceiptContract.Receipt.CATEGORY, categoryTextView.getText().toString());
-                    contentValues.put(ReceiptContract.Receipt.DATE, dateTextView.getText().toString());
-                    contentValues.put(ReceiptContract.Receipt.VALUE, valueTextView.getText().toString());
-                    contentValues.put(ReceiptContract.Receipt.IMAGE_PATH, c.getString(c.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH)));
-                    contentValues.put(ReceiptContract.Receipt.CONTENT, c.getString(c.getColumnIndex(ReceiptContract.Receipt.CONTENT)));
-                    contentValues.put(ReceiptContract.Receipt.FAVORITED, "yes");
-                    pf.updateParagon(id, contentValues);
-                    toast = Toast.makeText(getApplicationContext(), "Receipt dodano do ulubionych", Toast.LENGTH_SHORT);
-                }else{
-                    contentValues.put(CardContract.Card.NAME, nameTextView.getText().toString());
-                    contentValues.put(CardContract.Card.CATEGORY, categoryTextView.getText().toString());
-                    contentValues.put(CardContract.Card.EXPIRATION_DATE, dateTextView.getText().toString());
-                    contentValues.put(CardContract.Card.IMAGE_PATH, c.getString(c.getColumnIndex(CardContract.Card.IMAGE_PATH)));
-                    contentValues.put(CardContract.Card.FAVORITED, "yes");
-                    cf.updateCard(id, contentValues);
-                    toast = Toast.makeText(getApplicationContext(), "Kartę dodano do ulubionych", Toast.LENGTH_SHORT);
-                }
-
-                // Wyświetl potwierdzenie dodania do ulubionych
+                contentValues.put(CardContract.Card.FAVORITED, "yes");
+                db.update(itemTable, contentValues, selection, selectionArgs);
+                toast = Toast.makeText(getApplicationContext(), "Dodano do ulubionych", Toast.LENGTH_SHORT);
                 toast.show();
             }
         });
 
-        // Przycisk powoduje skasowanie elementu
         Button deleteButton = (Button)findViewById(R.id.deleteButton);
         deleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                // Wyświetlenie dialogu z prośbą o potwierdzenie akcji przez użytkownika
                 AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(DetailsActivity.this, R.style.myDialog));
                 if(showReceipts == true)
                     builder.setMessage("Czy na pewno chcesz skasować ten paragon ?").setTitle("Kasowanie paragonu.");
                 else
                     builder.setMessage("Czy na pewno chcesz skasować tą kartę ?").setTitle("Kasowanie karty.");
-
-
-                // Jeśli użytkownik potwierdzi operację, skasuj wpis
                 builder.setPositiveButton("Tak", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        if(showReceipts == true)
-                            db.delete(ReceiptContract.Receipt.TABLE_NAME, selection, selectionArgs);
-                        else
-                            db.delete(CardContract.Card.TABLE_NAME, selection, selectionArgs);
-                        finish();
+                            db.delete(itemTable, selection, selectionArgs);
+                            finish();
                     }
                 });
                 builder.setNegativeButton("Nie", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        // Nie rób nic.
                     }
                 });
                 AlertDialog dialog = builder.create();
@@ -206,60 +146,51 @@ public class DetailsActivity extends AppCompatActivity {
             }
         });
 
-        // Przycisk powoduje usunięcie elementu z ulubionych
         Button unfavoriteButton = (Button)findViewById(R.id.unfavoriteButton);
         unfavoriteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ContentValues contentValues = new ContentValues();
                 Toast toast;
-
-                if(showReceipts == true) {
-                    contentValues.put(ReceiptContract.Receipt.NAME, nameTextView.getText().toString());
-                    contentValues.put(ReceiptContract.Receipt.CATEGORY, categoryTextView.getText().toString());
-                    contentValues.put(ReceiptContract.Receipt.DATE, dateTextView.getText().toString());
-                    contentValues.put(ReceiptContract.Receipt.VALUE, valueTextView.getText().toString());
-                    contentValues.put(ReceiptContract.Receipt.IMAGE_PATH, c.getString(c.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH)));
-                    contentValues.put(ReceiptContract.Receipt.CONTENT, c.getString(c.getColumnIndex(ReceiptContract.Receipt.CONTENT)));
-                    contentValues.put(ReceiptContract.Receipt.FAVORITED, "no");
-                    pf.updateParagon(id, contentValues);
-                    toast = Toast.makeText(getApplicationContext(), "Paragon usunięto z ulubionych", Toast.LENGTH_SHORT);
-                }else{
-                    contentValues.put(CardContract.Card.NAME, nameTextView.getText().toString());
-                    contentValues.put(CardContract.Card.CATEGORY, categoryTextView.getText().toString());
-                    contentValues.put(CardContract.Card.EXPIRATION_DATE, dateTextView.getText().toString());
-                    contentValues.put(CardContract.Card.IMAGE_PATH, c.getString(c.getColumnIndex(CardContract.Card.IMAGE_PATH)));
-                    contentValues.put(CardContract.Card.FAVORITED, "no");
-                    cf.updateCard(id, contentValues);
-                    toast = Toast.makeText(getApplicationContext(), "Kartę usunięto z ulubionych", Toast.LENGTH_SHORT);
-                }
-                // Wyświetl potwierdzenie dla użytkownika
+                contentValues.put(CardContract.Card.FAVORITED, "no");
+                db.update(itemTable, contentValues, selection, selectionArgs);
+                toast = Toast.makeText(getApplicationContext(), "Usunięto z ulubionych", Toast.LENGTH_SHORT);
                 toast.show();
             }
         });
 
     }
 
+    public void setShowReceipts(boolean show){
+        if(show){
+            showReceipts = true;
+            favoritedColumn = ReceiptContract.Receipt.FAVORITED;
+            projection = Constants.receiptTableCols;
+            selection = ReceiptContract.Receipt._ID + " = ?";
+            itemTable = ReceiptContract.Receipt.TABLE_NAME;
+        }else{
+            showReceipts = false;
+            favoritedColumn = ReceiptContract.Receipt.FAVORITED;
+            projection = Constants.cardTableCols;
+            selection = CardContract.Card._ID + " = ?";
+            itemTable = CardContract.Card.TABLE_NAME;
+        }
+
+        selectionArgs = new String[]{ id };
+        c = db.query(itemTable, projection, selection, selectionArgs, null, null, null);
+
+    }
+
     @Override
     protected void onResume(){
-
-        // Wyświetl odpowiedni element o danym ID - z tabeli paragonów lub kart
-        if(showReceipts == true) {
-            c = db.query(ReceiptContract.Receipt.TABLE_NAME, receiptCols, selection, selectionArgs, null, null, null);
-        }else {
-            c = db.query(CardContract.Card.TABLE_NAME, cardCols, selection, selectionArgs, null, null, null);
-        }
+        c = db.query(itemTable, projection, selection, selectionArgs, null, null, null);
         c.moveToFirst();
-
-        // Ustaw zawartość elementów interfejsu użytkownika
         setViewContents();
-
         super.onResume();
     }
 
     @Override
     protected void onDestroy(){
-        // Przy niszczeniu aktywności zamknij kursor i połączenie z bazą danych
         c.close();
         db.close();
         super.onDestroy();
@@ -268,22 +199,59 @@ public class DetailsActivity extends AppCompatActivity {
     // Metoda ustawia zawartość poszczególnych pól i widoków interfejsu użytkownika
     private void setViewContents(){
         if(showReceipts == true){
-            nameTextView.setText(c.getString(c.getColumnIndex(ReceiptContract.Receipt.NAME)));
-            categoryTextView.setText(c.getString(c.getColumnIndex(ReceiptContract.Receipt.CATEGORY)));
-            dateTextView.setText(c.getString(c.getColumnIndex(ReceiptContract.Receipt.DATE)));
-            valueTextView.setText(c.getString(c.getColumnIndex(ReceiptContract.Receipt.VALUE)));
+            nameTextView.setText("Nazwa : " + c.getString(c.getColumnIndex(ReceiptContract.Receipt.NAME)));
+            categoryTextView.setText("Kategoria : " + c.getString(c.getColumnIndex(ReceiptContract.Receipt.CATEGORY)));
+            dateTextView.setText("Data : " + c.getString(c.getColumnIndex(ReceiptContract.Receipt.DATE)));
+            valueTextView.setText("Wartość : " +c.getString(c.getColumnIndex(ReceiptContract.Receipt.VALUE)));
+            descriptionTextView.setText("Opis : " + c.getString(c.getColumnIndex(ReceiptContract.Receipt.DESCRIPTION)));
             bitmapPath = c.getString(c.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH));
             receiptPhoto = BitmapFactory.decodeFile(bitmapPath);
             receiptPhotoDetailsView.setImageBitmap(receiptPhoto);
+            if(!c.getString(c.getColumnIndex(ReceiptContract.Receipt.FAVORITED)).equals("yes")){
+                favoritedIconView.setVisibility(View.GONE);
+            }else{
+                favoritedIconView.setVisibility(View.VISIBLE);
+            }
         }else {
-            nameTextView.setText(c.getString(c.getColumnIndex(CardContract.Card.NAME)));
-            categoryTextView.setText(c.getString(c.getColumnIndex(CardContract.Card.CATEGORY)));
-            dateTextView.setText(c.getString(c.getColumnIndex(CardContract.Card.EXPIRATION_DATE)));
+            nameTextView.setText("Nazwa : " + c.getString(c.getColumnIndex(CardContract.Card.NAME)));
+            categoryTextView.setText("Kategoria : " + c.getString(c.getColumnIndex(CardContract.Card.CATEGORY)));
+            dateTextView.setText("Data : " + c.getString(c.getColumnIndex(CardContract.Card.EXPIRATION_DATE)));
+            descriptionTextView.setText("Opis : " + c.getString(c.getColumnIndex(CardContract.Card.DESCRIPTION)));
             bitmapPath = c.getString(c.getColumnIndex(CardContract.Card.IMAGE_PATH));
             receiptPhoto = BitmapFactory.decodeFile(bitmapPath);
             receiptPhotoDetailsView.setImageBitmap(receiptPhoto);
-
             valueTextView.setVisibility(View.INVISIBLE);
+            if(!c.getString(c.getColumnIndex(CardContract.Card.FAVORITED)).equals("yes")){
+                favoritedIconView.setVisibility(View.GONE);
+            }else{
+                favoritedIconView.setVisibility(View.VISIBLE);
+            }
         }
+
     }
+
+    private ArrayList<String> buildDataArray(){
+        ArrayList<String> data = new ArrayList<>();
+        if(showReceipts){
+            data.add(0, c.getString(c.getColumnIndex(ReceiptContract.Receipt.NAME)));
+            data.add(1, c.getString(c.getColumnIndex(ReceiptContract.Receipt.CATEGORY)));
+            data.add(2, c.getString(c.getColumnIndex(ReceiptContract.Receipt.VALUE)));
+            data.add(3, c.getString(c.getColumnIndex(ReceiptContract.Receipt.DATE)));
+            data.add(4, c.getString(c.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH)));
+            data.add(5, c.getString(c.getColumnIndex(ReceiptContract.Receipt.CONTENT)));
+            data.add(6, c.getString(c.getColumnIndex(ReceiptContract.Receipt.FAVORITED)));
+            data.add(7, c.getString(c.getColumnIndex(ReceiptContract.Receipt.DESCRIPTION)));
+            data.add(8, c.getString(c.getColumnIndex(ReceiptContract.Receipt._ID)));
+        }else{
+            data.add(0, c.getString(c.getColumnIndex(CardContract.Card.NAME)));
+            data.add(1, c.getString(c.getColumnIndex(CardContract.Card.CATEGORY)));
+            data.add(2, c.getString(c.getColumnIndex(CardContract.Card.EXPIRATION_DATE)));
+            data.add(3, c.getString(c.getColumnIndex(CardContract.Card.IMAGE_PATH)));
+            data.add(4, c.getString(c.getColumnIndex(CardContract.Card.FAVORITED)));
+            data.add(5, c.getString(c.getColumnIndex(CardContract.Card.DESCRIPTION)));
+            data.add(6, c.getString(c.getColumnIndex(CardContract.Card._ID)));
+        }
+        return data;
+    }
+
 }

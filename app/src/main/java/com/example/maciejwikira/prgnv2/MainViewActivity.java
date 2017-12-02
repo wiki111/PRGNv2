@@ -1,11 +1,20 @@
 package com.example.maciejwikira.prgnv2;
 
+import android.app.DialogFragment;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.support.constraint.ConstraintLayout;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.support.v7.widget.SearchView;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MotionEvent;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -15,10 +24,22 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.PopupWindow;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
+
+import java.util.ArrayList;
+import java.util.EmptyStackException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /*
     Aktywność odpowiada za wyświetlanie głównego ekranu aplikacji.
@@ -30,85 +51,65 @@ import com.github.clans.fab.FloatingActionMenu;
 public class MainViewActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    // Definicje stałych kluczy używanych przy przekazywaniu lub odbieraniu danych z innych
-    // aktywności
-
-    // Klucz wartości decydującej o wybraniu zdjęcia z pamięci lub zrobienia nowego
     public static final String CAMERA_OR_MEDIA = "CAMERA_OR_MEDIA";
-
-    // Klucz wartości oznaczającej jakie dane są uwzględniane - paragony lub karty lojalnościowe
     public static final String CARDS_OR_RECEIPTS = "CARDS_OR_RECEIPTS";
-
-    // Klucz identyfikujący kod powrotu z aktywności filtrowania elementów listy
     public static final int RESULT_FILTER = 110;
-
-    // widok listy na której wyświetlane są dane
     private ListView listView;
-
-    // Deklaracja obiektu klasy odpowiedzialnej za obsługę danych paragonów
-    private ReceiptFunctions receiptFunctions;
-
-    // Deklaracja obiektu klasy odpowiedzialnej za obsługę danych kart lojalnościowych
-    private CardFunctions cardFunctions;
-
-    // Deklaracja zmiennej przechowującej aktualny kontekst aplikacji
     private Context context;
-
-    // Deklaracja obiektu menu aplikacji
     private Menu menu;
-
-    // Deklaracja elementu menu w pasku aplikacji odpowiedzialnego za obsługę wyświetlania
-    // ulubionych kart bądź paragonów
     private MenuItem favItem;
-
-    // Deklaracja zmiennej logicznej przechowującej informację o wyświetlaniu ulubionych elementów
     private boolean showFavorites;
-
-    // Deklaracja zmiennej logicznej przechowującej informację trybie działania aplikacji -
-    // tryb paragonów lub kart
-    private boolean showReceipts;
-
-    // Deklaracja obiektu klasy rozwijanego menu dodawania nowego wpisu
     private FloatingActionMenu fabMenu;
+    private DataHandler dataHandler;
+    private String categoryColumn;
+    private String[] projection;
+    private String selection;
+    private String categoriesTable;
+    private String itemTable;
+    private String updateSelection;
+    private String[] tableCols;
+    private SQLiteDatabase db;
+    private ReceiptDbHelper mDbHelper;
+    private CardListAdapter cardListAdapter;
+    private ReceiptListAdapter receiptListAdapter;
+    private ArrayList<Integer> itemIds;
+    private boolean resetFilters;
+    private boolean showReceipts;
+    private String chosenCategory;
+    private String chosenFromDate, chosenToDate;
+    private Matcher matcherFrom, matcherTo;
+    private Pattern datePattern = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");
+    private String query;
+
+    private Toast toast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         context = getApplicationContext();
+        mDbHelper = new ReceiptDbHelper(context);
+        setShowReceipts(true);
+        itemIds = new ArrayList<>();
+        query = null;
+        resetFilters = true;
 
-        // Utworzenie instancji klas obsługujących paragony i karty
-        receiptFunctions = new ReceiptFunctions(context);
-        cardFunctions = new CardFunctions(context);
-
-        // Domyślnie aktywność działa w trybie paragonów
-        showReceipts = true;
-
-        // Ustawienie widoku aktywności
         setContentView(R.layout.activity_main_view2);
 
-        // Deklaracja i ustawienie paska narzędzi
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // Deklaracja i ustawienie szuflady nawigacyjnej, oraz obsługa jej otwierania i zamykania
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        // Ustawienie nasłuchiwania na wydarzenia w szufladzie nawigacyjnej - wybór opcji
-        // przez użytkownika
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        // Zapisanie referencji do przycisku menu dodawania nowego wpisu
         fabMenu = (FloatingActionMenu)findViewById(R.id.material_design_android_floating_action_menu);
 
-        // Obsługa kliknięcia na przycisk odpowiadający za dodanie nowego wpisu przez wybranie zdjęcia
-        // z pamięci urządzenia. Uruchamiana jest aktywność dodawania nowego rekordu z odpowiednimi
-        // parametrami w zależności od wyboru użytkownika.
         FloatingActionButton fabMedia = (FloatingActionButton)findViewById(R.id.material_design_floating_action_menu_item1);
         fabMedia.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -117,14 +118,12 @@ public class MainViewActivity extends AppCompatActivity
             Bundle extras = new Bundle();
             extras.putBoolean(CARDS_OR_RECEIPTS, showReceipts);
             extras.putString(CAMERA_OR_MEDIA, "media");
+            extras.putBoolean(Constants.UPDATE, false);
             intent.putExtras(extras);
             startActivity(intent);
             }
         });
 
-        // Obsługa kliknięcia na przycisk odpowiadający za dodanie nowego wpisu przez zrobienie
-        // nowego zdjęcia. Uruchamiana jest aktywność dodawania nowego rekordu z odpowiednimi
-        // parametrami w zależności od wyboru użytkownika.
         FloatingActionButton fabCamera = (FloatingActionButton)findViewById(R.id.material_design_floating_action_menu_item2);
         fabCamera.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -133,109 +132,48 @@ public class MainViewActivity extends AppCompatActivity
             Bundle extras = new Bundle();
             extras.putBoolean(CARDS_OR_RECEIPTS, showReceipts);
             extras.putString(CAMERA_OR_MEDIA, "cam");
+            extras.putBoolean(Constants.UPDATE, false);
             intent.putExtras(extras);
             startActivity(intent);
             }
         });
 
-        // Zapisanie uchwytu do elementu interfejsu który jest odpowiedzialny za wyświetlanie listy
-        // wpisów
         listView = (ListView)findViewById(R.id.listView);
-
-        // Wyświetlenie listy wpisów
-        showReceiptsList(listView);
-    }
-
-
-    /*
-        Metoda odpowiada za wyświetlenie listy wpisów dotyczących paragonów, oraz za ustawienie
-        obiektu nasłuchującego na zdarzenia {Listener) który umożliwia obsługę kliknięcia
-        (tapnięcia) na element listy.
-     */
-    private void showReceiptsList(ListView lv){
-
-        // Jeśli wyświetlana jest lista paragonów, to aplikacja jest w trybie paragonów.
-        showReceipts = true;
-
-        // Ustawienie obiektu nasłuchującego na zdarzenia. Jeśli nastąpi kliknięcie na element listy
-        // uruchamiana jest z odpowiednimi parametrami aktywność odpowiedzialna za pokazanie
-        // szczegółów dotyczących wpisu.
-        receiptFunctions.populateList(lv, null);
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(context, DetailsActivity.class);
                 Bundle extras = new Bundle();
                 extras.putBoolean(CARDS_OR_RECEIPTS, showReceipts);
-                extras.putString("item_id", Integer.toString(receiptFunctions.getItemIds().get(position)));
+                extras.putString("item_id", Integer.toString(itemIds.get(position)));
                 intent.putExtras(extras);
                 startActivity(intent);
             }
         });
-    }
 
-    // Funkcja analogiczna do funkcji showReceiptsList, tyle, że dotycząca kart, a nie paragonów.
-    private void showCardsList(ListView lv){
-        showReceipts = false;
-        cardFunctions.populateList(lv, null);
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(context, DetailsActivity.class);
-                Bundle extras = new Bundle();
-                extras.putBoolean(CARDS_OR_RECEIPTS, showReceipts);
-                extras.putString("item_id", Integer.toString(cardFunctions.getItemIds().get(position)));
-                intent.putExtras(extras);
-                startActivity(intent);
-            }
-        });
     }
 
     @Override
     public void onResume(){
         super.onResume();
-
-        // Jeśli aplikacja znajduje się w trybie paragonów wyświetl listę paragonów. W przeciwnym
-        // razie wyświetl listę kart.
-        if(showReceipts == true){
-            // Jeśli lista nie ma być filtrowana po prostu wyświetl wszystkie rekordy z bazy danych.
-            // W przeciwnym wypadku przekaż do funkcji wyświetlającej listę odpowiednie zapytanie do
-            // bazy danych.
-            if(receiptFunctions.getResetFilters()){
-                receiptFunctions.populateList(listView, null);
-            }else{
-                receiptFunctions.populateList(listView, receiptFunctions.getQuery());
-            }
-        }else{
-                cardFunctions.populateList(listView, null);
-        }
-
+        populateList(listView, null);
     }
 
     @Override
     public void onPause(){
         super.onPause();
-
-        // Zwiń menu dodawania nowego wpisu.
         fabMenu.close(true);
-
-        // Nie wyświetlaj ulubionych.
         showFavorites = false;
-
-        // Ustawienie ikony oznaczającej, że wyświetlanie ulubionych elementów nie jest aktywne.
         favItem = menu.findItem(R.id.action_fav);
         favItem.setIcon(R.drawable.ic_favorite_border_white_24dp);
     }
 
     @Override
     public void onBackPressed() {
-
-        // Jeśli szuflada nawigacyjna jest otwarta, zamknij ją i zakończ akcję.
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            // W przeciwnym razie wywołaj zwyczajną akcję.
             super.onBackPressed();
         }
     }
@@ -243,47 +181,35 @@ public class MainViewActivity extends AppCompatActivity
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        // Gdy nastąpi powrót z aktywności która pozwala na wprowadzenie parametrów, według których
-        // ma być filtrowana lista wyników (FilterActivity) ...
         if(resultCode == RESULT_FILTER){
-            Bundle extras = data.getExtras();
-            // Jeśli aplikacja jest w trybie paragonów przekaż dane zwrócone przez FilterActivity
-            // do funkcji filtrującej listę paragonów.
-            if(showReceipts == true)
-                receiptFunctions.filterList(extras);
-            else
-                // W przeciwnym razie przekaż dane do funkcji filtrującej listę kart.
-                cardFunctions.filterList(extras);
-        }
+                Bundle extras = data.getExtras();
+                filterList(extras);
+            }
     }
 
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
+
         int id = item.getItemId();
 
-        // Jeśli wybrana została opcja paragonów przełącz aplikację w tryb paragonów, wyświetl ich
-        // listę i zmień etykietę menu dodawania wpisów. Postępuj analogicznie w przypadku gdy
-        // została wybrana opcja kart lojalnościowych.
         if (id == R.id.paragons_tab) {
             if(showReceipts == false){
-                showReceiptsList(listView);
+                setShowReceipts(true);
+                populateList(listView, null);
                 fabMenu.setMenuButtonLabelText("Dodaj paragon");
             }
         } else if (id == R.id.cards_tab) {
             if(showReceipts == true){
-                showCardsList(listView);
+                setShowReceipts(false);
+                populateList(listView, null);
                 fabMenu.setMenuButtonLabelText("Dodaj kartę");
             }
         }
 
-        // Zamknij szufladę.
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -301,16 +227,8 @@ public class MainViewActivity extends AppCompatActivity
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener(){
             @Override
             public boolean onQueryTextSubmit(String query) {
-                // Gdy użytkownik wyśle zapytanie wywoływana jest odpowiednia funkcja wyszukująca,
-                // która jako parametr przyjmuje zapytanie użytkownika, oraz uchwyt do elementu
-                // interfejsu, który jest odpowiedzialny za wyświetlenie listy wyników.
-
-                    if(showReceipts == true){
-                        receiptFunctions.search(listView, searchView.getQuery().toString());
-                    }else{
-                        cardFunctions.search(listView, searchView.getQuery().toString());
-                    }
-                    return true;
+                search(listView, searchView.getQuery().toString());
+                return true;
             }
 
             @Override
@@ -323,11 +241,7 @@ public class MainViewActivity extends AppCompatActivity
         MenuItemCompat.setOnActionExpandListener(searchItem, new MenuItemCompat.OnActionExpandListener() {
             @Override
             public boolean onMenuItemActionCollapse(MenuItem item) {
-                if(showReceipts == true)
-                    receiptFunctions.populateList(listView, null);
-                else
-                    cardFunctions.populateList(listView, null);
-
+                populateList(listView, null);
                 return true;
             }
 
@@ -343,13 +257,7 @@ public class MainViewActivity extends AppCompatActivity
         filterItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                // Uruchom aktywność filtrowania (FilterActivity) i przekaż do niej informację
-                // o trybie działania aplikacji.
-                Intent intent = new Intent(context, FilterActivity.class);
-                Bundle extras = new Bundle();
-                extras.putBoolean(CARDS_OR_RECEIPTS, showReceipts);
-                intent.putExtras(extras);
-                startActivityForResult(intent, 0);
+                showFilterPopup();
                 return true;
             }
         });
@@ -367,27 +275,21 @@ public class MainViewActivity extends AppCompatActivity
                 if(showFavorites == false) {
                     favItem.setIcon(R.drawable.ic_favorite_white_24dp);
                     showFavorites = true;
-                    // Jeśli aplikacja jest w trybie paragonów wyświetl listę ulubionych paragonów.
-                    // Analogicznie, jeśli aplikacja jest w trybie kart lojalnościowych.
                     if (showReceipts == true) {
                         query = "SELECT * FROM " + ReceiptContract.Receipt.TABLE_NAME + " WHERE " +
                         ReceiptContract.Receipt.FAVORITED + " = 'yes'";
-                        receiptFunctions.populateList(listView, query);
+                        populateList(listView, query);
                     } else {
                         query = "SELECT * FROM " + CardContract.Card.TABLE_NAME + " WHERE " +
                         CardContract.Card.FAVORITED + " = 'yes'";
-                        cardFunctions.populateList(listView, query);
+                        populateList(listView, query);
                     }
                 }else{
                     // W przeciwnym wypadku przestań wyświetlać tylko ulubione wpisy i zmień wygląd
                     // ikony.
                     favItem.setIcon(R.drawable.ic_favorite_border_white_24dp);
                     showFavorites = false;
-                    if (showReceipts == true) {
-                        receiptFunctions.populateList(listView, null);
-                    } else {
-                        cardFunctions.populateList(listView, null);
-                    }
+                    populateList(listView, null);
                 }
 
                 return true;
@@ -396,4 +298,281 @@ public class MainViewActivity extends AppCompatActivity
         return true;
     }
 
+    private void setShowReceipts(boolean show){
+        if(show){
+            showReceipts = true;
+            categoryColumn = ReceiptContract.Receipt.CATEGORY;
+            projection = Constants.receiptCategoriesProjection;
+            selection = Constants.receiptCategoriesSelection;
+            categoriesTable = ReceiptContract.Categories.TABLE_NAME;
+            itemTable = ReceiptContract.Receipt.TABLE_NAME;
+            updateSelection = ReceiptContract.Receipt._ID + " = ?";
+            tableCols = Constants.receiptTableCols;
+        }else{
+            showReceipts = false;
+            categoryColumn = CardContract.Card.CATEGORY;
+            projection = Constants.cardCategoriesProjection;
+            selection = Constants.cardCategoriesSelection;
+            categoriesTable = CardContract.Card_Categories.TABLE_NAME;
+            itemTable = CardContract.Card.TABLE_NAME;
+            updateSelection = CardContract.Card._ID + " = ?";
+            tableCols = Constants.cardTableCols;
+        }
+    }
+
+    public void populateList(ListView lv, String query){
+        try{
+            db = mDbHelper.getWritableDatabase();
+            Cursor c;
+
+            if(query != null){
+                c = db.rawQuery(query, null);
+            }else if(query == null && this.query != null){
+                c = db.rawQuery(this.query, null);
+            }else{
+                c = db.query(
+                        true,
+                        itemTable,
+                        tableCols,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                );
+            }
+
+            itemIds.clear();
+
+            while (c.moveToNext()){
+                itemIds.add(c.getInt(c.getColumnIndex(tableCols[0])));
+            }
+
+            c.moveToFirst();
+
+            if(showReceipts){
+                receiptListAdapter = new ReceiptListAdapter(
+                        context,
+                        R.layout.list_item,
+                        c,
+                        Constants.fromReceiptTable,
+                        Constants.toReceiptTable,
+                        0
+                );
+                lv.setAdapter(receiptListAdapter);
+            }else{
+                cardListAdapter = new CardListAdapter(
+                        context,
+                        R.layout.list_item,
+                        c,
+                        Constants.fromCardTable,
+                        Constants.toCardTable,
+                        0
+                );
+                lv.setAdapter(cardListAdapter);
+            }
+
+        }catch (Exception e){
+            //Wyświetlenie komunikatu błędu w wypadku jego wystąpienia
+            toast = Toast.makeText(context, R.string.toast_add_new_failure + e.toString(), Toast.LENGTH_LONG);
+            toast.show();
+        }finally {
+            db.close();
+        }
+    }
+
+    private void filterList(Bundle filterData){
+        boolean reset = filterData.getBoolean("Reset");
+        chosenCategory = filterData.getString("Chosen_Category");
+        if(showReceipts){
+            chosenFromDate = filterData.getString("Chosen_From_Date");
+            chosenToDate = filterData.getString("Chosen_To_Date");
+        }
+
+        if(!reset){
+            resetFilters = false;
+
+            query = "SELECT * FROM " + itemTable + " WHERE ";
+            String categoryPart = "";
+            String datePart = "";
+            boolean filterByCategory = false;
+            boolean filterByDate = false;
+
+            if(!chosenCategory.equals("")){
+                filterByCategory = true;
+                categoryPart = tableCols[2] + " = '" + chosenCategory.toLowerCase() + "'";
+            }
+
+            if(showReceipts){
+                if(!chosenFromDate.equals("YYYY-MM-DD")) {
+                    filterByDate = true;
+                    matcherFrom = datePattern.matcher(chosenFromDate);
+                    matcherTo = datePattern.matcher(chosenToDate);
+                    if (matcherFrom.find()) {
+                        if (matcherTo.find()) {
+                            datePart = ReceiptContract.Receipt.DATE +
+                                    " >= " + "'" + chosenFromDate + "'" + " AND " +
+                                    ReceiptContract.Receipt.DATE + " <= " +
+                                    "'" + chosenToDate + "'";
+                        } else {
+                            datePart = ReceiptContract.Receipt.DATE +
+                                    " >= " + "'" + chosenFromDate + "'";
+                        }
+                    }
+                }
+            }
+
+            if(filterByCategory){
+                query = query + categoryPart;
+            }
+
+            if(filterByCategory && filterByDate){
+                query = query + " AND " + datePart;
+            }
+
+            if(!filterByCategory && filterByDate){
+                query = query + datePart;
+            }
+
+            populateList(listView, query);
+
+        }else{
+            resetFilters = true;
+            query = null;
+            populateList(listView, null);
+        }
+    }
+
+    private void search(ListView lv, String query){
+
+        String dbQuery;
+
+        if(showReceipts){
+            dbQuery =
+                    "SELECT * FROM " +
+                            ReceiptContract.Receipt.TABLE_NAME +
+                            " WHERE " +
+                            ReceiptContract.Receipt.NAME +
+                            " LIKE '" + query +
+                            "' OR " + ReceiptContract.Receipt.CONTENT +
+                            " LIKE '%" + query + "%'" +
+                            " OR " + ReceiptContract.Receipt.DESCRIPTION +
+                            " LIKE '%" + query + "%'";
+        }else{
+            dbQuery =
+                    "SELECT * FROM " +
+                            CardContract.Card.TABLE_NAME +
+                            " WHERE " +
+                            CardContract.Card.NAME +
+                            " LIKE '%" + query + "%'" +
+                            " OR " + ReceiptContract.Receipt.DESCRIPTION +
+                            " LIKE '%" + query + "%'";
+        }
+
+        populateList(lv, dbQuery);
+
+    }
+
+    public void showFilterPopup(){
+        LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+        View popupView = inflater.inflate(R.layout.filter_popup, null);
+        int width = LinearLayout.LayoutParams.WRAP_CONTENT;
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+        boolean focusable = true;
+        final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
+        popupWindow.showAtLocation(popupView, Gravity.CENTER, 0, 0);
+        popupView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                popupWindow.dismiss();
+                return true;
+            }
+        });
+
+        final EditText editFromDate = (EditText)popupView.findViewById(R.id.editFromDate);
+        editFromDate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DialogFragment newFragment = new DatePickerFragment();
+                Bundle arg = new Bundle();
+                arg.putInt("Field_ID", R.id.editFromDate);
+                newFragment.setArguments(arg);
+                newFragment.show(getFragmentManager(), "datePicker");
+            }
+        });
+
+        final EditText editToDate = (EditText)popupView.findViewById(R.id.editToDate);
+        editToDate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DialogFragment newFragment = new DatePickerFragment();
+                Bundle arg = new Bundle();
+                arg.putInt("Field_ID", R.id.editToDate);
+                newFragment.setArguments(arg);
+                newFragment.show(getFragmentManager(), "datePicker");
+            }
+        });
+
+        final Spinner spinner = (Spinner)popupView.findViewById(R.id.categorySpinner);
+
+        Button filterButton =(Button)popupView.findViewById(R.id.filterButton);
+        filterButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Bundle extras = new Bundle();
+                Cursor cursor = (Cursor)spinner.getSelectedItem();
+                chosenCategory = cursor.getString(cursor.getColumnIndex(projection[1]));
+                extras.putString("Chosen_Category", chosenCategory);
+                if(showReceipts == true){
+                    extras.putString("Chosen_From_Date", editFromDate.getText().toString());
+                    extras.putString("Chosen_To_Date", editToDate.getText().toString());
+                }
+                extras.putBoolean("Reset", false);
+                filterList(extras);
+                popupWindow.dismiss();
+            }
+        });
+
+        Button resetButton = (Button)popupView.findViewById(R.id.resetButton);
+        resetButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Bundle extras = new Bundle();
+                extras.putString("Chosen_Category", "");
+                extras.putBoolean("Reset", true);
+                filterList(extras);
+                popupWindow.dismiss();
+            }
+        });
+
+
+        TextView dateText = (TextView)popupView.findViewById(R.id.dateText);
+        LinearLayout dateLayout = (LinearLayout)popupView.findViewById(R.id.dateLayout);
+
+
+        if(!showReceipts) {
+            dateText.setVisibility(View.GONE);
+            dateLayout.setVisibility(View.GONE);
+        }
+
+        try{
+            db = mDbHelper.getReadableDatabase();
+
+            Cursor c = db.query(true, categoriesTable, projection, null, null, null, null, null, null);
+
+            String[] from = new String[]{
+                    projection[1]
+            };
+
+            int[] to = new int[]{
+                    R.id.categoryName
+            };
+
+            SimpleCursorAdapter simpleCursorAdapter = new SimpleCursorAdapter(this, R.layout.category_spinner_item, c, from, to, 0);
+            spinner.setAdapter(simpleCursorAdapter);
+        }finally {
+            db.close();
+        }
+    }
 }

@@ -2,6 +2,7 @@ package com.example.maciejwikira.prgnv2;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -229,7 +230,35 @@ public class DataHandler {
         }
     }
 
+    public void search(ListView lv, String query){
 
+        String dbQuery;
+
+        if(showReceipts){
+            dbQuery =
+                "SELECT * FROM " +
+                ReceiptContract.Receipt.TABLE_NAME +
+                " WHERE " +
+                ReceiptContract.Receipt.NAME +
+                " LIKE '" + query +
+                "' OR " + ReceiptContract.Receipt.CONTENT +
+                " LIKE '%" + query + "%'" +
+                " OR " + ReceiptContract.Receipt.DESCRIPTION +
+                " LIKE '%" + query + "%'";
+        }else{
+            dbQuery =
+                "SELECT * FROM " +
+                CardContract.Card.TABLE_NAME +
+                " WHERE " +
+                CardContract.Card.NAME +
+                " LIKE '%" + query + "%'" +
+                " OR " + ReceiptContract.Receipt.DESCRIPTION +
+                " LIKE '%" + query + "%'";
+        }
+
+        populateList(lv, dbQuery);
+
+    }
 
     private boolean checkCategory( SQLiteDatabase db, ContentValues itemData){
 
@@ -266,10 +295,21 @@ public class DataHandler {
                 categoryName
         );
         db.insert(
-                categoryColumn,
+                categoriesTable,
                 null,
                 newCategoryValue
         );
     }
 
+    public ArrayList<Integer> getItemIds(){
+        return this.itemIds;
+    }
+
+    public boolean getResetFilters(){
+        return this.resetFilters;
+    }
+
+    public boolean getShowReceipts(){
+        return this.showReceipts;
+    }
 }

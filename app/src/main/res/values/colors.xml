@@ -6,10 +6,10 @@
     <color name="black_text">#000000</color>
     <color name="list_divider">#1e000000</color>
 
-    <color name="blue">#ff59a9ff</color>
+    <color name="blue">#59a9ff</color>
     <color name="orange">#ffff900d</color>
     <color name="bottom_background_color">#c4c2bc</color>
 
     <color name="choosePointsViewCircleStrokeColor">#ff59a9ff</color>
-    <color name="choosePointsViewCircleBackground">#90e5f8ff</color>
+    <color name="choosePointsViewCircleBackground">#5a003b51</color>
 </resources>

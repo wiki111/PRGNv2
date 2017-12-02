@@ -41,12 +41,6 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <activity
-            android:name=".FilterActivity"
-            android:theme="@style/AppTheme.PopUpStyle"
-            android:screenOrientation="portrait"
-            android:configChanges="orientation|keyboardHidden"/>
-
         <activity android:name=".EditActivity"
             android:screenOrientation="portrait"
             android:configChanges="orientation|keyboardHidden"/>

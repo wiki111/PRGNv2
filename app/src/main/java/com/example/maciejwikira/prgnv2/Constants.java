@@ -14,11 +14,13 @@ public final class Constants {
     public static final String RECEIPT_DATE = "receipt_date";
     public static final String RECEIPT_TEXT = "receipt_text";
     public static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 44;
+    public static final String UPDATE = "update";
+    public static final String ITEM_DATA = "data";
 
     public static final String[] cardCategoriesProjection = {
             CardContract.Card_Categories._ID,
             CardContract.Card_Categories.CATEGORY_NAME
-    };
+};
 
     public static final String cardCategoriesSelection =
             CardContract.Card_Categories.CATEGORY_NAME + " = ?";
@@ -29,7 +31,9 @@ public final class Constants {
             CardContract.Card.NAME,
             CardContract.Card.CATEGORY,
             CardContract.Card.EXPIRATION_DATE,
-            CardContract.Card.IMAGE_PATH
+            CardContract.Card.IMAGE_PATH,
+            CardContract.Card.FAVORITED,
+            CardContract.Card.DESCRIPTION
     };
 
     public static final  String[] receiptTableCols = new String[]{
