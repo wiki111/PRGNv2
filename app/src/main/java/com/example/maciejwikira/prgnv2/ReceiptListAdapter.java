@@ -49,8 +49,7 @@ public class ReceiptListAdapter extends SimpleCursorAdapter{
         TextView valueView = (TextView) view.findViewById(R.id.valueTextView);
 
         // Wyświetlenie bitmapy na interfejsie użytkownika
-        Bitmap image = BitmapFactory.decodeFile(cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH)));
-        imageView.setImageBitmap(image);
+        imageView.setImageBitmap(loadScaledBitmap(cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH))));
 
         // Ustawienie zawartości pól interfejsu
         nameView.setText("Nazwa: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.NAME)));
@@ -58,5 +57,35 @@ public class ReceiptListAdapter extends SimpleCursorAdapter{
         dateView.setText("Data: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.DATE)));
         valueView.setText("Wartość: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.VALUE)));
 
+    }
+
+    public Bitmap loadScaledBitmap(String path){
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(path, options);
+
+        options.inSampleSize = calculateSampleSize(options, 200, 150);
+
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeFile(path, options);
+    }
+
+    public int calculateSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight){
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if(height > reqHeight || width > reqWidth){
+
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            while((halfHeight / inSampleSize) >= reqHeight &&
+                    (halfWidth / inSampleSize) >= reqWidth){
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
     }
 }

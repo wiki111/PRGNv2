@@ -42,43 +42,49 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /*
-    Aktywność odpowiada za wyświetlanie głównego ekranu aplikacji.
-    Wyświetla listę paragonów lub kart, zależnie od wyboru użytkownika.
-    Posiada szufladę nawigacyjną, która pozwala na wybór pomiędzy interfejsem
-    kart i paragonów. Poza tym zawiera przycisk, który pozwala na dodanie nowego
+    Aktywność wyświetla główny ekran aplikacji, zawierającą
+    listę na której w zależności od wyboru użytkownika wyświetlane są
+    zapisane karty lub paragony. Posiada szufladę nawigacyjną, która
+    pozwala na wybór przełączanie trybu aplikacji pomiędzy wyświetlaniem
+    paragonów i kart. Zawiera menu, które pozwala na dodanie nowego
     paragonu bądź karty.
  */
 public class MainViewActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, DatePickerFragment.onDateSetListener {
 
     public static final String CAMERA_OR_MEDIA = "CAMERA_OR_MEDIA";
     public static final String CARDS_OR_RECEIPTS = "CARDS_OR_RECEIPTS";
     public static final int RESULT_FILTER = 110;
-    private ListView listView;
+
     private Context context;
+
     private Menu menu;
     private MenuItem favItem;
-    private boolean showFavorites;
     private FloatingActionMenu fabMenu;
-    private DataHandler dataHandler;
-    private String categoryColumn;
-    private String[] projection;
-    private String selection;
-    private String categoriesTable;
-    private String itemTable;
-    private String updateSelection;
-    private String[] tableCols;
-    private SQLiteDatabase db;
-    private ReceiptDbHelper mDbHelper;
+
+    private EditText editFromDate, editToDate;
+
+    private ListView listView;
     private CardListAdapter cardListAdapter;
     private ReceiptListAdapter receiptListAdapter;
+
+    private SQLiteDatabase db;
+    private ReceiptDbHelper mDbHelper;
+
     private ArrayList<Integer> itemIds;
-    private boolean resetFilters;
+    private String[] projection;
+    private String categoriesTable;
+    private String itemTable;
+    private String[] tableCols;
+
     private boolean showReceipts;
-    private String chosenCategory;
-    private String chosenFromDate, chosenToDate;
+    private boolean showFavorites;
+
+    private String chosenCategory, chosenFromDate, chosenToDate;
+
     private Matcher matcherFrom, matcherTo;
     private Pattern datePattern = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");
+
     private String query;
 
     private Toast toast;
@@ -92,7 +98,6 @@ public class MainViewActivity extends AppCompatActivity
         setShowReceipts(true);
         itemIds = new ArrayList<>();
         query = null;
-        resetFilters = true;
 
         setContentView(R.layout.activity_main_view2);
 
@@ -301,21 +306,15 @@ public class MainViewActivity extends AppCompatActivity
     private void setShowReceipts(boolean show){
         if(show){
             showReceipts = true;
-            categoryColumn = ReceiptContract.Receipt.CATEGORY;
             projection = Constants.receiptCategoriesProjection;
-            selection = Constants.receiptCategoriesSelection;
             categoriesTable = ReceiptContract.Categories.TABLE_NAME;
             itemTable = ReceiptContract.Receipt.TABLE_NAME;
-            updateSelection = ReceiptContract.Receipt._ID + " = ?";
             tableCols = Constants.receiptTableCols;
         }else{
             showReceipts = false;
-            categoryColumn = CardContract.Card.CATEGORY;
             projection = Constants.cardCategoriesProjection;
-            selection = Constants.cardCategoriesSelection;
             categoriesTable = CardContract.Card_Categories.TABLE_NAME;
             itemTable = CardContract.Card.TABLE_NAME;
-            updateSelection = CardContract.Card._ID + " = ?";
             tableCols = Constants.cardTableCols;
         }
     }
@@ -391,7 +390,6 @@ public class MainViewActivity extends AppCompatActivity
         }
 
         if(!reset){
-            resetFilters = false;
 
             query = "SELECT * FROM " + itemTable + " WHERE ";
             String categoryPart = "";
@@ -438,7 +436,6 @@ public class MainViewActivity extends AppCompatActivity
             populateList(listView, query);
 
         }else{
-            resetFilters = true;
             query = null;
             populateList(listView, null);
         }
@@ -490,25 +487,25 @@ public class MainViewActivity extends AppCompatActivity
             }
         });
 
-        final EditText editFromDate = (EditText)popupView.findViewById(R.id.editFromDate);
+        editFromDate = (EditText)popupView.findViewById(R.id.editFromDate);
         editFromDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 DialogFragment newFragment = new DatePickerFragment();
                 Bundle arg = new Bundle();
-                arg.putInt("Field_ID", R.id.editFromDate);
+                arg.putString("Field", "from");
                 newFragment.setArguments(arg);
                 newFragment.show(getFragmentManager(), "datePicker");
             }
         });
 
-        final EditText editToDate = (EditText)popupView.findViewById(R.id.editToDate);
+        editToDate = (EditText)popupView.findViewById(R.id.editToDate);
         editToDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 DialogFragment newFragment = new DatePickerFragment();
                 Bundle arg = new Bundle();
-                arg.putInt("Field_ID", R.id.editToDate);
+                arg.putString("Field", "to");
                 newFragment.setArguments(arg);
                 newFragment.show(getFragmentManager(), "datePicker");
             }
@@ -574,5 +571,15 @@ public class MainViewActivity extends AppCompatActivity
         }finally {
             db.close();
         }
+    }
+
+    public void dateSet(String date, String field) {
+
+        if(field.equals("to")){
+            editToDate.setText(date);
+        }else{
+            editFromDate.setText(date);
+        }
+
     }
 }

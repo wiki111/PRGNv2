@@ -19,54 +19,67 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
-// Aktywność obsługuje wyświetlanie szczegółów wpisu
+// Aktywność wyświetla szczegóły wpisu.
 public class DetailsActivity extends AppCompatActivity {
 
-    // Deklaracja zmiennych
     private ReceiptDbHelper mDbHelper;
     private SQLiteDatabase db;
     private Cursor c;
-    private String[] selectionArgs;
+
+    private boolean showReceipts;
+
+    private Bitmap receiptPhoto;
+
+    // ID elementu, którego szczegóły są wyświetlane.
     private String id;
+    private String bitmapPath;
+
+    // Kolumny odpowiedniej tabeli, z których należy pobrać dane.
+    private String[] projection;
+
+    // Klauzula WHERE dla zapytania do bazy danych.
+    private String selection;
+
+    // Argumenty dla klauzuli WHERE.
+    private String[] selectionArgs;
+
+    // Nazwa odpowiedniej tabeli.
+    private String itemTable;
+
     private TextView nameTextView;
     private TextView categoryTextView;
     private TextView dateTextView;
     private TextView valueTextView;
     private TextView descriptionTextView;
+
     private ImageView receiptPhotoDetailsView;
     private ImageView favoritedIconView;
-    private String bitmapPath;
-    private Bitmap receiptPhoto;
-    private boolean showReceipts;
-    private String[] projection;
-    private String selection;
-    private String favoritedColumn;
-    private String itemTable;
+
     private Toast toast;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
 
-        // Inicjalizacja bazy danych
+        // Inicjalizacja połączenia z bazą danych
         mDbHelper = new ReceiptDbHelper(getApplicationContext());
         db = mDbHelper.getWritableDatabase();
 
 
-        // Pobranie ID elementu do wyświetlenia i trybu aplikacji
+        // Pobranie ID elementu do wyświetlenia i trybu w którym działa
+        // aplikacja (wyświetlanie kart lub paragonów).
         Intent intent = getIntent();
         Bundle extras = intent.getExtras();
         id = extras.getString("item_id");
         showReceipts = extras.getBoolean(MainViewActivity.CARDS_OR_RECEIPTS);
 
-        // Jeśli aplikacja jest w trybie paragonów wykonaj zapytanie które spowoduje zwrócenie
-        // danych elementu o podanym ID z tabeli paragonów. W przeciwnym razie pobierz odpowiednie
-        // dane z tabeli kart.
+        // W zależności od aktywnego trybu ustawiane są odpowiednie zmienne i wykonywane
+        // jest zapytanie do bazy danych.
         setShowReceipts(showReceipts);
-        // Przesun kursor na pierwszą pozycję
+
         c.moveToFirst();
 
-        // Pobranie elementów interfejsu użytkownika
         nameTextView = (TextView) findViewById(R.id.nameTextView);
         categoryTextView = (TextView) findViewById(R.id.categoryTextView);
         dateTextView = (TextView)findViewById(R.id.dateTextView);
@@ -75,7 +88,7 @@ public class DetailsActivity extends AppCompatActivity {
         receiptPhotoDetailsView = (ImageView)findViewById(R.id.paragonPhotoDetailsView);
         favoritedIconView = (ImageView)findViewById(R.id.favoritedIconView);
 
-        // Ustaw zawartość elementów interfejsu
+        // Ustawienie zawartości elementów interfejsu.
         setViewContents();
 
         // Ustawienie nasłuchiwania na zdarzenie kliknięcia zdjęcia. Gdy to nastąpi, obraz jest
@@ -92,85 +105,99 @@ public class DetailsActivity extends AppCompatActivity {
             }
         });
 
-        // Przycisk powoduje przejście do aktywności edycji paragonu
+        // Przejście do edycji wpisu.
         Button goToEditButton = (Button)findViewById(R.id.goToEditButton);
         goToEditButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), NewRecordActivity.class);
+
                 Bundle extras = new Bundle();
                 extras.putBoolean(MainViewActivity.CARDS_OR_RECEIPTS, showReceipts);
                 extras.putString("item_id", id);
                 extras.putBoolean(Constants.UPDATE, true);
+
+                // Przekazanie danych wpisu.
                 extras.putStringArrayList(Constants.ITEM_DATA, buildDataArray());
+
                 intent.putExtras(extras);
                 startActivity(intent);
             }
         });
 
-        // Przycisk odpowiadajacy za dodanie elementu do polubionych
+        // Dodanie wpisu do ulubionych.
         Button favoriteButton = (Button)findViewById(R.id.favoriteButton);
         favoriteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ContentValues contentValues = new ContentValues();
-                Toast toast;
                 contentValues.put(CardContract.Card.FAVORITED, "yes");
+
                 db.update(itemTable, contentValues, selection, selectionArgs);
-                toast = Toast.makeText(getApplicationContext(), "Dodano do ulubionych", Toast.LENGTH_SHORT);
+
+                toast = Toast.makeText(getApplicationContext(), "Dodano do ulubionych.", Toast.LENGTH_SHORT);
                 toast.show();
+
+                favoritedIconView.setVisibility(View.VISIBLE);
             }
         });
 
+        // Usunięcie wpisu.
         Button deleteButton = (Button)findViewById(R.id.deleteButton);
         deleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                // Wyświetlenie okna z prośbą o potwierdzenie.
                 AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(DetailsActivity.this, R.style.myDialog));
+
                 if(showReceipts == true)
                     builder.setMessage("Czy na pewno chcesz skasować ten paragon ?").setTitle("Kasowanie paragonu.");
                 else
                     builder.setMessage("Czy na pewno chcesz skasować tą kartę ?").setTitle("Kasowanie karty.");
+
                 builder.setPositiveButton("Tak", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                             db.delete(itemTable, selection, selectionArgs);
                             finish();
                     }
                 });
-                builder.setNegativeButton("Nie", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                    }
-                });
+
                 AlertDialog dialog = builder.create();
                 dialog.show();
             }
         });
 
+        // Usunięcie wpisu z ulubionych.
         Button unfavoriteButton = (Button)findViewById(R.id.unfavoriteButton);
         unfavoriteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ContentValues contentValues = new ContentValues();
-                Toast toast;
                 contentValues.put(CardContract.Card.FAVORITED, "no");
+
                 db.update(itemTable, contentValues, selection, selectionArgs);
+
                 toast = Toast.makeText(getApplicationContext(), "Usunięto z ulubionych", Toast.LENGTH_SHORT);
                 toast.show();
+
+                favoritedIconView.setVisibility(View.INVISIBLE);
             }
         });
 
     }
 
+    // Ustawienie nazwy tabeli, treści klauzuli WHERE i jej parametrów w zależności
+    // od trybu aplikacji, oraz wykonanie zapytania do bazy danych i zapisanie
+    // wyników w kursorze.
     public void setShowReceipts(boolean show){
         if(show){
             showReceipts = true;
-            favoritedColumn = ReceiptContract.Receipt.FAVORITED;
             projection = Constants.receiptTableCols;
             selection = ReceiptContract.Receipt._ID + " = ?";
             itemTable = ReceiptContract.Receipt.TABLE_NAME;
         }else{
             showReceipts = false;
-            favoritedColumn = ReceiptContract.Receipt.FAVORITED;
             projection = Constants.cardTableCols;
             selection = CardContract.Card._ID + " = ?";
             itemTable = CardContract.Card.TABLE_NAME;
@@ -181,6 +208,8 @@ public class DetailsActivity extends AppCompatActivity {
 
     }
 
+    // Przy wznowieniu aktywności dane wyświetlanego wpisu są ponownie pobierane i
+    // zawartość elementów interfejsu jest aktualizowana.
     @Override
     protected void onResume(){
         c = db.query(itemTable, projection, selection, selectionArgs, null, null, null);
@@ -189,6 +218,7 @@ public class DetailsActivity extends AppCompatActivity {
         super.onResume();
     }
 
+    // Przy zakończeniu działania aktywności zamykany jest kursor oraz połączenie z bazą danych.
     @Override
     protected void onDestroy(){
         c.close();
@@ -196,7 +226,8 @@ public class DetailsActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    // Metoda ustawia zawartość poszczególnych pól i widoków interfejsu użytkownika
+    // Metoda ustawia zawartość poszczególnych elementów interfejsu użytkownika
+    // w zależności od aktywnego trybu aplikacji.
     private void setViewContents(){
         if(showReceipts == true){
             nameTextView.setText("Nazwa : " + c.getString(c.getColumnIndex(ReceiptContract.Receipt.NAME)));
@@ -230,6 +261,7 @@ public class DetailsActivity extends AppCompatActivity {
 
     }
 
+    // Metoda zwraca listę danych wyświetlanego wpisu.
     private ArrayList<String> buildDataArray(){
         ArrayList<String> data = new ArrayList<>();
         if(showReceipts){

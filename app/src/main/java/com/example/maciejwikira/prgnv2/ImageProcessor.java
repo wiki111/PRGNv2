@@ -30,15 +30,24 @@ import java.util.ArrayList;
 // Klasa realizuje przetwarzanie obrazu i ekstrakcję zawartości tekstowej.
 public class ImageProcessor extends IntentService {
 
-    // Deklaracje zmiennych
+    // Ścieżka do obrazu.
     private String path;
+
+    // Uri obrazu.
     private Uri uri;
+
+    // Ścieżka zmodyfikowanego obrazu.
     private String imgToSave;
+
+    // Tekst rozpoznany na obrazie.
     private String textFromImage;
+
+    // Rozpoznana wartość paragonu.
     private String receiptValue;
+
+    // Rozpoznana data paragonu.
     private String receiptDate;
 
-    // Publiczny konstruktor
     public ImageProcessor(){
         super("ImageProcessor");
     }
@@ -46,77 +55,91 @@ public class ImageProcessor extends IntentService {
     @Override
     protected void onHandleIntent(Intent workIntent){
 
-        //Pobranie ścieżki i uri obrazu do przetworzenia
+        //Pobranie ścieżki i uri obrazu do przetworzenia.
         Bundle extras = workIntent.getExtras();
         path = extras.get(Constants.IMAGE_PATH).toString();
         uri = Uri.parse(extras.get(Constants.IMAGE_URI).toString());
 
-        // Deklaracja klasy obsługującej rozpoznawanie tekstu na obrazie
+        // Deklaracja obiektu klasy obsługującej rozpoznawanie tekstu na obrazie.
         TextRecognitionFunctions textRecognitionFunctions = new TextRecognitionFunctions(this);
 
-        // Zapisanie obrazu w postaci macierzy
+        // Zapisanie obrazu w postaci macierzy.
         Mat originalImage = Highgui.imread(path);
-        // Przetworzenie odwzorowania kolorów z przestrzeni BGR na RGB
+
+        // Przetworzenie odwzorowania kolorów z przestrzeni BGR na RGB.
         Imgproc.cvtColor(originalImage, originalImage, Imgproc.COLOR_BGR2RGB);
 
-        // Deklaracja macierzy w której zostanie zapisany zmodyfikowany obraz
+        // Deklaracja macierzy w której zostanie zapisany zmodyfikowany obraz.
         Mat modifiedImage = new Mat();
-        // Przetworzenie obrazu do skali szarości i zapisanie w nowej macierzy
-        Imgproc.cvtColor(originalImage, modifiedImage, Imgproc.COLOR_RGB2GRAY);
-        // Zastosowanie rozmycia Gaussa
-        Imgproc.GaussianBlur(modifiedImage, modifiedImage, new Size(7,7), 0, 0);
-        // Zastosowanie progowania
-        Imgproc.adaptiveThreshold(modifiedImage, modifiedImage, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 31, 7);
 
-        // Skopiowanie obrazu po przetworzeniu do nowej macierzy
+        // Przetworzenie obrazu do skali szarości i zapisanie w nowej macierzy.
+        Imgproc.cvtColor(originalImage, modifiedImage, Imgproc.COLOR_RGB2GRAY);
+
+        // Zastosowanie rozmycia Gaussa.
+        Imgproc.GaussianBlur(modifiedImage, modifiedImage, new Size(7,7), 0, 0);
+
+        // Zastosowanie progowania.
+        Imgproc.adaptiveThreshold(
+                modifiedImage,
+                modifiedImage,
+                255,
+                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
+                Imgproc.THRESH_BINARY,
+                31,
+                7
+        );
+
+        // Skopiowanie obrazu po przetworzeniu do nowej macierzy.
         Mat imageForOcr = modifiedImage.clone();
 
-        // Odwrócenie kolorów przetworzonego obrazu
+        // Odwrócenie kolorów przetworzonego obrazu.
         Core.bitwise_not(modifiedImage, modifiedImage);
 
         // Redukcja macierzy do jednowymiarowego wektora - uzyskanie horyzontalnej projekcji
-        // obrazu binarnego - histogramu
+        // obrazu binarnego - histogramu.
         Mat horProj = new Mat();
         Core.reduce(modifiedImage, horProj, 1, Core.REDUCE_AVG);
 
-        // Zastosowanie progowania na histogramie w celu zamortyzowania szumu
+        // Zastosowanie progowania na histogramie w celu zamortyzowania szumu.
         double threshold = 0;
         Mat hist = new Mat();
         Imgproc.threshold(horProj, hist, threshold, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C);
 
-        // Lista współrzędnych Y rzędów macierzy które nie zawierają tekstu
+        // Lista współrzędnych Y rzędów macierzy które nie zawierają tekstu.
         ArrayList<Integer> ycoords = new ArrayList<>();
-        // Zmienna przechowująca wartość licznika y
+
+        // Zmienna przechowująca wartość licznika y.
         int y = 0;
-        // Zmienna przechowująca wartość licznika count
+
+        // Zmienna przechowująca wartość licznika count.
         int count = 0;
-        // Zmienna przechowująca informację o tym, czy dany rząd macierzy należy do linii tekstu
+
         boolean isSpace = false;
 
-        // Wyszukiwanie linii tekstu w obrazie i zapisywanie współrzędnych Y linii nie zawierających
-        // tekstu do listy.
-        // Dla każdego rzędu macierzy przechowującej obraz
+        // Wyszukiwanie linii tekstu w obrazie na podstawie histogramu i zapisywanie
+        // współrzędnych Y linii nie zawierających tekstu do listy.
         for(int i = 0; i < modifiedImage.rows(); ++i){
-            // Jeśli ostatni rząd nie należał do linii tekstu
+
             if(!isSpace){
-                // Jeśli odpowiadający rzędowi element projekcji horyzontalnej obrazu po progowaniu
-                // ma wartość większą niż zero, oznacza to, że rząd należy do linii tekstu.
+
                 if(hist.get(i,0)[0] > 0){
                     isSpace = true;
                     count = 1;
                     y = i;
                 }
+
             }else{
-                // Jeśli ostatni rząd należał do linii tekstu sprawdź czy bieżący też należy
+
                 if(!(hist.get(i,0)[0] > 0)){
-                    // Jeśli nie należy ustaw zmienną informującą o przynależności do linii tekstu
-                    // na false i dodaj początkową współrzędną Y linii tekstu do listy.
+
                     isSpace = false;
                     ycoords.add(y/count);
+
                 }else{
-                    // W przeciwnym razie zwiększ wartość liczników
+
                     y += i;
                     count++;
+
                 }
             }
         }

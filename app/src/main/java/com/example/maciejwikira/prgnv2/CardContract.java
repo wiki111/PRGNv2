@@ -7,17 +7,17 @@ import android.provider.BaseColumns;
  */
 
 /*
-    Klasa definiuje stałe używane do obsługi tabeli bazy danych zawierających dane
+    Klasa definiuje stałe używane do obsługi tabeli bazy danych zawierających informacje
     dotyczące kart lojalnościowych.
  */
 public final class CardContract {
 
-    // Konstruktor jest prywatny aby zapobiec tworzeniu instancji klasy
     private CardContract(){}
 
+    // Klasa definiująca pola i polecenia tabeli kart lojalnościowych.
     public static class Card implements BaseColumns {
 
-        // Nazwa głównej tabeli i kolumn
+        // Nazwa głównej tabeli i jej kolumn.
         public static final String TABLE_NAME = "cards";
         public static final String NAME = "name";
         public static final String CATEGORY = "category";
@@ -26,7 +26,7 @@ public final class CardContract {
         public static final String FAVORITED = "favorited";
         public static final String DESCRIPTION = "description";
 
-        // Polecenie tworzące tabelę w bazie danych
+        // Polecenie tworzące tabelę w bazie danych.
         public static final String SQL_CREATE_CARDS =
                 "CREATE TABLE IF NOT EXISTS " + Card.TABLE_NAME + " (" +
                         Card._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -39,28 +39,29 @@ public final class CardContract {
                         "FOREIGN KEY (" + Card.CATEGORY + ") REFERENCES card_categories(" +
                             Card_Categories.CATEGORY_NAME + "))";
 
-        // Polecenie usuwające tabelę z bazy danych
+        // Polecenie usuwające tabelę z bazy danych.
         public static final String SQL_DELETE_CARDS = "DROP TABLE IF EXISTS " + Card.TABLE_NAME;
     }
 
 
+    // Klasa definiująca pola i polecenia tabeli kategorii kart lojalnościowych.
     public static class Card_Categories implements BaseColumns{
 
-        // Nazwa tabeli kategorii kart i nazwy kolumn
+        // Nazwa tabeli kategorii kart i nazwy kolumn.
         public static final String TABLE_NAME = "card_categories";
         public static final String CATEGORY_NAME = "category_name";
 
-        // Polecenie tworzące tabelę w bazie danych
+        // Polecenie tworzące tabelę w bazie danych.
         public static final String SQL_CREATE_CARD_CATEGORIES = "CREATE TABLE IF NOT EXISTS " +
                 Card_Categories.TABLE_NAME + " (" + Card_Categories._ID + " INTEGER PRIMARY KEY " +
                 "AUTOINCREMENT, " + Card_Categories.CATEGORY_NAME + " TEXT)";
 
-        // Polecenie wstawiające bazową kategorię do tabeli
+        // Polecenie wstawiające bazową kategorię do tabeli.
         public static final String SQL_INSERT_EMPTY_CARD_CATEGORY = "INSERT INTO " +
                 Card_Categories.TABLE_NAME + " (" + Card_Categories.CATEGORY_NAME + ") " + "VALUES " +
                 "('')";
 
-        // Polecenie usuwające tabelę
+        // Polecenie usuwające tabelę.
         public static final String SQL_DELETE_CARD_CATEGORIES = "DROP TABLE IF EXISTS " +
                 Card_Categories.TABLE_NAME;
 

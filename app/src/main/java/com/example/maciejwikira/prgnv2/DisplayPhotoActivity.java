@@ -10,11 +10,12 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.widget.ImageView;
 
-// Aktywność wykonuje bardzo proste zadanie  - wyświetla zdjęcie paragonu lub karty.
+// Aktywność wyświetla zdjęcie paragonu lub karty.
 public class DisplayPhotoActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_display_photo);
 
@@ -24,14 +25,12 @@ public class DisplayPhotoActivity extends AppCompatActivity {
         Bitmap bmp = BitmapFactory.decodeFile(bundle.getString("BitmapPath"));
         Boolean showReceipts = bundle.getBoolean(MainViewActivity.CARDS_OR_RECEIPTS);
 
+        // Karty wyświetlane są w horyzontalnej orientacji ekranu.
         if(!showReceipts){
             this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         }
 
-
-
         image.setImageBitmap(bmp);
-
 
     }
 }

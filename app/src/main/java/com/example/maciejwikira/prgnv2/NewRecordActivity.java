@@ -47,14 +47,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
-// Aktywność pozwala na dodanie nowego wpisu do bazy danych
+// Aktywność pozwala na dodanie nowego wpisu do bazy danych lub edycję wpisu.
 public class NewRecordActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
 
-    // Deklaracja stałych identyfikatorów
     static final int REQUEST_TAKE_PHOTO = 1;
     static final int REQUEST_GET_RECEIPT = 2;
 
-    //Deklaracja elementów interfejsu :
     private EditText nameField;
     private Spinner catSpinner;
     private EditText valueField;
@@ -66,8 +64,6 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
 
     private String mCurrentPhotoPath;
     private Uri mUri;
-    private ReceiptFunctions receiptFunctions;
-    private CardFunctions cardFunctions;
     private TextRecognitionFunctions textRecognitionFunctions;
     private boolean showReceipts;
     private Intent mServiceIntent;
@@ -81,13 +77,11 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
 
     private SQLiteOpenHelper mDbHelper;
     private SQLiteDatabase db;
-    private String[] catCols;
     private Cursor catCursor;
     private ArrayList<String> categories;
     private String chosenCategory;
     private ArrayAdapter<String> catAdapter;
 
-    private DataHandler dataHandler;
 
     private Toast toast;
 
@@ -118,7 +112,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                         Constants.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
         }
-        setContentView(R.layout.activity_new_prgn);
+        setContentView(R.layout.activity_new);
         final Context context = getApplicationContext();
         nameField = (EditText)findViewById(R.id.nameField);
         catSpinner = (Spinner)findViewById(R.id.catSpinner);

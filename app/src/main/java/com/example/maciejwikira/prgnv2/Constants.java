@@ -20,11 +20,10 @@ public final class Constants {
     public static final String[] cardCategoriesProjection = {
             CardContract.Card_Categories._ID,
             CardContract.Card_Categories.CATEGORY_NAME
-};
+    };
 
     public static final String cardCategoriesSelection =
             CardContract.Card_Categories.CATEGORY_NAME + " = ?";
-    public static final String cardSelection = CardContract.Card._ID + " = ?";
 
     public static final  String[] cardTableCols = new String[]{
             CardContract.Card._ID,
