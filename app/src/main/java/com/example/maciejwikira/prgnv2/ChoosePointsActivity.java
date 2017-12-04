@@ -217,7 +217,7 @@ public class ChoosePointsActivity extends AppCompatActivity {
 
                 // Przekazanie informacji zwrotnej zawierającej ścieżkę do poprawionego
                 // obrazu oraz jego Uri.
-                Intent intent = new Intent();
+                Intent intent = new Intent(getApplicationContext(), NewRecordActivity.class);
                 Bundle extras = new Bundle();
                 extras.putString(Constants.IMAGE_PATH, path);
                 extras.putString(Constants.IMAGE_URI, uri.toString());

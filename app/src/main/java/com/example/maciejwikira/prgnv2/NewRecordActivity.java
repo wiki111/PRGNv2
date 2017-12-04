@@ -47,6 +47,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import static android.os.Environment.getExternalStoragePublicDirectory;
+
 // Aktywność pozwala na dodanie nowego wpisu do bazy danych lub edycję wpisu.
 public class NewRecordActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
 
@@ -64,7 +66,6 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
 
     private String mCurrentPhotoPath;
     private Uri mUri;
-    private TextRecognitionFunctions textRecognitionFunctions;
     private boolean showReceipts;
     private Intent mServiceIntent;
     private ImageView pickedImageView;
@@ -159,7 +160,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                     cv.put(CardContract.Card.NAME, nameField.getText().toString());
                     cv.put(CardContract.Card.CATEGORY, chosenCategory.toLowerCase());
                     cv.put(CardContract.Card.EXPIRATION_DATE, dateField.getText().toString());
-                    cv.put(CardContract.Card.IMAGE_PATH, getRealPathFromURI(activeUri));
+                    cv.put(CardContract.Card.IMAGE_PATH, imgToSave);
                     cv.put(CardContract.Card.FAVORITED, isFavorited);
                     cv.put(CardContract.Card.DESCRIPTION, dscField.getText().toString());
                 }
@@ -178,7 +179,6 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         setShowReceipts(extras.getBoolean(MainViewActivity.CARDS_OR_RECEIPTS));
         if(showReceipts){
             addToDBBtn.setText("Dodaj paragon");
-            textRecognitionFunctions = new TextRecognitionFunctions(context);
             catCursor = db.query(
                     true,
                     ReceiptContract.Categories.TABLE_NAME,
@@ -327,6 +327,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                 pickedImageView.setImageBitmap(chosenImage);
             }
         }else if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK){
+            activeUri = mUri;
             if(showReceipts == true){
                 Intent intent = new Intent(getApplicationContext(), ChoosePointsActivity.class);
                 Bundle bundle = new Bundle();
@@ -335,6 +336,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                 startActivityForResult(intent, REQUEST_GET_RECEIPT);
             }else{
                 activeUri = mUri;
+                imgToSave = mCurrentPhotoPath;
                 Bitmap chosenImage = BitmapFactory.decodeFile(mCurrentPhotoPath);
                 pickedImageView.setImageBitmap(chosenImage);
             }
@@ -380,7 +382,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     private File createImageFile() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File storageDir = getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         File image = File.createTempFile(
                 imageFileName,  /* prefix */
                 ".jpg",         /* suffix */

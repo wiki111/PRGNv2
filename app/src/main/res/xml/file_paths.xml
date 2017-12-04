@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <external-path name="my_images" path="Android/data/com.example.maciejwikira.prgnv2/files/Pictures" />
-    <external-path name="paragons_images" path="Android/data/com.example.maciejwikira.prgnv2/files/Pictures/Receipt" />
+    <external-path name="receipt_images_dir" path="Android/data/com.example.maciejwikira.prgnv2/files/Pictures/Receipt" />
+    <external-path name="cards_images_dir" path="Android/data/com.example.maciejwikira.prgnv2/files/Pictures/Cards" />
     <external-path name="receipt_images" path="Pictures/Receipt" />
+    <external-path name="cards_images" path="Pictures/Cards" />
+    <external-path name="app_images" path="Pictures" />
 </paths>

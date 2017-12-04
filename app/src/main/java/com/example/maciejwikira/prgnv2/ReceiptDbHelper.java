@@ -12,7 +12,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class ReceiptDbHelper extends SQLiteOpenHelper {
 
     // Deklaracja wersji i nazwy bazy danych.
-    public static final int DATABASE_VERSION = 14;
+    public static final int DATABASE_VERSION = 15;
     public static final String DATABASE_NAME = "ParagonApp.db";
 
     // Konstruktor

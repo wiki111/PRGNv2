@@ -163,6 +163,11 @@ public class DetailsActivity extends AppCompatActivity {
                     }
                 });
 
+                builder.setNegativeButton("Nie", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                    }
+                });
+
                 AlertDialog dialog = builder.create();
                 dialog.show();
             }
@@ -249,8 +254,7 @@ public class DetailsActivity extends AppCompatActivity {
             dateTextView.setText("Data : " + c.getString(c.getColumnIndex(CardContract.Card.EXPIRATION_DATE)));
             descriptionTextView.setText("Opis : " + c.getString(c.getColumnIndex(CardContract.Card.DESCRIPTION)));
             bitmapPath = c.getString(c.getColumnIndex(CardContract.Card.IMAGE_PATH));
-            receiptPhoto = BitmapFactory.decodeFile(bitmapPath);
-            receiptPhotoDetailsView.setImageBitmap(receiptPhoto);
+            receiptPhotoDetailsView.setImageBitmap(loadScaledBitmap(bitmapPath));
             valueTextView.setVisibility(View.INVISIBLE);
             if(!c.getString(c.getColumnIndex(CardContract.Card.FAVORITED)).equals("yes")){
                 favoritedIconView.setVisibility(View.GONE);
@@ -284,6 +288,41 @@ public class DetailsActivity extends AppCompatActivity {
             data.add(6, c.getString(c.getColumnIndex(CardContract.Card._ID)));
         }
         return data;
+    }
+
+    // Metoda ładuje bitmapę o zmniejszonej rozdzielczości.
+    public Bitmap loadScaledBitmap(String path){
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(path, options);
+
+        options.inSampleSize = calculateSampleSize(options, 300, 200);
+
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeFile(path, options);
+    }
+
+    // Metoda oblicza próbkowanie używane do załadowania wersji bitmapy o
+    // porządanych rozmiarach.
+    public int calculateSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight){
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if(height > reqHeight || width > reqWidth){
+
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            // Obliczanie optymalnej wartości próbkowania tak, aby uzyskać
+            // rozmiar obrazu najbardziej zbliżony do porządanego.
+            while((halfHeight / inSampleSize) >= reqHeight &&
+                    (halfWidth / inSampleSize) >= reqWidth){
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
     }
 
 }

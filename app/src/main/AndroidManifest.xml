@@ -41,10 +41,6 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <activity android:name=".EditActivity"
-            android:screenOrientation="portrait"
-            android:configChanges="orientation|keyboardHidden"/>
-
         <activity android:name=".DetailsActivity"
             android:screenOrientation="portrait"
             android:configChanges="orientation|keyboardHidden"/>
