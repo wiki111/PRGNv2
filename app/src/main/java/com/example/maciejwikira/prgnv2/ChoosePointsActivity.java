@@ -5,7 +5,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.support.v4.content.FileProvider;
@@ -20,8 +22,10 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.highgui.Highgui;
 import org.opencv.imgproc.Imgproc;
@@ -110,7 +114,7 @@ public class ChoosePointsActivity extends AppCompatActivity {
                    // Ustawienie punktów wyznaczających czworokąt.
                    Map<Integer, PointF> points = new HashMap<>();
                    points.put(0, new PointF(0 ,0));
-                   points.put(1, new PointF(width , 0));
+                   points.put(1, new PointF(width, 0));
                    points.put(2, new PointF(0, height));
                    points.put(3, new PointF(width, height));
                    cpv.setPoints(points);
@@ -133,25 +137,32 @@ public class ChoosePointsActivity extends AppCompatActivity {
         getPointsBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                // Zapisanie punktów wierzchołków czworokąta.
                 Map<Integer, PointF> points = cpv.getPoints();
 
-                // Zapisanie stosunku wymiarów oryginalnej bitmapy do wymiarów wyświetlanego obrazu
-                float xRatio = (float) original.getWidth() / (sourceImageView.getWidth() +  padding - 8);
-                float yRatio = (float) original.getHeight() / (sourceImageView.getHeight() +  padding - 8);
+                // Zapisanie wymiarów wyświetlanej bitmapy.
+                Drawable drawable = sourceImageView.getDrawable();
+                int bitmapWidth = drawable.getIntrinsicWidth();
+                int bitmapHeight = drawable.getIntrinsicHeight();
 
-                // Mapowanie punktów na oryginalny obraz.
-                float x1 = (points.get(0).x ) * xRatio;
-                float x2 = (points.get(1).x ) * xRatio;
-                float x3 = (points.get(2).x ) * xRatio;
-                float x4 = (points.get(3).x ) * xRatio;
-                float y1 = (points.get(0).y ) * yRatio;
-                float y2 = (points.get(1).y ) * yRatio;
-                float y3 = (points.get(2).y ) * yRatio;
-                float y4 = (points.get(3).y ) * yRatio;
-
-                // Zapisanie obrazu jako macierzy.
+                // Zapisanie oryginalnego obrazu jako macierzy.
                 Mat originalImage = Highgui.imread(originalPath);
                 Imgproc.cvtColor(originalImage, originalImage, Imgproc.COLOR_BGR2RGB);
+
+                // Zapisanie stosunku wymiarów oryginalnej bitmapy do wymiarów wyświetlanego obrazu.
+                float xRatio = (float) originalImage.cols() / (bitmapWidth - padding / 2);
+                float yRatio = (float) originalImage.rows() / (bitmapHeight - padding / 2);
+
+                // Mapowanie punktów na oryginalny obraz.
+                float x1 = (points.get(0).x - padding / 4 ) * xRatio;
+                float x2 = (points.get(1).x - padding / 4 ) * xRatio;
+                float x3 = (points.get(2).x - padding / 4 ) * xRatio;
+                float x4 = (points.get(3).x - padding / 4 ) * xRatio;
+                float y1 = (points.get(0).y - padding / 4 ) * yRatio;
+                float y2 = (points.get(1).y - padding / 4 ) * yRatio;
+                float y3 = (points.get(2).y - padding / 4 ) * yRatio;
+                float y4 = (points.get(3).y - padding / 4 ) * yRatio;
 
                 // Zapisanie punktów do listy.
                 ArrayList<Point> rect = new ArrayList<Point>();
