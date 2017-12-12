@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
@@ -55,6 +56,8 @@ public class ImageProcessor extends IntentService {
     @Override
     protected void onHandleIntent(Intent workIntent){
 
+        Bitmap testBitmap;
+
         //Pobranie ścieżki i uri obrazu do przetworzenia.
         Bundle extras = workIntent.getExtras();
         path = extras.get(Constants.IMAGE_PATH).toString();
@@ -66,8 +69,13 @@ public class ImageProcessor extends IntentService {
         // Zapisanie obrazu w postaci macierzy.
         Mat originalImage = Highgui.imread(path);
 
+        testBitmap = Bitmap.createBitmap(originalImage.cols(), originalImage.rows(), Bitmap.Config.RGB_565);
+        Utils.matToBitmap(originalImage, testBitmap);
+
         // Przetworzenie odwzorowania kolorów z przestrzeni BGR na RGB.
         Imgproc.cvtColor(originalImage, originalImage, Imgproc.COLOR_BGR2RGB);
+
+
 
         // Deklaracja macierzy w której zostanie zapisany zmodyfikowany obraz.
         Mat modifiedImage = new Mat();
@@ -75,8 +83,12 @@ public class ImageProcessor extends IntentService {
         // Przetworzenie obrazu do skali szarości i zapisanie w nowej macierzy.
         Imgproc.cvtColor(originalImage, modifiedImage, Imgproc.COLOR_RGB2GRAY);
 
+        Utils.matToBitmap(modifiedImage, testBitmap);
+
         // Zastosowanie rozmycia Gaussa.
         Imgproc.GaussianBlur(modifiedImage, modifiedImage, new Size(7,7), 0, 0);
+
+        Utils.matToBitmap(modifiedImage, testBitmap);
 
         // Zastosowanie progowania.
         Imgproc.adaptiveThreshold(
@@ -89,21 +101,30 @@ public class ImageProcessor extends IntentService {
                 7
         );
 
+        Utils.matToBitmap(modifiedImage, testBitmap);
+
         // Skopiowanie obrazu po przetworzeniu do nowej macierzy.
         Mat imageForOcr = modifiedImage.clone();
 
         // Odwrócenie kolorów przetworzonego obrazu.
         Core.bitwise_not(modifiedImage, modifiedImage);
 
+        Utils.matToBitmap(modifiedImage, testBitmap);
+
         // Redukcja macierzy do jednowymiarowego wektora - uzyskanie horyzontalnej projekcji
         // obrazu binarnego - histogramu.
         Mat horProj = new Mat();
         Core.reduce(modifiedImage, horProj, 1, Core.REDUCE_AVG);
 
+        testBitmap = Bitmap.createBitmap(horProj.cols(), horProj.rows(), Bitmap.Config.RGB_565);
+        Utils.matToBitmap(horProj, testBitmap);
+
         // Zastosowanie progowania na histogramie w celu zamortyzowania szumu.
         double threshold = 0;
         Mat hist = new Mat();
         Imgproc.threshold(horProj, hist, threshold, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C);
+
+        Utils.matToBitmap(hist, testBitmap);
 
         // Lista współrzędnych Y rzędów macierzy które nie zawierają tekstu.
         ArrayList<Integer> ycoords = new ArrayList<>();
@@ -154,6 +175,8 @@ public class ImageProcessor extends IntentService {
         // punkty początkowy i końcowy prostokąta
         Point p1,p4;
 
+        Imgproc.cvtColor(modifiedImage, modifiedImage, Imgproc.COLOR_GRAY2RGB);
+
         // Wytnij każdą rozpoznaną linię tekstu i wprowadź ją do silnika OCR
         for(int i = 0; i < ycoords.size(); ++i){
             // Definicja punktu początkowego prostokąta ograniczającego linię tekstu
@@ -166,8 +189,14 @@ public class ImageProcessor extends IntentService {
             // Definicja punktu końcowego prostokąta ograniczającego linię tekstu
             p4 = new Point(modifiedImage.cols(), ycoords.get(i));
 
+            Core.rectangle(modifiedImage, p1, p4, new Scalar(0,255,0), 5);
+
+            testBitmap = Bitmap.createBitmap(modifiedImage.cols(), modifiedImage.rows(), Bitmap.Config.RGB_565);
+            Utils.matToBitmap(modifiedImage, testBitmap);
+
             // Zapisanie prostokąta ograniczającego linię tekstu
             line = new Rect(p1, p4);
+
             // Zapisanie fragmentu macierzy obrazu zawierającego linię tekstu
             lineMat = new Mat(imageForOcr, line);
 
@@ -179,6 +208,8 @@ public class ImageProcessor extends IntentService {
             textRecognitionFunctions.searchInBitmap(lineMap);
 
         }
+
+
 
         // Ustawienie ścieżki obrazu który ma zostać zapisany w pamięci urządzenia
         textRecognitionFunctions.setImgToSave(path);

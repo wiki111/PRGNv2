@@ -7,6 +7,8 @@ package com.example.maciejwikira.prgnv2;
     Klasa zawiera globalne definicje stałych.
  */
 public final class Constants {
+
+    public static final String CARDS_OR_RECEIPTS = "CARDS_OR_RECEIPTS";
     public static final String BROADCAST_ACTION = "com.example.maciejwikira.prgnv2.BROADCAST";
     public static final String IMAGE_PATH = "path";
     public static final String IMAGE_URI = "uri";

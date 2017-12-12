@@ -430,13 +430,14 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         addNewCatBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                chosenCategory = newCatName.getText().toString();
-                categories.add(newCatName.getText().toString());
+                chosenCategory = newCatName.getText().toString().toLowerCase();
+                categories.add(newCatName.getText().toString().toLowerCase());
                 catAdapter.notifyDataSetChanged();
                 ContentValues newCategoryValue = new ContentValues();
                 newCategoryValue.put(projection[1],  chosenCategory);
                 db.insert(categoriesTable, null, newCategoryValue);
                 setCategoryText(chosenCategory);
+                popupWindow.dismiss();
             }
         });
     }
@@ -559,7 +560,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         ContentValues newCategoryValue = new ContentValues();
         newCategoryValue.put(
                 projection[1],
-                categoryName
+                categoryName.toLowerCase()
         );
         db.insert(
                 categoriesTable,

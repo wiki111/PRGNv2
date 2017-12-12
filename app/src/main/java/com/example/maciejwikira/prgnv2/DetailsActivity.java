@@ -297,7 +297,7 @@ public class DetailsActivity extends AppCompatActivity {
         BitmapFactory.decodeFile(path, options);
 
         options.inSampleSize = calculateSampleSize(options, 300, 200);
-
+        options.inPreferredConfig = Bitmap.Config.RGB_565;
         options.inJustDecodeBounds = false;
         return BitmapFactory.decodeFile(path, options);
     }

@@ -39,5 +39,4 @@ public class ReceiptDbHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-
 }

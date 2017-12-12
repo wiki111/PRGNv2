@@ -1,15 +1,19 @@
 package com.example.maciejwikira.prgnv2;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Bundle;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
 
 /**
  * Created by Maciej on 2017-10-21.
@@ -30,62 +34,46 @@ public class ReceiptListAdapter extends SimpleCursorAdapter{
         this.layout = layout;
     }
 
+    private static class ViewHolder {
+        ImageView imageView;
+        TextView nameView;
+        TextView categoryView;
+        TextView dateView;
+        TextView valueView;
+    }
+
     // Każdy nowy element listy jest tworzony przez obiekt LayoutInflater z zasobu o podanym ID
     @Override
     public View newView (Context context, Cursor cursor, ViewGroup parent){
         return inflater.inflate(layout, null);
     }
 
-    // Metoda mapuje dane do elementów interfejsu
     @Override
-    public void bindView(View view, Context context, Cursor cursor){
-        super.bindView(view, context, cursor);
+    public View getView(int position, View view, ViewGroup parent){
+        ReceiptListAdapter.ViewHolder viewHolder;
 
-        // Deklaracje elementów interfejsu
-        ImageView imageView = (ImageView) view.findViewById(R.id.photoView);
-        TextView nameView = (TextView) view.findViewById(R.id.nameTextView);
-        TextView categoryView = (TextView) view.findViewById(R.id.categoryTextView);
-        TextView dateView = (TextView) view.findViewById(R.id.dateView);
-        TextView valueView = (TextView) view.findViewById(R.id.valueTextView);
-
-        // Wyświetlenie bitmapy na interfejsie użytkownika
-        imageView.setImageBitmap(loadScaledBitmap(cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH))));
-
-        // Ustawienie zawartości pól interfejsu
-        nameView.setText("Nazwa: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.NAME)));
-        categoryView.setText("Kategoria: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.CATEGORY)));
-        dateView.setText("Data: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.DATE)));
-        valueView.setText("Wartość: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.VALUE)));
-
-    }
-
-    public Bitmap loadScaledBitmap(String path){
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(path, options);
-
-        options.inSampleSize = calculateSampleSize(options, 200, 150);
-
-        options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeFile(path, options);
-    }
-
-    public int calculateSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight){
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
-
-        if(height > reqHeight || width > reqWidth){
-
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-
-            while((halfHeight / inSampleSize) >= reqHeight &&
-                    (halfWidth / inSampleSize) >= reqWidth){
-                inSampleSize *= 2;
-            }
+        if(view == null){
+            viewHolder = new ReceiptListAdapter.ViewHolder();
+            inflater = LayoutInflater.from(mContext);
+            view = inflater.inflate(R.layout.list_item, parent, false);
+            viewHolder.imageView = (ImageView) view.findViewById(R.id.photoView);
+            viewHolder.nameView = (TextView) view.findViewById(R.id.nameTextView);
+            viewHolder.categoryView = (TextView) view.findViewById(R.id.categoryTextView);
+            viewHolder.dateView = (TextView) view.findViewById(R.id.dateView);
+            viewHolder.valueView = (TextView) view.findViewById(R.id.valueTextView);
+            view.setTag(viewHolder);
+        }else{
+            viewHolder = (ReceiptListAdapter.ViewHolder) view.getTag();
         }
 
-        return inSampleSize;
+        viewHolder.valueView.setVisibility(View.GONE);
+        Glide.with(mContext).load(mCursor.getString(mCursor.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH))).into(viewHolder.imageView);
+        viewHolder.nameView.setText("Nazwa: " + mCursor.getString(mCursor.getColumnIndex(ReceiptContract.Receipt.NAME)));
+        viewHolder.categoryView.setText("Kategoria: " + mCursor.getString(mCursor.getColumnIndex(ReceiptContract.Receipt.CATEGORY)));
+        viewHolder.dateView.setText("Data: " + mCursor.getString(mCursor.getColumnIndex(ReceiptContract.Receipt.DATE)));
+        viewHolder.valueView.setText("Wartość: " + mCursor.getString(mCursor.getColumnIndex(ReceiptContract.Receipt.VALUE)));
+
+        return view;
     }
+
 }
