@@ -35,7 +35,6 @@ public class TextRecognitionFunctions {
     private Matcher matchValue, matchDate;
     //Wzory do wyszukiwania wartości zakupu :
     private Pattern wholeValue2 = Pattern.compile("(s\\w*a|su\\w*|\\w*uma|\\w*ma)(\\s*)(pln|\\w*ln|pl\\w*)(\\s*)\\d+(,|\\.)\\d+");
-    private Pattern wholeValue3 = Pattern.compile("([0-9]+,[0-9]+ pln)(.*?)");
     private Pattern theValue = Pattern.compile("([0-9]+(,|\\.)[0-9]+)");
     //Wzór do wyszukiwania daty :
     private Pattern theDate = Pattern.compile("[0-9]{4}-[0-9]{2}-[0-9]{2}");

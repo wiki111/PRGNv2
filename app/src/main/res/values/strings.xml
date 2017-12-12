@@ -13,5 +13,14 @@
     <string name="toast_add_new_receipt_success">Huraaa! Paragon dodano pomyślnie.</string>
     <string name="toast_add_new_failure">Ups, coś poszło nie tak... Może spróbuj jeszcze raz </string>
     <string name="toast_bad_date">Nieprawidłowa data - spróbuj jeszcze raz.</string>
-
+    <string name="toast_update_successful">Element został zaktualizowany.</string>
+    <string name="toast_add_category_successful">Dodano nową kategorię.</string>
+    <string name="toast_pick_contour_info">Użyj widocznego na ekranie czworokąta by wskazać kontur paragonu :
+    najlepiej, żeby czworokąt zawierał się wewnątrz konturu paragonu, nie obejmując tła, tylko treść.</string>
+    <string name="toast_val_not_found">Niestety, nie udało się odczytać wartości paragonu :-(</string>
+    <string name="toast_val_found">Udało się odnaleźć wartość paragonu :-) !</string>
+    <string name="toast_date_not_found">Niestety, nie udało się odczytać daty :-(</string>
+    <string name="toast_date_found">Udało się odnaleźć datę paragonu :-) !</string>
+    <string name="toast_saved_text_info">Tekst z paragonu został sczytany i zapisany.</string>
+    <string name="toast_image_processing_info">Aplikacja sczytuje dane z paragonu.</string>
 </resources>

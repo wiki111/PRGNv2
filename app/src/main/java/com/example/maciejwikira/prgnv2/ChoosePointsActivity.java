@@ -9,6 +9,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
@@ -20,6 +21,7 @@ import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -67,6 +69,8 @@ public class ChoosePointsActivity extends AppCompatActivity {
     private int padding;
     private boolean bitmapSet;
 
+    private Toast toast;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +79,19 @@ public class ChoosePointsActivity extends AppCompatActivity {
 
         // Wywołanie metody inicjalizującej.
         init();
+
+        Button helpBtn = (Button)findViewById(R.id.helpBtn);
+        helpBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                toast = Toast.makeText(getApplicationContext(), R.string.toast_pick_contour_info, Toast.LENGTH_LONG);
+                toast.show();
+            }
+        });
+
+        toast = Toast.makeText(getApplicationContext(), R.string.toast_pick_contour_info, Toast.LENGTH_LONG);
+        toast.show();
+
     }
 
     // Metoda incjalizująca. Wykonuje ładowanie i wyświetlenie obrazu,
@@ -95,7 +112,6 @@ public class ChoosePointsActivity extends AppCompatActivity {
                 original = getBitmap();
                 if (original != null) {
                     setBitmap(original);
-                    bitmapSet = true;
                 }
             }
         });
@@ -241,10 +257,27 @@ public class ChoosePointsActivity extends AppCompatActivity {
 
     // Metoda wyświetla przeskalowaną bitmapę na interfejsie.
     private void setBitmap(Bitmap image){
-        // Skalowanie bitmapy.
-        Bitmap scaled = scaledBitmap(image, sourceFrame.getWidth(), sourceFrame.getHeight());
-        // Ustawienie bitmapy.
-        sourceImageView.setImageBitmap(scaled);
+
+        final int width =  sourceFrame.getWidth();
+        final int height = sourceFrame.getHeight();
+
+        new AsyncTask<Bitmap, Integer, Bitmap>(){
+
+            protected Bitmap doInBackground(Bitmap... bitmaps){
+                // Skalowanie bitmapy.
+                Bitmap scaled = scaledBitmap(bitmaps[0], width, height);
+                return scaled;
+            }
+
+            protected void onPostExecute(Bitmap scaled) {
+                // Ustawienie bitmapy.
+                sourceImageView.setImageBitmap(scaled);
+                bitmapSet = true;
+            }
+
+        }.execute(image);
+
+
        }
 
     // Metoda skaluje bitmapę do podanej wysokości i szerokości.

@@ -341,14 +341,18 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                 Glide.with(this).load(mCurrentPhotoPath).into(pickedImageView);
             }
         }else if(requestCode == REQUEST_GET_RECEIPT){
-            Bundle bundle = data.getExtras();
-            activeUri = Uri.parse(bundle.getString(Constants.IMAGE_URI));
-            Glide.with(this).load(bundle.getString(Constants.IMAGE_PATH)).into(pickedImageView);
-            processImage(
-                    this,
-                    Uri.parse(bundle.getString(Constants.IMAGE_URI)),
-                    bundle.getString(Constants.IMAGE_PATH)
-            );
+            if(data != null){
+                Bundle bundle = data.getExtras();
+                activeUri = Uri.parse(bundle.getString(Constants.IMAGE_URI));
+                Glide.with(this).load(bundle.getString(Constants.IMAGE_PATH)).into(pickedImageView);
+                processImage(
+                        this,
+                        Uri.parse(bundle.getString(Constants.IMAGE_URI)),
+                        bundle.getString(Constants.IMAGE_PATH)
+                );
+            }else {
+                finish();
+            }
         }
 
         if(activeUri == null){
@@ -363,6 +367,8 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         mServiceIntent = new Intent(context, ImageProcessor.class);
         mServiceIntent.putExtras(bundle);
         context.startService(mServiceIntent);
+        toast.makeText(getApplicationContext(), R.string.toast_image_processing_info, Toast.LENGTH_SHORT);
+        toast.show();
     }
 
     //Pozyskanie absolutnej sciezki do pliku na podstawie Uri
@@ -434,9 +440,16 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                 catAdapter.notifyDataSetChanged();
                 ContentValues newCategoryValue = new ContentValues();
                 newCategoryValue.put(projection[1],  chosenCategory);
-                db.insert(categoriesTable, null, newCategoryValue);
-                setCategoryText(chosenCategory);
-                popupWindow.dismiss();
+                try{
+                    db.insert(categoriesTable, null, newCategoryValue);
+                    toast.makeText(getApplicationContext(), R.string.toast_add_category_successful, Toast.LENGTH_SHORT);
+                    toast.show();
+                    setCategoryText(chosenCategory);
+                    popupWindow.dismiss();
+                }catch (Exception e){
+                    toast.makeText(getApplicationContext(), R.string.toast_add_new_failure, Toast.LENGTH_SHORT);
+                    toast.show();
+                }
             }
         });
     }
@@ -486,10 +499,31 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             imgToSave = extras.getString(Constants.IMAGE_PATH);
             textFromImage = extras.getString(Constants.RECEIPT_TEXT);
             receiptValue = extras.getString(Constants.RECEIPT_VAL);
+
+            if(receiptValue.equals("")){
+                toast.makeText(getApplicationContext(), R.string.toast_val_not_found, Toast.LENGTH_SHORT);
+                toast.show();
+            }else{
+                toast.makeText(getApplicationContext(), R.string.toast_val_found, Toast.LENGTH_SHORT);
+                toast.show();
+            }
+
             receiptDate = extras.getString(Constants.RECEIPT_DATE);
+
+            if(receiptDate.equals("")){
+                toast.makeText(getApplicationContext(), R.string.toast_date_not_found, Toast.LENGTH_SHORT);
+                toast.show();
+            }else{
+                toast.makeText(getApplicationContext(), R.string.toast_date_found, Toast.LENGTH_SHORT);
+                toast.show();
+            }
+
             valueField.setText(receiptValue);
             dateField.setText(receiptDate);
             progressBar.setVisibility(View.GONE);
+
+            toast.makeText(getApplicationContext(), R.string.toast_saved_text_info, Toast.LENGTH_SHORT);
+
             addToDBBtn.setVisibility(View.VISIBLE);
         }
     }
@@ -612,6 +646,10 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             checkCategory(db, newItemData);
             String[] item_id = {id};
             db.update(itemTable, newItemData, updateSelection, item_id);
+
+            toast.makeText(getApplicationContext(), R.string.toast_update_successful, Toast.LENGTH_SHORT);
+            toast.show();
+
         }catch (Exception e){
             //Wyświetlenie komunikatu błędu w wypadku jego wystąpienia
             toast = Toast.makeText(getApplicationContext(), R.string.toast_add_new_failure + e.toString(), Toast.LENGTH_LONG);

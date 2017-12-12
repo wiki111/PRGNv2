@@ -6,20 +6,43 @@
     android:layout_height="match_parent"
     tools:context="com.example.maciejwikira.prgnv2.ChoosePointsActivity">
 
-    <Button
-        android:id="@+id/getPointsBtn"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:id="@+id/linearLayout3"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
-        android:text="Dalej"
+        android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp" />
+        app:layout_constraintRight_toRightOf="parent">
+
+        <Button
+            android:id="@+id/helpBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Pomoc"
+            tools:layout_editor_absoluteX="-1dp"
+            tools:layout_editor_absoluteY="-3dp" />
+
+        <Button
+            android:id="@+id/getPointsBtn"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="Dalej"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent" />
+    </LinearLayout>
 
     <FrameLayout
         android:id="@+id/frame_layout"
@@ -27,10 +50,12 @@
         android:layout_height="0dp"
         android:layout_gravity="center"
         android:layout_margin="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/getPointsBtn"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout3"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintVertical_bias="0.031">
 
         <FrameLayout
             android:id="@+id/source_frame"
