@@ -298,6 +298,7 @@ public class ChoosePointsActivity extends AppCompatActivity {
         }
     }
 
+
     // Metoda zapisuje bitmapę w pamięci urządzenia.
     private void saveImage(Bitmap bitmap){
 

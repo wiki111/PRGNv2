@@ -1,11 +1,7 @@
 package com.example.maciejwikira.prgnv2;
 
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.Bundle;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,13 +30,6 @@ public class ReceiptListAdapter extends SimpleCursorAdapter{
         this.layout = layout;
     }
 
-    private static class ViewHolder {
-        ImageView imageView;
-        TextView nameView;
-        TextView categoryView;
-        TextView dateView;
-        TextView valueView;
-    }
 
     // Każdy nowy element listy jest tworzony przez obiekt LayoutInflater z zasobu o podanym ID
     @Override
@@ -48,32 +37,26 @@ public class ReceiptListAdapter extends SimpleCursorAdapter{
         return inflater.inflate(layout, null);
     }
 
+    // Metoda mapuje dane do elementów interfejsu
     @Override
-    public View getView(int position, View view, ViewGroup parent){
-        ReceiptListAdapter.ViewHolder viewHolder;
+    public void bindView(View view, Context context, Cursor cursor){
+        super.bindView(view, context, cursor);
 
-        if(view == null){
-            viewHolder = new ReceiptListAdapter.ViewHolder();
-            inflater = LayoutInflater.from(mContext);
-            view = inflater.inflate(R.layout.list_item, parent, false);
-            viewHolder.imageView = (ImageView) view.findViewById(R.id.photoView);
-            viewHolder.nameView = (TextView) view.findViewById(R.id.nameTextView);
-            viewHolder.categoryView = (TextView) view.findViewById(R.id.categoryTextView);
-            viewHolder.dateView = (TextView) view.findViewById(R.id.dateView);
-            viewHolder.valueView = (TextView) view.findViewById(R.id.valueTextView);
-            view.setTag(viewHolder);
-        }else{
-            viewHolder = (ReceiptListAdapter.ViewHolder) view.getTag();
-        }
+        // Deklaracje elementów interfejsu
+        ImageView imageView = (ImageView) view.findViewById(R.id.photoView);
+        TextView nameView = (TextView) view.findViewById(R.id.nameTextView);
+        TextView categoryView = (TextView) view.findViewById(R.id.categoryTextView);
+        TextView dateView = (TextView) view.findViewById(R.id.dateView);
+        TextView valueView = (TextView) view.findViewById(R.id.valueTextView);
 
-        viewHolder.valueView.setVisibility(View.GONE);
-        Glide.with(mContext).load(mCursor.getString(mCursor.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH))).into(viewHolder.imageView);
-        viewHolder.nameView.setText("Nazwa: " + mCursor.getString(mCursor.getColumnIndex(ReceiptContract.Receipt.NAME)));
-        viewHolder.categoryView.setText("Kategoria: " + mCursor.getString(mCursor.getColumnIndex(ReceiptContract.Receipt.CATEGORY)));
-        viewHolder.dateView.setText("Data: " + mCursor.getString(mCursor.getColumnIndex(ReceiptContract.Receipt.DATE)));
-        viewHolder.valueView.setText("Wartość: " + mCursor.getString(mCursor.getColumnIndex(ReceiptContract.Receipt.VALUE)));
+        // Wyświetlenie bitmapy na interfejsie użytkownika
+        Glide.with(mContext).load(mCursor.getString(mCursor.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH))).into(imageView);
 
-        return view;
+        // Ustawienie zawartości pól interfejsu
+        nameView.setText("Nazwa: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.NAME)));
+        categoryView.setText("Kategoria: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.CATEGORY)));
+        dateView.setText("Data: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.DATE)));
+        valueView.setText("Wartość: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.VALUE)));
+
     }
-
 }

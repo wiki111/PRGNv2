@@ -44,7 +44,11 @@ import com.bumptech.glide.Glide;
 import org.opencv.android.OpenCVLoader;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -318,6 +322,21 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         if (resultCode == RESULT_OK && requestCode == 100) {
             activeUri = data.getData();
             String path = getRealPathFromURI(activeUri);
+
+            File internal;
+
+            try {
+                internal = createImageFile();
+                File external = new File(path);
+                copy(external, internal);
+
+                path = mCurrentPhotoPath;
+                activeUri = Uri.fromFile(external);
+
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+
             if(showReceipts == true){
                 Intent intent = new Intent(getApplicationContext(), ChoosePointsActivity.class);
                 Bundle bundle = new Bundle();
@@ -360,6 +379,25 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         }
     }
 
+    public static void copy(File src, File dst) throws IOException {
+        InputStream in = new FileInputStream(src);
+        try {
+            OutputStream out = new FileOutputStream(dst);
+            try {
+                // Transfer bytes from in to out
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+            } finally {
+                out.close();
+            }
+        } finally {
+            in.close();
+        }
+    }
+
     private void processImage(Context context, Uri uri, String path){
         Bundle bundle = new Bundle();
         bundle.putString(Constants.IMAGE_PATH, path);
@@ -367,8 +405,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         mServiceIntent = new Intent(context, ImageProcessor.class);
         mServiceIntent.putExtras(bundle);
         context.startService(mServiceIntent);
-        toast.makeText(getApplicationContext(), R.string.toast_image_processing_info, Toast.LENGTH_SHORT);
-        toast.show();
+
     }
 
     //Pozyskanie absolutnej sciezki do pliku na podstawie Uri
@@ -386,13 +423,20 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
 
     private File createImageFile() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",         /* suffix */
-                storageDir      /* directory */
-        );
+
+        String imageFileName;
+
+        if(showReceipts == true){
+             imageFileName = "receipt_" + timeStamp;
+        }else{
+            imageFileName = "card_" + timeStamp;
+        }
+
+        File storageDir = new File(getFilesDir() + "/Photos");
+        storageDir.mkdirs();
+
+        File image = new File(storageDir, imageFileName + ".jpg");
+
         mCurrentPhotoPath = image.getAbsolutePath();
         return image;
     }
@@ -499,31 +543,10 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             imgToSave = extras.getString(Constants.IMAGE_PATH);
             textFromImage = extras.getString(Constants.RECEIPT_TEXT);
             receiptValue = extras.getString(Constants.RECEIPT_VAL);
-
-            if(receiptValue.equals("")){
-                toast.makeText(getApplicationContext(), R.string.toast_val_not_found, Toast.LENGTH_SHORT);
-                toast.show();
-            }else{
-                toast.makeText(getApplicationContext(), R.string.toast_val_found, Toast.LENGTH_SHORT);
-                toast.show();
-            }
-
             receiptDate = extras.getString(Constants.RECEIPT_DATE);
-
-            if(receiptDate.equals("")){
-                toast.makeText(getApplicationContext(), R.string.toast_date_not_found, Toast.LENGTH_SHORT);
-                toast.show();
-            }else{
-                toast.makeText(getApplicationContext(), R.string.toast_date_found, Toast.LENGTH_SHORT);
-                toast.show();
-            }
-
             valueField.setText(receiptValue);
             dateField.setText(receiptDate);
             progressBar.setVisibility(View.GONE);
-
-            toast.makeText(getApplicationContext(), R.string.toast_saved_text_info, Toast.LENGTH_SHORT);
-
             addToDBBtn.setVisibility(View.VISIBLE);
         }
     }

@@ -376,8 +376,6 @@ public class MainViewActivity extends AppCompatActivity
             //Wyświetlenie komunikatu błędu w wypadku jego wystąpienia
             toast = Toast.makeText(context, R.string.toast_add_new_failure + e.toString(), Toast.LENGTH_LONG);
             toast.show();
-        }finally {
-            db.close();
         }
     }
 
@@ -581,5 +579,11 @@ public class MainViewActivity extends AppCompatActivity
             editFromDate.setText(date);
         }
 
+    }
+
+    @Override
+    protected void onDestroy(){
+        db.close();
+        super.onDestroy();
     }
 }
