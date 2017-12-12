@@ -39,6 +39,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+
 import org.opencv.android.OpenCVLoader;
 
 import java.io.File;
@@ -323,8 +325,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                 intent.putExtras(bundle);
                 startActivityForResult(intent, REQUEST_GET_RECEIPT);
             }else{
-                Bitmap chosenImage = BitmapFactory.decodeFile(path);
-                pickedImageView.setImageBitmap(chosenImage);
+                Glide.with(this).load(path).into(pickedImageView);
             }
         }else if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK){
             activeUri = mUri;
@@ -337,14 +338,12 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             }else{
                 activeUri = mUri;
                 imgToSave = mCurrentPhotoPath;
-                Bitmap chosenImage = BitmapFactory.decodeFile(mCurrentPhotoPath);
-                pickedImageView.setImageBitmap(chosenImage);
+                Glide.with(this).load(mCurrentPhotoPath).into(pickedImageView);
             }
         }else if(requestCode == REQUEST_GET_RECEIPT){
             Bundle bundle = data.getExtras();
             activeUri = Uri.parse(bundle.getString(Constants.IMAGE_URI));
-            Bitmap chosenImage = BitmapFactory.decodeFile(bundle.getString(Constants.IMAGE_PATH));
-            pickedImageView.setImageBitmap(chosenImage);
+            Glide.with(this).load(bundle.getString(Constants.IMAGE_PATH)).into(pickedImageView);
             processImage(
                     this,
                     Uri.parse(bundle.getString(Constants.IMAGE_URI)),

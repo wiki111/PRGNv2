@@ -10,6 +10,8 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.widget.ImageView;
 
+import com.bumptech.glide.Glide;
+
 // Aktywność wyświetla zdjęcie paragonu lub karty.
 public class DisplayPhotoActivity extends AppCompatActivity {
 
@@ -32,41 +34,8 @@ public class DisplayPhotoActivity extends AppCompatActivity {
             this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         }
 
-        image.setImageBitmap(loadScaledBitmap(bundle.getString("BitmapPath")));
+        Glide.with(this).load(bundle.getString("BitmapPath")).into(image);
 
     }
 
-    public Bitmap loadScaledBitmap(String path){
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(path, options);
-
-        options.inSampleSize = calculateSampleSize(options, image.getMaxWidth(), image.getMaxHeight());
-        options.inPreferredConfig = Bitmap.Config.RGB_565;
-        options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeFile(path, options);
-    }
-
-    // Metoda oblicza próbkowanie używane do załadowania wersji bitmapy o
-    // porządanych rozmiarach.
-    public int calculateSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight){
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
-
-        if(height > reqHeight || width > reqWidth){
-
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-
-            // Obliczanie optymalnej wartości próbkowania tak, aby uzyskać
-            // rozmiar obrazu najbardziej zbliżony do porządanego.
-            while((halfHeight / inSampleSize) >= reqHeight &&
-                    (halfWidth / inSampleSize) >= reqWidth){
-                inSampleSize *= 2;
-            }
-        }
-
-        return inSampleSize;
-    }
 }

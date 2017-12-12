@@ -307,4 +307,12 @@ public class ChoosePointsActivity extends AppCompatActivity {
         uri = FileProvider.getUriForFile(this, "com.example.android.fileprovider", file);
     }
 
+    @Override
+    protected void onDestroy(){
+        cpv = null;
+        sourceFrame = null;
+        sourceImageView = null;
+        original = null;
+        super.onDestroy();
+    }
 }

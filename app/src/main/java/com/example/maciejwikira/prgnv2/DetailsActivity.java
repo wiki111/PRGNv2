@@ -17,6 +17,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+
 import java.util.ArrayList;
 
 // Aktywność wyświetla szczegóły wpisu.
@@ -27,8 +29,6 @@ public class DetailsActivity extends AppCompatActivity {
     private Cursor c;
 
     private boolean showReceipts;
-
-    private Bitmap receiptPhoto;
 
     // ID elementu, którego szczegóły są wyświetlane.
     private String id;
@@ -223,14 +223,6 @@ public class DetailsActivity extends AppCompatActivity {
         super.onResume();
     }
 
-    // Przy zakończeniu działania aktywności zamykany jest kursor oraz połączenie z bazą danych.
-    @Override
-    protected void onDestroy(){
-        c.close();
-        db.close();
-        super.onDestroy();
-    }
-
     // Metoda ustawia zawartość poszczególnych elementów interfejsu użytkownika
     // w zależności od aktywnego trybu aplikacji.
     private void setViewContents(){
@@ -241,8 +233,7 @@ public class DetailsActivity extends AppCompatActivity {
             valueTextView.setText("Wartość : " +c.getString(c.getColumnIndex(ReceiptContract.Receipt.VALUE)));
             descriptionTextView.setText("Opis : " + c.getString(c.getColumnIndex(ReceiptContract.Receipt.DESCRIPTION)));
             bitmapPath = c.getString(c.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH));
-            receiptPhoto = BitmapFactory.decodeFile(bitmapPath);
-            receiptPhotoDetailsView.setImageBitmap(receiptPhoto);
+            Glide.with(this).load(bitmapPath).into(receiptPhotoDetailsView);
             if(!c.getString(c.getColumnIndex(ReceiptContract.Receipt.FAVORITED)).equals("yes")){
                 favoritedIconView.setVisibility(View.GONE);
             }else{
@@ -254,7 +245,7 @@ public class DetailsActivity extends AppCompatActivity {
             dateTextView.setText("Data : " + c.getString(c.getColumnIndex(CardContract.Card.EXPIRATION_DATE)));
             descriptionTextView.setText("Opis : " + c.getString(c.getColumnIndex(CardContract.Card.DESCRIPTION)));
             bitmapPath = c.getString(c.getColumnIndex(CardContract.Card.IMAGE_PATH));
-            receiptPhotoDetailsView.setImageBitmap(loadScaledBitmap(bitmapPath));
+            Glide.with(this).load(bitmapPath).into(receiptPhotoDetailsView);
             valueTextView.setVisibility(View.INVISIBLE);
             if(!c.getString(c.getColumnIndex(CardContract.Card.FAVORITED)).equals("yes")){
                 favoritedIconView.setVisibility(View.GONE);
@@ -290,39 +281,13 @@ public class DetailsActivity extends AppCompatActivity {
         return data;
     }
 
-    // Metoda ładuje bitmapę o zmniejszonej rozdzielczości.
-    public Bitmap loadScaledBitmap(String path){
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(path, options);
+    // Przy zakończeniu działania aktywności zamykany jest kursor oraz połączenie z bazą danych.
+    @Override
+    protected void onDestroy(){
 
-        options.inSampleSize = calculateSampleSize(options, 300, 200);
-        options.inPreferredConfig = Bitmap.Config.RGB_565;
-        options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeFile(path, options);
-    }
-
-    // Metoda oblicza próbkowanie używane do załadowania wersji bitmapy o
-    // porządanych rozmiarach.
-    public int calculateSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight){
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
-
-        if(height > reqHeight || width > reqWidth){
-
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-
-            // Obliczanie optymalnej wartości próbkowania tak, aby uzyskać
-            // rozmiar obrazu najbardziej zbliżony do porządanego.
-            while((halfHeight / inSampleSize) >= reqHeight &&
-                    (halfWidth / inSampleSize) >= reqWidth){
-                inSampleSize *= 2;
-            }
-        }
-
-        return inSampleSize;
+        c.close();
+        db.close();
+        super.onDestroy();
     }
 
 }
