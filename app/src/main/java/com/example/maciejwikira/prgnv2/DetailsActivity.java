@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import java.io.File;
 import java.util.ArrayList;
 
 // Aktywność wyświetla szczegóły wpisu.
@@ -158,6 +159,21 @@ public class DetailsActivity extends AppCompatActivity {
 
                 builder.setPositiveButton("Tak", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
+                            Cursor c = db.query(itemTable, projection, selection, selectionArgs, null, null, null);
+                            c.moveToFirst();
+                            String path;
+                            if(showReceipts){
+                                path = c.getString(c.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH));
+                            }else{
+                                path = c.getString(c.getColumnIndex(CardContract.Card.IMAGE_PATH));
+                            }
+                            try{
+                                File photoToDelete = new File(path);
+                                photoToDelete.delete();
+                            }catch (Exception e){
+                                toast = Toast.makeText(getApplicationContext(), "Nie znaleziono pliku zdjęcia do skasowania.", Toast.LENGTH_SHORT);
+                                toast.show();
+                            }
                             db.delete(itemTable, selection, selectionArgs);
                             finish();
                     }

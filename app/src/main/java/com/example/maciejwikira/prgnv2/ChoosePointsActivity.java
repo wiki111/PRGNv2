@@ -303,7 +303,7 @@ public class ChoosePointsActivity extends AppCompatActivity {
     private void saveImage(Bitmap bitmap){
 
         // Zapisanie uchwytu do lokalizacji docelowej.
-        File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/Receipts");
+        File folder = new File(getFilesDir() + "/Photos");
 
         // Stworzenie odpowiedniej lokalizacji, jeśli nie istnieje.
         if(!folder.exists()){
@@ -318,7 +318,7 @@ public class ChoosePointsActivity extends AppCompatActivity {
         Random generator = new Random();
         int n = 10000;
         n = generator.nextInt(n);
-        String fname = "Image-" + n + ".jpg";
+        String fname = "processed_receipt_" + n + ".jpg";
         File file = new File(folder, fname);
 
         // Jeżeli plik o takiej nazwie istnieje, skasuj go.

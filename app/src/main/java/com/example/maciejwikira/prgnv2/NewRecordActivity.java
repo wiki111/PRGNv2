@@ -485,13 +485,13 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                 ContentValues newCategoryValue = new ContentValues();
                 newCategoryValue.put(projection[1],  chosenCategory);
                 try{
-                    db.insert(categoriesTable, null, newCategoryValue);
-                    toast.makeText(getApplicationContext(), R.string.toast_add_category_successful, Toast.LENGTH_SHORT);
+                    checkCategory(db, newCategoryValue);
+                    toast = Toast.makeText(getApplicationContext(), R.string.toast_add_category_successful, Toast.LENGTH_SHORT);
                     toast.show();
-                    setCategoryText(chosenCategory);
+                    setCategoryText(chosenCategory.toLowerCase());
                     popupWindow.dismiss();
                 }catch (Exception e){
-                    toast.makeText(getApplicationContext(), R.string.toast_add_new_failure, Toast.LENGTH_SHORT);
+                    toast = Toast.makeText(getApplicationContext(), R.string.toast_add_new_failure, Toast.LENGTH_SHORT);
                     toast.show();
                 }
             }

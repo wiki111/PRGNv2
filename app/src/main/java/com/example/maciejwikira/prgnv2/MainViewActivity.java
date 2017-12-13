@@ -68,6 +68,8 @@ public class MainViewActivity extends AppCompatActivity
     private CardListAdapter cardListAdapter;
     private ReceiptListAdapter receiptListAdapter;
 
+    private DrawerLayout drawer;
+
     private SQLiteDatabase db;
     private ReceiptDbHelper mDbHelper;
 
@@ -323,6 +325,8 @@ public class MainViewActivity extends AppCompatActivity
         try{
             db = mDbHelper.getWritableDatabase();
             Cursor c;
+
+            final ListView list = lv;
 
             if(query != null){
                 c = db.rawQuery(query, null);
