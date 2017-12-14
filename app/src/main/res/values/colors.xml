@@ -12,4 +12,8 @@
 
     <color name="choosePointsViewCircleStrokeColor">#ff59a9ff</color>
     <color name="choosePointsViewCircleBackground">#5a003b51</color>
+
+    <color name="holo_blue_dark">#ff0099cc</color>
+    <color name="view_divider_color">#BABABA</color>
+    <color name="view_divider_color_2">#DADADA</color>
 </resources>

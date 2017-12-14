@@ -22,8 +22,9 @@ public final class ReceiptContract {
         public static final String CONTENT = "text";
         public static final String FAVORITED = "favorited";
         public static final String DESCRIPTION = "description";
+        public static final String WARRANTY = "warranty";
 
-        public static final String SQL_CREATE_PARAGONS =
+        public static final String SQL_CREATE_RECEIPTS =
                 "CREATE TABLE IF NOT EXISTS " + Receipt.TABLE_NAME + " (" +
                     Receipt._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     Receipt.NAME + " TEXT," +
@@ -34,9 +35,10 @@ public final class ReceiptContract {
                     Receipt.CONTENT + " TEXT," +
                     Receipt.FAVORITED + " TEXT," +
                     Receipt.DESCRIPTION + " TEXT, " +
+                    Receipt.WARRANTY + " TEXT, " +
                     "FOREIGN KEY (" + Receipt.CATEGORY + ") REFERENCES categories(" + Categories.CATEGORY_NAME + "))";
 
-        public static final String SQL_DELETE_PARAGONS = "DROP TABLE IF EXISTS " + Receipt.TABLE_NAME;
+        public static final String SQL_DELETE_RECEIPTS = "DROP TABLE IF EXISTS " + Receipt.TABLE_NAME;
     }
 
     // Tabela kategorii paragonów
@@ -52,5 +54,24 @@ public final class ReceiptContract {
                 + " (" + Categories.CATEGORY_NAME + ") " + "VALUES ('')";
 
         public static final String SQL_DELETE_CATEGORIES = "DROP TABLE IF EXISTS " + Categories.TABLE_NAME;
+    }
+
+    public static class Receipt_Photos implements BaseColumns{
+        public static final String TABLE_NAME = "receipt_photos";
+        public static final String PHOTO_PATH = "photo_path";
+        public static final String RECEIPT_ID = "receipt_id";
+
+        public static final String SQL_CREATE_RECEIPT_PHOTOS =
+                "CREATE TABLE IF NOT EXISTS " + Receipt_Photos.TABLE_NAME + " (" +
+                        Receipt_Photos._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        Receipt_Photos.PHOTO_PATH + " TEXT, " +
+                        Receipt_Photos.RECEIPT_ID + " INTEGER, " +
+                        "FOREIGN KEY (" +
+                            Receipt_Photos.RECEIPT_ID + ") REFERENCES " +
+                            Receipt.TABLE_NAME +
+                            " (" + Receipt._ID + "))";
+
+        public static final String SQL_DELETE_RECEIPT_PHOTOS =
+                "DROP TABLE IF EXISTS " + Receipt_Photos.TABLE_NAME;
     }
 }

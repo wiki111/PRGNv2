@@ -68,8 +68,6 @@ public class MainViewActivity extends AppCompatActivity
     private CardListAdapter cardListAdapter;
     private ReceiptListAdapter receiptListAdapter;
 
-    private DrawerLayout drawer;
-
     private SQLiteDatabase db;
     private ReceiptDbHelper mDbHelper;
 
