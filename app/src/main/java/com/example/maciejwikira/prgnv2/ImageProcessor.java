@@ -1,13 +1,20 @@
 package com.example.maciejwikira.prgnv2;
 
 import android.app.IntentService;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.widget.ArrayAdapter;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -49,6 +56,10 @@ public class ImageProcessor extends IntentService {
     // Rozpoznana data paragonu.
     private String receiptDate;
 
+    private ArrayList<String> imgs;
+
+    private String itemId;
+
     public ImageProcessor(){
         super("ImageProcessor");
     }
@@ -56,12 +67,79 @@ public class ImageProcessor extends IntentService {
     @Override
     protected void onHandleIntent(Intent workIntent){
 
-        Bitmap testBitmap;
-
         //Pobranie ścieżki i uri obrazu do przetworzenia.
         Bundle extras = workIntent.getExtras();
-        path = extras.get(Constants.IMAGE_PATH).toString();
-        uri = Uri.parse(extras.get(Constants.IMAGE_URI).toString());
+        itemId = extras.getString(Constants.ITEM_ID);
+        imgs = (ArrayList<String>) extras.get(Constants.IMAGE_PATH);
+
+        for (String path : imgs) {
+            processImage(path);
+        }
+
+        ContentValues foundData = new ContentValues();
+        if(receiptValue == null){
+            foundData.put(ReceiptContract.Receipt.VALUE, "");
+        }else{
+            foundData.put(ReceiptContract.Receipt.VALUE, receiptValue);
+        }
+
+        if(receiptDate == null){
+            foundData.put(ReceiptContract.Receipt.DATE, "");
+        }else{
+            foundData.put(ReceiptContract.Receipt.DATE, receiptDate);
+        }
+
+        foundData.put(ReceiptContract.Receipt.CONTENT, textFromImage);
+
+        String updateSelection = ReceiptContract.Receipt._ID + " = ?";
+
+        ReceiptDbHelper mDbHelper = new ReceiptDbHelper(getApplicationContext());
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+        String[] item_id = {itemId};
+
+        try{
+            db.update(ReceiptContract.Receipt.TABLE_NAME, foundData, updateSelection, item_id);
+        }catch (Exception e){
+
+        }
+
+
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.ic_receipt)
+                        .setContentTitle("Przetwarzanie paragonu")
+                        .setContentText("Znaleziono nowe dane paragonu, który został ostatnio dodany !");
+
+        Intent resultIntent = new Intent(this, DetailsActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putBoolean(MainViewActivity.CARDS_OR_RECEIPTS, true);
+        bundle.putString("item_id", itemId);
+        resultIntent.putExtras(bundle);
+
+        PendingIntent resultPendingIntent =
+                PendingIntent.getActivity(
+                        this,
+                        0,
+                        resultIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        mBuilder.setContentIntent(resultPendingIntent);
+
+        int mNotId = 001;
+        NotificationManager mNotifyMgr =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        mNotifyMgr.notify(mNotId, mBuilder.build());
+
+        Intent localIntent = new Intent(Constants.BROADCAST_ACTION);
+        localIntent.putExtras(bundle);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+
+    }
+
+    private void processImage(String path){
+
+        Bitmap testBitmap;
 
         // Deklaracja obiektu klasy obsługującej rozpoznawanie tekstu na obrazie.
         TextRecognitionFunctions textRecognitionFunctions = new TextRecognitionFunctions(this);
@@ -209,26 +287,18 @@ public class ImageProcessor extends IntentService {
 
         }
 
-
-
-        // Ustawienie ścieżki obrazu który ma zostać zapisany w pamięci urządzenia
-        textRecognitionFunctions.setImgToSave(path);
-
         // Pobranie danych z obiektu rozpoznającego tekst na obrazie
-        imgToSave = textRecognitionFunctions.getImgToSave();
-        textFromImage = textRecognitionFunctions.getPrgnText();
-        receiptValue = textRecognitionFunctions.getReceiptValue();
-        receiptDate = textRecognitionFunctions.getReceiptDate();
+        textFromImage += textRecognitionFunctions.getPrgnText();
+        if(textRecognitionFunctions.getReceiptValue() != null)
+            receiptValue = textRecognitionFunctions.getReceiptValue();
 
-        // Stworzenie i przekazanie pakietu danych, które zwraca obiekt
-        Bundle bundle = new Bundle();
-        bundle.putString(Constants.IMAGE_PATH, imgToSave);
-        bundle.putString(Constants.RECEIPT_TEXT, textFromImage);
-        bundle.putString(Constants.RECEIPT_VAL, receiptValue);
-        bundle.putString(Constants.RECEIPT_DATE, receiptDate);
-        Intent localIntent = new Intent(Constants.BROADCAST_ACTION);
-        localIntent.putExtras(bundle);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+        if(textRecognitionFunctions.getReceiptDate() != null)
+            receiptDate = textRecognitionFunctions.getReceiptDate();
+
+
+
+
+
     }
 
 }

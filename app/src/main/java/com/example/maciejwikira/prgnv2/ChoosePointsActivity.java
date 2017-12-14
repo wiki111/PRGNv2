@@ -171,14 +171,14 @@ public class ChoosePointsActivity extends AppCompatActivity {
                 float yRatio = (float) originalImage.rows() / (bitmapHeight - padding / 2);
 
                 // Mapowanie punktów na oryginalny obraz.
-                float x1 = (points.get(0).x - padding / 4 ) * xRatio;
-                float x2 = (points.get(1).x - padding / 4 ) * xRatio;
-                float x3 = (points.get(2).x - padding / 4 ) * xRatio;
-                float x4 = (points.get(3).x - padding / 4 ) * xRatio;
-                float y1 = (points.get(0).y - padding / 4 ) * yRatio;
-                float y2 = (points.get(1).y - padding / 4 ) * yRatio;
-                float y3 = (points.get(2).y - padding / 4 ) * yRatio;
-                float y4 = (points.get(3).y - padding / 4 ) * yRatio;
+                float x1 = (points.get(0).x) * xRatio;
+                float x2 = (points.get(1).x) * xRatio;
+                float x3 = (points.get(2).x) * xRatio;
+                float x4 = (points.get(3).x) * xRatio;
+                float y1 = (points.get(0).y) * yRatio;
+                float y2 = (points.get(1).y) * yRatio;
+                float y3 = (points.get(2).y + padding) * yRatio;
+                float y4 = (points.get(3).y + padding) * yRatio;
 
                 // Zapisanie punktów do listy.
                 ArrayList<Point> rect = new ArrayList<Point>();

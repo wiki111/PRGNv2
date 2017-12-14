@@ -48,8 +48,16 @@ public class ReceiptListAdapter extends SimpleCursorAdapter{
         TextView dateView = (TextView) view.findViewById(R.id.dateView);
         TextView valueView = (TextView) view.findViewById(R.id.valueTextView);
 
-        // Wyświetlenie bitmapy na interfejsie użytkownika
-        Glide.with(mContext).load(mCursor.getString(mCursor.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH))).into(imageView);
+        //Wyświetlenie bitmapy na interfejsie użytkownika
+        String path = mCursor.getString(mCursor.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH));
+        if(path != null){
+            Glide.with(mContext).load(path).into(imageView);
+        }else{
+            imageView.setImageResource(R.drawable.ic_receipt);
+        }
+
+
+
 
         // Ustawienie zawartości pól interfejsu
         nameView.setText("Nazwa: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.NAME)));

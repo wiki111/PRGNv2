@@ -63,14 +63,14 @@ public class TextRecognitionFunctions {
         if(paragonValue != null)
             return this.paragonValue;
         else
-            return "";
+            return null;
     }
     // Metoda typu GET pozwalająca na pobranie znalezionej daty paragonu
     public String getReceiptDate(){
         if(paragonDate != null)
             return this.paragonDate;
         else
-            return "";
+            return null;
     }
 
     // Metoda wyszukuje tekst w podanym obrazie

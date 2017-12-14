@@ -1,13 +1,16 @@
 package com.example.maciejwikira.prgnv2;
 
 import android.app.DialogFragment;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.constraint.ConstraintLayout;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.support.v7.widget.SearchView;
@@ -29,6 +32,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -125,7 +129,7 @@ public class MainViewActivity extends AppCompatActivity
             extras.putString(CAMERA_OR_MEDIA, "media");
             extras.putBoolean(Constants.UPDATE, false);
             intent.putExtras(extras);
-            startActivity(intent);
+            startActivityForResult(intent, Constants.RESULT_PROCESSING);
             }
         });
 
@@ -139,7 +143,7 @@ public class MainViewActivity extends AppCompatActivity
             extras.putString(CAMERA_OR_MEDIA, "cam");
             extras.putBoolean(Constants.UPDATE, false);
             intent.putExtras(extras);
-            startActivity(intent);
+            startActivityForResult(intent, Constants.RESULT_PROCESSING);
             }
         });
 
@@ -155,6 +159,10 @@ public class MainViewActivity extends AppCompatActivity
                 startActivity(intent);
             }
         });
+
+        IntentFilter intentFilter = new IntentFilter(Constants.BROADCAST_ACTION);
+        FixedImageReceiver fixedImageReceiver = new FixedImageReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(fixedImageReceiver, intentFilter);
 
     }
 
@@ -187,9 +195,15 @@ public class MainViewActivity extends AppCompatActivity
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode == RESULT_FILTER){
-                Bundle extras = data.getExtras();
-                filterList(extras);
+            Bundle extras = data.getExtras();
+            filterList(extras);
+        }else if(resultCode == Constants.RESULT_PROCESSING){
+            Bundle extras = data.getExtras();
+            if(extras.getBoolean(Constants.RECEIPT_PROCESSING)){
+                ProgressBar progressBar = (ProgressBar)findViewById(R.id.processingImagesProgressBar);
+                progressBar.setVisibility(View.VISIBLE);
             }
+        }
     }
 
     @Override
@@ -587,5 +601,15 @@ public class MainViewActivity extends AppCompatActivity
     protected void onDestroy(){
         db.close();
         super.onDestroy();
+    }
+
+    private class FixedImageReceiver extends BroadcastReceiver{
+        private FixedImageReceiver(){}
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            populateList(listView, null);
+            ProgressBar progressBar = (ProgressBar) findViewById(R.id.processingImagesProgressBar);
+            progressBar.setVisibility(View.GONE);
+        }
     }
 }

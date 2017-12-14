@@ -18,6 +18,9 @@ public final class Constants {
     public static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 44;
     public static final String UPDATE = "update";
     public static final String ITEM_DATA = "data";
+    public static final String ITEM_ID = "item_id";
+    public static final String RECEIPT_PROCESSING = "receipt_processing";
+    public static final int RESULT_PROCESSING = 777;
 
     public static final String[] cardCategoriesProjection = {
             CardContract.Card_Categories._ID,
@@ -46,7 +49,14 @@ public final class Constants {
             ReceiptContract.Receipt.IMAGE_PATH,
             ReceiptContract.Receipt.CONTENT,
             ReceiptContract.Receipt.FAVORITED,
-            ReceiptContract.Receipt.DESCRIPTION
+            ReceiptContract.Receipt.DESCRIPTION,
+            ReceiptContract.Receipt.WARRANTY
+    };
+
+    public static final String[] receiptPhotosTableCols = new String[]{
+            ReceiptContract.Receipt_Photos._ID,
+            ReceiptContract.Receipt_Photos.PHOTO_PATH,
+            ReceiptContract.Receipt_Photos.RECEIPT_ID
     };
 
     public static final String[] fromCardTable = new String[]{
@@ -64,7 +74,8 @@ public final class Constants {
             ReceiptContract.Receipt.IMAGE_PATH,
             ReceiptContract.Receipt.CONTENT,
             ReceiptContract.Receipt.FAVORITED,
-            ReceiptContract.Receipt.DESCRIPTION
+            ReceiptContract.Receipt.DESCRIPTION,
+            ReceiptContract.Receipt.WARRANTY
     };
 
     public static final int[] toCardTable = new int[]{

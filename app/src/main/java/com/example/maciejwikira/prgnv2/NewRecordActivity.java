@@ -1,17 +1,15 @@
 package com.example.maciejwikira.prgnv2;
 
 import android.Manifest;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -19,7 +17,6 @@ import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -35,6 +32,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -45,11 +43,7 @@ import com.bumptech.glide.Glide;
 import org.opencv.android.OpenCVLoader;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -60,17 +54,22 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     static final int REQUEST_TAKE_PHOTO = 1;
     static final int REQUEST_GET_RECEIPT = 2;
 
+    //Deklaracja elementów interfejsu
     private EditText nameField;
     private Spinner catSpinner;
     private EditText valueField;
     private EditText dateField;
     private EditText dscField;
-    private Button addToDBBtn;
+    private Button addToDbBtn;
     private Button addReceiptPhoto;
+    private Button itemImageAddBtn;
     private SeekBar warrantySeekBar;
     private TextView warrantyTextView;
+    private ImageView itemPhotoView;
 
     private Uri activeUri;
+
+    private String itemImagePath;
 
     private ViewPager viewPager;
     private ViewPagerImageAdapter viewPagerImageAdapter;
@@ -104,40 +103,43 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     private String isFavorited;
     private String updateSelection;
     private String itemId;
+    private String photosTable;
 
     private boolean update;
+    private boolean changingItemImage;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (!OpenCVLoader.initDebug()) {
-            Log.e(this.getClass().getSimpleName(), "  OpenCVLoader.initDebug(), not working.");
-        } else {
-            Log.d(this.getClass().getSimpleName(), "  OpenCVLoader.initDebug(), working.");
-        }
-        if (ContextCompat.checkSelfPermission( this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        Constants.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
-        }
         setContentView(R.layout.activity_new);
+
+        initOpenCV();
+        requestWritePerm();
+
         final Context context = getApplicationContext();
-        nameField = (EditText)findViewById(R.id.nameField);
+
+        //Inicjalizacja elementów interfejsu
         catSpinner = (Spinner)findViewById(R.id.catSpinner);
+
+        nameField = (EditText)findViewById(R.id.nameField);
         valueField = (EditText) findViewById(R.id.valueField);
         dateField = (EditText) findViewById(R.id.dateField);
-        addToDBBtn = (Button)findViewById(R.id.addToDBButton);
         dscField = (EditText)findViewById(R.id.dscField);
-        dscField.setText(" ");
+        addToDbBtn = (Button)findViewById(R.id.addToDBButton);
+        addReceiptPhoto = (Button)findViewById(R.id.addParagonPhotoBtn);
         warrantySeekBar = (SeekBar) findViewById(R.id.warrantySeekBar);
         warrantyTextView = (TextView) findViewById(R.id.warrantyTextView);
+        viewPager = (ViewPager) findViewById(R.id.view_pager);
+        itemImageAddBtn = (Button)findViewById(R.id.itemImageAddBtn);
+        itemPhotoView = (ImageView)findViewById(R.id.itemPhotoView);
 
+        dscField.setText(" ");
         imgsToSave = new ArrayList<>();
-
-        isFavorited = "no";
+        categories = new ArrayList<>();
+        update = false;
+        changingItemImage = false;
+        itemImagePath = null;
 
         warrantySeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -156,24 +158,41 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             }
         });
 
-        addReceiptPhoto = (Button)findViewById(R.id.addParagonPhotoBtn);
         addReceiptPhoto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showChangePhotoPopup(v);
-                //addToDBBtn.setVisibility(View.GONE);
+
             }
         });
 
-        viewPager = (ViewPager) findViewById(R.id.view_pager);
-        viewPagerImageAdapter = new ViewPagerImageAdapter(context, imgsToSave);
+        addToDbBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(showReceipts){
+                    addReceipt();
+                    processImage(context);
+                }else{
+                    addCard();
+                }
+            }
+        });
+
+        itemImageAddBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showChangePhotoPopup(v);
+                changingItemImage = true;
+            }
+        });
+
+        viewPagerImageAdapter = new ViewPagerImageAdapter(context, imgsToSave, showReceipts);
         viewPager.setAdapter(viewPagerImageAdapter);
 
         mDbHelper = new ReceiptDbHelper(this);
         db = mDbHelper.getWritableDatabase();
 
-        categories = new ArrayList<>();
-
+        /*
         addToDBBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -204,140 +223,12 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                     addItem(cv);
                 }
             }
-        });
+        }); */
 
-        Intent intent = getIntent();
-        Bundle extras = intent.getExtras();
-
-        setShowReceipts(extras.getBoolean(MainViewActivity.CARDS_OR_RECEIPTS));
-        if(showReceipts){
-            addToDBBtn.setText("Dodaj paragon");
-            catCursor = db.query(
-                    true,
-                    ReceiptContract.Categories.TABLE_NAME,
-                    Constants.receiptCategoriesProjection,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-        }else {
-            TextView dateView = (TextView)findViewById(R.id.dateTextView);
-            dateView.setText("Data wygaśnięcia");
-            addToDBBtn.setText("Dodaj kartę");
-            LinearLayout valRow = (LinearLayout)findViewById(R.id.valRow);
-            valRow.setVisibility(View.GONE);
-            addToDBBtn.setVisibility(View.VISIBLE);
-            catCursor = db.query(
-                    true,
-                    CardContract.Card_Categories.TABLE_NAME,
-                    Constants.cardCategoriesProjection,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-            );
-        }
-
-        while(catCursor.moveToNext()){
-            categories.add(
-                    catCursor.getString(
-                            catCursor.getColumnIndex(
-                                    CardContract.Card_Categories.CATEGORY_NAME
-                            )
-                    )
-            );
-        }
-        categories.add(categories.size(), "Dodaj nową kategorię");
-        catAdapter = new ArrayAdapter<>(context, R.layout.category_spinner_item, categories);
-        catSpinner.setAdapter(catAdapter);
-        catSpinner.setOnItemSelectedListener(this);
-
-        //IntentFilter intentFilter = new IntentFilter(Constants.BROADCAST_ACTION);
-        //FixedImageReceiver fixedImageReceiver = new FixedImageReceiver();
-        //LocalBroadcastManager.getInstance(this).registerReceiver(fixedImageReceiver, intentFilter);
+        handleIntent(getIntent());
 
 
-        update = extras.getBoolean(Constants.UPDATE);
-        if(!update){
-            if(extras.getString(MainViewActivity.CAMERA_OR_MEDIA).equals("cam")){
-                takePhoto();
-            }else if(extras.getString(MainViewActivity.CAMERA_OR_MEDIA).equals("media")) {
-                openGallery();
-            }
-        }else{
-            ArrayList<String> data = extras.getStringArrayList(Constants.ITEM_DATA);
-            setContents(data);
-        }
 
-    }
-
-    public void setShowReceipts(boolean show){
-        if(show){
-            showReceipts = true;
-            categoryColumn = ReceiptContract.Receipt.CATEGORY;
-            projection = Constants.receiptCategoriesProjection;
-            selection = Constants.receiptCategoriesSelection;
-            categoriesTable = ReceiptContract.Categories.TABLE_NAME;
-            itemTable = ReceiptContract.Receipt.TABLE_NAME;
-            updateSelection = ReceiptContract.Receipt._ID + " = ?";
-        }else{
-            showReceipts = false;
-            categoryColumn = CardContract.Card.CATEGORY;
-            projection = Constants.cardCategoriesProjection;
-            selection = Constants.cardCategoriesSelection;
-            categoriesTable = CardContract.Card_Categories.TABLE_NAME;
-            itemTable = CardContract.Card.TABLE_NAME;
-            updateSelection = CardContract.Card._ID + " = ?";
-        }
-    }
-
-    // Metoda ustawia zezwolenie na zapis w pamięci zewnętrznej
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case Constants.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE: {
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                }
-            }
-        }
-    }
-
-    //Funkcja otwierająca galerię w celu wbrania zdjęcia paragonu
-    private void openGallery(){
-        Intent gallery = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
-        startActivityForResult(gallery, 100);
-    }
-
-    // Metoda otwierająca kamerę
-    private void takePhoto(){
-        // Deklaracja intencji
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            // Stworzenie pliku w którym zostanie zapisane zdjęcie
-            File photoFile = null;
-            try {
-                photoFile = createImageFile();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-            // Jeśli plik został pomyślnie utworzony, pobierz Uri i przekaż je do aktywności
-            // wykonującej zdjęcie
-            if (photoFile != null) {
-                Uri photoURI = FileProvider.getUriForFile(this,
-                        "com.example.android.fileprovider",
-                        photoFile);
-                mUri = photoURI;
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
-            }
-        }
     }
 
     @Override
@@ -345,16 +236,20 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         super.onActivityResult(requestCode, resultCode, data);
 
         if (resultCode == RESULT_OK && requestCode == 100) {
-            activeUri = data.getData();
-            String path = getRealPathFromURI(activeUri);
 
+            if(data != null){
+                activeUri = data.getData();
+            }
 
             if(showReceipts == true){
-                Intent intent = new Intent(getApplicationContext(), ChoosePointsActivity.class);
-                Bundle bundle = new Bundle();
-                bundle.putString(Constants.IMAGE_PATH, path);
-                intent.putExtras(bundle);
-                startActivityForResult(intent, REQUEST_GET_RECEIPT);
+                if(changingItemImage){
+                    itemImagePath = getRealPathFromURI(activeUri);
+                    Glide.with(this).load(itemImagePath).into(itemPhotoView);
+                    changingItemImage = false;
+                }else {
+                    runChoosePoints(getRealPathFromURI(activeUri));
+                }
+
             }else{
                 /*
                 File photoFile;
@@ -379,13 +274,19 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                 */
             }
         }else if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK){
+
             activeUri = mUri;
+
             if(showReceipts == true){
-                Intent intent = new Intent(getApplicationContext(), ChoosePointsActivity.class);
-                Bundle bundle = new Bundle();
-                bundle.putString(Constants.IMAGE_PATH, mCurrentPhotoPath);
-                intent.putExtras(bundle);
-                startActivityForResult(intent, REQUEST_GET_RECEIPT);
+                if(activeUri != null){
+                    if(changingItemImage){
+                        itemImagePath = mCurrentPhotoPath;
+                        Glide.with(this).load(itemImagePath).into(itemPhotoView);
+                        changingItemImage = false;
+                    }else{
+                        runChoosePoints(mCurrentPhotoPath);
+                    }
+                }
             }else{
                 /*
                 activeUri = mUri;
@@ -419,34 +320,266 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             if(data != null){
                 Bundle bundle = data.getExtras();
                 activeUri = Uri.parse(bundle.getString(Constants.IMAGE_URI));
+                addImage(bundle.getString(Constants.IMAGE_PATH));
                 //Glide.with(this).load(bundle.getString(Constants.IMAGE_PATH)).into(pickedImageView);
-                imgsToSave.add(bundle.getString(Constants.IMAGE_PATH));
-                viewPagerImageAdapter = new ViewPagerImageAdapter(getApplicationContext(), imgsToSave);
-                viewPager.setAdapter(viewPagerImageAdapter);
+
                 /*processImage(
                         this,
                         Uri.parse(bundle.getString(Constants.IMAGE_URI)),
                         bundle.getString(Constants.IMAGE_PATH)
                 );*/
-            }else {
-                finish();
             }
-        }
-
-        if(activeUri == null){
-            finish();
         }
     }
 
+    // Metoda ustawia zezwolenie na zapis w pamięci zewnętrznej
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case Constants.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE: {
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-    private void processImage(Context context, Uri uri, String path){
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        chosenCategory = categories.get(position).toString().toLowerCase();
+        if(chosenCategory.equals("dodaj nową kategorię")){
+            showNewCatPopup(view);
+        }
+
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+        chosenCategory = "brak kategorii";
+    }
+
+    @Override
+    public void onDestroy(){
+        db.close();
+        super.onDestroy();
+    }
+
+    private void initOpenCV(){
+        if (!OpenCVLoader.initDebug()) {
+            Log.e(this.getClass().getSimpleName(), "  OpenCVLoader.initDebug(), not working.");
+        } else {
+            Log.d(this.getClass().getSimpleName(), "  OpenCVLoader.initDebug(), working.");
+        }
+    }
+
+    private void runChoosePoints(String path){
+        Intent intent = new Intent(getApplicationContext(), ChoosePointsActivity.class);
         Bundle bundle = new Bundle();
         bundle.putString(Constants.IMAGE_PATH, path);
-        bundle.putString(Constants.IMAGE_URI, uri.toString());
+        intent.putExtras(bundle);
+        startActivityForResult(intent, REQUEST_GET_RECEIPT);
+    }
+
+    private void requestWritePerm(){
+        if (ContextCompat.checkSelfPermission( this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    Constants.MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+        }
+    }
+
+    public void setShowReceipts(boolean show){
+        if(show){
+            showReceipts = true;
+            categoryColumn = ReceiptContract.Receipt.CATEGORY;
+            projection = Constants.receiptCategoriesProjection;
+            selection = Constants.receiptCategoriesSelection;
+            categoriesTable = ReceiptContract.Categories.TABLE_NAME;
+            itemTable = ReceiptContract.Receipt.TABLE_NAME;
+            updateSelection = ReceiptContract.Receipt._ID + " = ?";
+            photosTable = ReceiptContract.Receipt_Photos.TABLE_NAME;
+        }else{
+            showReceipts = false;
+            categoryColumn = CardContract.Card.CATEGORY;
+            projection = Constants.cardCategoriesProjection;
+            selection = Constants.cardCategoriesSelection;
+            categoriesTable = CardContract.Card_Categories.TABLE_NAME;
+            itemTable = CardContract.Card.TABLE_NAME;
+            updateSelection = CardContract.Card._ID + " = ?";
+            photosTable = null;
+        }
+    }
+
+    private void addImage(String path){
+        imgsToSave.add(path);
+        viewPagerImageAdapter = new ViewPagerImageAdapter(getApplicationContext(), imgsToSave, showReceipts);
+        viewPager.setAdapter(viewPagerImageAdapter);
+    }
+
+    private void addReceipt(){
+        ContentValues cv = new ContentValues();
+        cv.put(ReceiptContract.Receipt.NAME, nameField.getText().toString());
+        cv.put(ReceiptContract.Receipt.CATEGORY, chosenCategory.toLowerCase());
+        cv.put(ReceiptContract.Receipt.DATE, "");
+        cv.put(ReceiptContract.Receipt.VALUE, "");
+        cv.put(ReceiptContract.Receipt.IMAGE_PATH, itemImagePath);
+        cv.put(ReceiptContract.Receipt.DESCRIPTION, dscField.getText().toString());
+        cv.put(ReceiptContract.Receipt.WARRANTY, Integer.toString(warrantySeekBar.getProgress()));
+        addItem(cv);
+    }
+
+    private void addCard(){
+        //TODO implement adding cards
+    }
+
+    private void addItem(ContentValues itemData){
+        try{
+            checkCategory(db, itemData);
+            Long id = db.insert(itemTable, null, itemData);
+            itemId = Long.toString(id);
+
+            ContentValues pathData = new ContentValues();
+
+            for (String path : imgsToSave) {
+
+                if(showReceipts){
+                    pathData.put(ReceiptContract.Receipt_Photos.PHOTO_PATH, path);
+                    pathData.put(ReceiptContract.Receipt_Photos.RECEIPT_ID, id.intValue());
+                }
+
+                db.insert(photosTable, null, pathData);
+            }
+
+            String confirmationText;
+            if(showReceipts){
+                confirmationText = Integer.toString(R.string.toast_add_new_receipt_success);
+            }else{
+                confirmationText = Integer.toString(R.string.toast_add_new_card_success);
+            }
+
+            toast = Toast.makeText(
+                    getApplicationContext(),
+                    confirmationText,
+                    Toast.LENGTH_LONG
+            );
+
+            toast.show();
+
+        }catch (Exception e) {
+
+            toast = Toast.makeText(
+                    getApplicationContext(),
+                    R.string.toast_add_new_failure + e.toString(),
+                    Toast.LENGTH_LONG
+            );
+
+            toast.show();
+
+        }
+    }
+
+    private Cursor getCatCursor(Boolean showReceipts){
+
+        if(showReceipts){
+            return db.query(
+                    true,
+                    ReceiptContract.Categories.TABLE_NAME,
+                    Constants.receiptCategoriesProjection,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }else{
+            return db.query(
+                    true,
+                    CardContract.Card_Categories.TABLE_NAME,
+                    Constants.cardCategoriesProjection,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }
+
+
+    }
+
+    private void getCategoriesFromDb(){
+        catCursor = getCatCursor(showReceipts);
+
+        while(catCursor.moveToNext()){
+            categories.add(
+                    catCursor.getString(
+                            catCursor.getColumnIndex(
+                                    CardContract.Card_Categories.CATEGORY_NAME
+                            )
+                    )
+            );
+        }
+        categories.add(categories.size(), "Dodaj nową kategorię");
+        catAdapter = new ArrayAdapter<>(
+                getApplicationContext(),
+                R.layout.category_spinner_item,
+                categories
+        );
+        catSpinner.setAdapter(catAdapter);
+        catSpinner.setOnItemSelectedListener(this);
+    }
+
+    //Funkcja otwierająca galerię w celu wbrania zdjęcia paragonu
+    private void openGallery(){
+        Intent gallery = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+        startActivityForResult(gallery, 100);
+    }
+
+    // Metoda otwierająca kamerę
+    private void takePhoto(){
+        // Deklaracja intencji
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Stworzenie pliku w którym zostanie zapisane zdjęcie
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+            // Jeśli plik został pomyślnie utworzony, pobierz Uri i przekaż je do aktywności
+            // wykonującej zdjęcie
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.example.android.fileprovider",
+                        photoFile);
+                mUri = photoURI;
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+            }
+        }
+    }
+
+    private void processImage(Context context){
+        Bundle bundle = new Bundle();
+        bundle.putString(Constants.ITEM_ID, itemId);
+        bundle.putStringArrayList(Constants.IMAGE_PATH, imgsToSave);
         mServiceIntent = new Intent(context, ImageProcessor.class);
         mServiceIntent.putExtras(bundle);
         context.startService(mServiceIntent);
 
+        Intent result = new Intent(context, MainViewActivity.class);
+        Bundle extras = new Bundle();
+        extras.putBoolean(Constants.RECEIPT_PROCESSING, true);
+        result.putExtras(extras);
+        setResult(Constants.RESULT_PROCESSING, result);
+        finish();
     }
 
     //Pozyskanie absolutnej sciezki do pliku na podstawie Uri
@@ -486,19 +619,6 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         return image;
     }
 
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        chosenCategory = categories.get(position).toString().toLowerCase();
-        if(chosenCategory.equals("dodaj nową kategorię")){
-            showNewCatPopup(view);
-        }
-
-    }
-
-    @Override
-    public void onNothingSelected(AdapterView<?> parent) {
-        chosenCategory = "brak kategorii";
-    }
 
     public void showNewCatPopup(View view){
 
@@ -525,7 +645,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             @Override
             public void onClick(View v) {
                 chosenCategory = newCatName.getText().toString().toLowerCase();
-                categories.add(newCatName.getText().toString().toLowerCase());
+                categories.add(1, newCatName.getText().toString().toLowerCase());
                 catAdapter.notifyDataSetChanged();
                 ContentValues newCategoryValue = new ContentValues();
                 newCategoryValue.put(projection[1],  chosenCategory);
@@ -580,53 +700,26 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         });
     }
 
-    private class FixedImageReceiver extends BroadcastReceiver{
+    /*
+        private class FixedImageReceiver extends BroadcastReceiver{
         private FixedImageReceiver(){}
         @Override
         public void onReceive(Context context, Intent intent) {
             Bundle extras = intent.getExtras();
-            //imgToSave = extras.getString(Constants.IMAGE_PATH);
-            textFromImage = extras.getString(Constants.RECEIPT_TEXT);
-            receiptValue = extras.getString(Constants.RECEIPT_VAL);
-            receiptDate = extras.getString(Constants.RECEIPT_DATE);
-            valueField.setText(receiptValue);
-            dateField.setText(receiptDate);
-            addToDBBtn.setVisibility(View.VISIBLE);
-        }
-    }
+            ContentValues newItemData = new ContentValues();
 
-    @Override
-    public void onDestroy(){
-        db.close();
-        super.onDestroy();
-    }
-
-    private void addItem(ContentValues itemData){
-        try{
-            checkCategory(db, itemData);
-            db.insert(itemTable, null, itemData);
-            String confirmationText;
             if(showReceipts){
-                confirmationText = Integer.toString(R.string.toast_add_new_receipt_success);
-            }else{
-                confirmationText = Integer.toString(R.string.toast_add_new_card_success);
+                newItemData.put(ReceiptContract.Receipt.CONTENT, extras.getString(Constants.RECEIPT_TEXT));
+                newItemData.put(ReceiptContract.Receipt.VALUE, extras.getString(Constants.RECEIPT_VAL));
+                newItemData.put(ReceiptContract.Receipt.DATE, extras.getString(Constants.RECEIPT_DATE));
             }
-            toast = Toast.makeText(
-                    getApplicationContext(),
-                    confirmationText,
-                    Toast.LENGTH_LONG
-            );
-            toast.show();
-            finish();
-        }catch (Exception e) {
-            toast = Toast.makeText(
-                    getApplicationContext(),
-                    R.string.toast_add_new_failure + e.toString(),
-                    Toast.LENGTH_LONG
-            );
-            toast.show();
+
+            IntentFilter intentFilter = new IntentFilter(Constants.BROADCAST_ACTION);
+        FixedImageReceiver fixedImageReceiver = new FixedImageReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(fixedImageReceiver, intentFilter);
         }
     }
+    */
 
     private boolean checkCategory( SQLiteDatabase db, ContentValues itemData){
 
@@ -669,31 +762,63 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         );
     }
 
-    private void setContents(ArrayList<String> data){
-        if(showReceipts){
-            nameField.setText(data.get(0));
-            setCategoryText(data.get(1));
-            valueField.setText(data.get(2));
-            dateField.setText(data.get(3));
-            //imgToSave = data.get(4);
-            textFromImage = data.get(5);
-            isFavorited = data.get(6);
-            dscField.setText(data.get(7));
-            itemId = data.get(8);
-            addToDBBtn.setText("Aktualizuj");
+    private void handleIntent(Intent intent){
+        Bundle extras = intent.getExtras();
+        setShowReceipts(extras.getBoolean(MainViewActivity.CARDS_OR_RECEIPTS));
+        update = extras.getBoolean(Constants.UPDATE);
+        getCategoriesFromDb();
+        ArrayList<String> data = null;
+        if(!update){
+            if(extras.getString(MainViewActivity.CAMERA_OR_MEDIA).equals("cam")){
+                takePhoto();
+            }else if(extras.getString(MainViewActivity.CAMERA_OR_MEDIA).equals("media")) {
+                openGallery();
+            }
         }else{
-            nameField.setText(data.get(0));
-            setCategoryText(data.get(1));
-            dateField.setText(data.get(2));
-            //imgToSave = data.get(3);
-            isFavorited = data.get(4);
-            dscField.setText(data.get(5));
-            addToDBBtn.setText("Aktualizuj");
+            data = extras.getStringArrayList(Constants.ITEM_DATA);
         }
-        addToDBBtn.setVisibility(View.VISIBLE);
-        //Bitmap chosenImage = BitmapFactory.decodeFile(imgToSave);
-        //pickedImageView.setImageBitmap(chosenImage);
 
+        setLayoutElementsContent(showReceipts, update, data);
+    }
+
+    private void setLayoutElementsContent(Boolean showReceipts, Boolean update, ArrayList<String> data){
+        if(update){
+            if(showReceipts){
+                nameField.setText(data.get(0));
+                setCategoryText(data.get(1));
+                valueField.setText(data.get(2));
+                dateField.setText(data.get(3));
+                itemImagePath = data.get(4);
+                textFromImage = data.get(5);
+                isFavorited = data.get(6);
+                dscField.setText(data.get(7));
+                itemId = data.get(8);
+                warrantySeekBar.setProgress(Integer.parseInt(data.get(9)));
+                addToDbBtn.setText("Aktualizuj");
+            }else{
+                nameField.setText(data.get(0));
+                setCategoryText(data.get(1));
+                dateField.setText(data.get(2));
+                itemImagePath = data.get(3);
+                isFavorited = data.get(4);
+                dscField.setText(data.get(5));
+                addToDbBtn.setText("Aktualizuj");
+            }
+        }else{
+            if(showReceipts){
+                addToDbBtn.setText("Dodaj paragon");
+                LinearLayout valRow = (LinearLayout) findViewById(R.id.valRow);
+                LinearLayout dateRow = (LinearLayout) findViewById(R.id.dateRow);
+                valRow.setVisibility(View.GONE);
+                dateRow.setVisibility(View.GONE);
+            }else {
+                TextView dateView = (TextView)findViewById(R.id.dateTextView);
+                dateView.setText("Data wygaśnięcia");
+                addToDbBtn.setText("Dodaj kartę");
+                LinearLayout valRow = (LinearLayout)findViewById(R.id.valRow);
+                valRow.setVisibility(View.GONE);
+            }
+        }
 
     }
 
