@@ -42,6 +42,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -323,19 +324,6 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             activeUri = data.getData();
             String path = getRealPathFromURI(activeUri);
 
-            File internal;
-
-            try {
-                internal = createImageFile();
-                File external = new File(path);
-                copy(external, internal);
-
-                path = mCurrentPhotoPath;
-                activeUri = Uri.fromFile(external);
-
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
 
             if(showReceipts == true){
                 Intent intent = new Intent(getApplicationContext(), ChoosePointsActivity.class);
@@ -344,6 +332,24 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                 intent.putExtras(bundle);
                 startActivityForResult(intent, REQUEST_GET_RECEIPT);
             }else{
+                File photoFile;
+
+                try {
+                    photoFile = createImageFile();
+                    Bitmap bmp = BitmapFactory.decodeFile(path);
+
+                    FileOutputStream out = new FileOutputStream(photoFile);
+                    bmp.compress(Bitmap.CompressFormat.JPEG, 90, out);
+
+                    out.flush();
+                    out.close();
+
+                    path = mCurrentPhotoPath;
+                    activeUri = Uri.fromFile(photoFile);
+
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
                 Glide.with(this).load(path).into(pickedImageView);
             }
         }else if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK){
@@ -357,6 +363,28 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             }else{
                 activeUri = mUri;
                 imgToSave = mCurrentPhotoPath;
+                String oldFilePath = imgToSave;
+                File photoFile;
+
+                try {
+                    photoFile = createImageFile();
+                    Bitmap bmp = BitmapFactory.decodeFile(imgToSave);
+
+                    FileOutputStream out = new FileOutputStream(photoFile);
+                    bmp.compress(Bitmap.CompressFormat.JPEG, 90, out);
+
+                    out.flush();
+                    out.close();
+
+                    File fileToDelete = new File(oldFilePath);
+                    fileToDelete.delete();
+
+                    imgToSave = mCurrentPhotoPath;
+                    activeUri = Uri.fromFile(photoFile);
+
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
                 Glide.with(this).load(mCurrentPhotoPath).into(pickedImageView);
             }
         }else if(requestCode == REQUEST_GET_RECEIPT){
@@ -432,7 +460,11 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             imageFileName = "card_" + timeStamp;
         }
 
-        File storageDir = new File(getFilesDir() + "/Photos");
+        File storageDir = new File(
+                Environment.getExternalStoragePublicDirectory(
+                                Environment.DIRECTORY_PICTURES
+                ) + "/Paragon_App_Photos"
+        );
         storageDir.mkdirs();
 
         File image = new File(storageDir, imageFileName + ".jpg");

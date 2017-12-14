@@ -40,7 +40,6 @@ public class ReceiptListAdapter extends SimpleCursorAdapter{
     // Metoda mapuje dane do elementów interfejsu
     @Override
     public void bindView(View view, Context context, Cursor cursor){
-        super.bindView(view, context, cursor);
 
         // Deklaracje elementów interfejsu
         ImageView imageView = (ImageView) view.findViewById(R.id.photoView);

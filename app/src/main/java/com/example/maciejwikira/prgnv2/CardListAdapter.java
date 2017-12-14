@@ -10,7 +10,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
 
 /**
  * Created by Maciej on 2017-11-03.
@@ -33,16 +32,12 @@ public class CardListAdapter extends SimpleCursorAdapter {
     @Override
     public View newView (Context context, Cursor cursor, ViewGroup parent) {
         View inflated = inflater.inflate(layout, null);
-
-
-
         return inflated;
     }
 
     // Metoda przypisuje dane z kursora do elementów interfejsu.
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
-        super.bindView(view, context, cursor);
 
         ImageView imageView = (ImageView) view.findViewById(R.id.photoView);
         TextView nameView = (TextView) view.findViewById(R.id.nameTextView);
@@ -55,6 +50,7 @@ public class CardListAdapter extends SimpleCursorAdapter {
         Glide.with(context)
                 .load(cursor.getString(cursor.getColumnIndex(CardContract.Card.IMAGE_PATH)))
                 .into(imageView);
+
 
         nameView.setText(cursor.getString(cursor.getColumnIndex(CardContract.Card.NAME)));
         categoryView.setText(cursor.getString(cursor.getColumnIndex(CardContract.Card.CATEGORY)));
