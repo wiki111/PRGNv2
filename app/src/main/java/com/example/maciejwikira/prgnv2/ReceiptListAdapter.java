@@ -2,6 +2,7 @@ package com.example.maciejwikira.prgnv2;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.icu.math.BigDecimal;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -55,9 +56,6 @@ public class ReceiptListAdapter extends SimpleCursorAdapter{
         }else{
             imageView.setImageResource(R.drawable.ic_receipt);
         }
-
-
-
 
         // Ustawienie zawartości pól interfejsu
         nameView.setText("Nazwa: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.NAME)));

@@ -67,9 +67,6 @@ public class ViewPagerImageAdapter extends PagerAdapter {
             });
         }catch (Exception e){
         }
-
-
-
         container.addView(viewItem);
 
         return viewItem;
@@ -78,9 +75,5 @@ public class ViewPagerImageAdapter extends PagerAdapter {
     @Override
     public void destroyItem(ViewGroup container, int position, Object object) {
         ((ViewPager) container).removeView((LinearLayout) object);
-    }
-
-    public void setResources(ArrayList<String> paths){
-        this.paths = paths;
     }
 }

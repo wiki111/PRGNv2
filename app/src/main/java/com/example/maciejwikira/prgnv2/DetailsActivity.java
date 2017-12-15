@@ -64,6 +64,8 @@ public class DetailsActivity extends AppCompatActivity {
     private ImageView favoritedIconView;
     private ImageView itemImageView;
 
+    private ViewPagerImageAdapter viewPagerImageAdapter;
+
     private ViewPager viewPager;
 
     private Toast toast;
@@ -101,7 +103,7 @@ public class DetailsActivity extends AppCompatActivity {
             imgs.add(photoCursor.getString(photoCursor.getColumnIndex(photoColumn)));
         }
 
-        ViewPagerImageAdapter viewPagerImageAdapter = new ViewPagerImageAdapter(getApplicationContext(), imgs, showReceipts);
+        viewPagerImageAdapter = new ViewPagerImageAdapter(getApplicationContext(), imgs, showReceipts);
         viewPager.setAdapter(viewPagerImageAdapter);
 
         tableCursor.moveToFirst();
@@ -286,6 +288,7 @@ public class DetailsActivity extends AppCompatActivity {
     protected void onResume(){
         tableCursor = db.query(itemTable, projection, selection, selectionArgs, null, null, null);
         tableCursor.moveToFirst();
+        loadImages(itemId);
         setViewContents();
         super.onResume();
     }
@@ -340,6 +343,7 @@ public class DetailsActivity extends AppCompatActivity {
             data.add(6, tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.FAVORITED)));
             data.add(7, tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.DESCRIPTION)));
             data.add(8, tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt._ID)));
+            data.add(9, tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.WARRANTY)));
         }else{
             data.add(0, tableCursor.getString(tableCursor.getColumnIndex(CardContract.Card.NAME)));
             data.add(1, tableCursor.getString(tableCursor.getColumnIndex(CardContract.Card.CATEGORY)));
@@ -359,6 +363,17 @@ public class DetailsActivity extends AppCompatActivity {
         tableCursor.close();
         db.close();
         super.onDestroy();
+    }
+
+    private void loadImages(String itemId){
+
+        String[] selectionArgs = new String[]{itemId};
+        Cursor photoCursor = db.query(photoTable, photoProjection, photoSelection, selectionArgs, null , null, null);
+        while (photoCursor.moveToNext()){
+            imgs.add(photoCursor.getString(photoCursor.getColumnIndex(photoColumn)));
+        }
+        viewPagerImageAdapter = new ViewPagerImageAdapter(getApplicationContext(), imgs, showReceipts);
+        viewPager.setAdapter(viewPagerImageAdapter);
     }
 
 }
