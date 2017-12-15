@@ -370,7 +370,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         }else{
             value = 0.0d;
         }
-        cv.put(ReceiptContract.Receipt.VALUE, String.format("%\..2f", value));
+        cv.put(ReceiptContract.Receipt.VALUE, String.format("%,.2f", value));
         cv.put(ReceiptContract.Receipt.IMAGE_PATH, itemImagePath);
         cv.put(ReceiptContract.Receipt.DESCRIPTION, dscField.getText().toString());
         cv.put(ReceiptContract.Receipt.WARRANTY, Integer.toString(warrantySeekBar.getProgress()));

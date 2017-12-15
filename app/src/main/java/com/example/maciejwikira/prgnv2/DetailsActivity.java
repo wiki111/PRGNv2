@@ -99,10 +99,6 @@ public class DetailsActivity extends AppCompatActivity {
 
         imgs = new ArrayList<>();
 
-        while(photoCursor.moveToNext()){
-            imgs.add(photoCursor.getString(photoCursor.getColumnIndex(photoColumn)));
-        }
-
         viewPagerImageAdapter = new ViewPagerImageAdapter(getApplicationContext(), imgs, showReceipts);
         viewPager.setAdapter(viewPagerImageAdapter);
 
@@ -366,8 +362,8 @@ public class DetailsActivity extends AppCompatActivity {
     }
 
     private void loadImages(String itemId){
-
         String[] selectionArgs = new String[]{itemId};
+        imgs.clear();
         Cursor photoCursor = db.query(photoTable, photoProjection, photoSelection, selectionArgs, null , null, null);
         while (photoCursor.moveToNext()){
             imgs.add(photoCursor.getString(photoCursor.getColumnIndex(photoColumn)));
