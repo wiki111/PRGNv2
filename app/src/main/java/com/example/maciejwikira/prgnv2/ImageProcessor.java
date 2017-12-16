@@ -80,13 +80,7 @@ public class ImageProcessor extends IntentService {
         if(receiptValue == null){
             foundData.put(ReceiptContract.Receipt.VALUE, "0.00");
         }else{
-            Double value;
-            if(!receiptValue.isEmpty()){
-                value = Double.parseDouble(receiptValue);
-            }else{
-                value = 0.0d;
-            }
-            foundData.put(ReceiptContract.Receipt.VALUE, String.format("%,.2f", value));
+            foundData.put(ReceiptContract.Receipt.VALUE, receiptValue);
         }
 
         if(receiptDate == null){

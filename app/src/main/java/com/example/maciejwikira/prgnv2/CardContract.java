@@ -67,4 +67,23 @@ public final class CardContract {
 
     }
 
+    public static class Card_Photos implements BaseColumns{
+        public static final String TABLE_NAME = "card_photos";
+        public static final String PHOTO_PATH = "photo_path";
+        public static final String CARD_ID = "card_id";
+
+        public static final String SQL_CREATE_CARD_PHOTOS =
+                "CREATE TABLE IF NOT EXISTS " + Card_Photos.TABLE_NAME + " (" +
+                        Card_Photos._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        Card_Photos.PHOTO_PATH + " TEXT, " +
+                        Card_Photos.CARD_ID + " INTEGER, " +
+                        "FOREIGN KEY (" +
+                        Card_Photos.CARD_ID + ") REFERENCES " +
+                        Card.TABLE_NAME +
+                        " (" + Card._ID + "))";
+
+        public static final String SQL_DELETE_CARD_PHOTOS =
+                "DROP TABLE IF EXISTS " + Card_Photos.TABLE_NAME;
+    }
+
 }

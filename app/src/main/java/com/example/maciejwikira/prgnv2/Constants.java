@@ -59,6 +59,12 @@ public final class Constants {
             ReceiptContract.Receipt_Photos.RECEIPT_ID
     };
 
+    public static final String[] cardPhotosTableCols = new String[]{
+            CardContract.Card_Photos._ID,
+            CardContract.Card_Photos.PHOTO_PATH,
+            CardContract.Card_Photos.CARD_ID
+    };
+
     public static final String[] fromCardTable = new String[]{
             CardContract.Card.NAME,
             CardContract.Card.CATEGORY,

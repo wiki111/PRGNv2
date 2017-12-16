@@ -30,7 +30,7 @@ public final class ReceiptContract {
                     Receipt.NAME + " TEXT," +
                     Receipt.CATEGORY + " TEXT," +
                     Receipt.DATE +  " DATE," +
-                    Receipt.VALUE + " REAL," +
+                    Receipt.VALUE + " TEXT," +
                     Receipt.IMAGE_PATH + " TEXT," +
                     Receipt.CONTENT + " TEXT," +
                     Receipt.FAVORITED + " TEXT," +

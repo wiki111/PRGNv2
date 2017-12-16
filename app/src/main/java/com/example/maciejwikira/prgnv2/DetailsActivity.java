@@ -212,18 +212,6 @@ public class DetailsActivity extends AppCompatActivity {
                 Cursor c = db.query(itemTable, projection, selection, selectionArgs, null, null, null);
                 c.moveToFirst();
                 String path;
-                if(showReceipts){
-                    path = c.getString(c.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH));
-                }else{
-                    path = c.getString(c.getColumnIndex(CardContract.Card.IMAGE_PATH));
-                }
-                try{
-                    File photoToDelete = new File(path);
-                    photoToDelete.delete();
-                }catch (Exception e){
-                    toast = Toast.makeText(getApplicationContext(), "Nie znaleziono pliku zdjęcia do skasowania.", Toast.LENGTH_SHORT);
-                    toast.show();
-                }
 
                 selectionArgs = new String[]{ itemId };
 
@@ -240,6 +228,7 @@ public class DetailsActivity extends AppCompatActivity {
                 }
 
                 db.delete(itemTable, selection, selectionArgs);
+                db.delete(photoTable, photoSelection, selectionArgs);
                 finish();
             }
         });
@@ -269,8 +258,12 @@ public class DetailsActivity extends AppCompatActivity {
         }else{
             showReceipts = false;
             projection = Constants.cardTableCols;
+            photoProjection = Constants.cardPhotosTableCols;
             selection = CardContract.Card._ID + " = ?";
+            photoSelection = CardContract.Card_Photos.CARD_ID + " = ?";
             itemTable = CardContract.Card.TABLE_NAME;
+            photoTable = CardContract.Card_Photos.TABLE_NAME;
+            photoColumn = CardContract.Card_Photos.PHOTO_PATH;
         }
 
         selectionArgs = new String[]{itemId};
@@ -315,12 +308,15 @@ public class DetailsActivity extends AppCompatActivity {
             dateTextView.setText("Data : " + tableCursor.getString(tableCursor.getColumnIndex(CardContract.Card.EXPIRATION_DATE)));
             descriptionTextView.setText("Opis : " + tableCursor.getString(tableCursor.getColumnIndex(CardContract.Card.DESCRIPTION)));
             bitmapPath = tableCursor.getString(tableCursor.getColumnIndex(CardContract.Card.IMAGE_PATH));
-            Glide.with(this).load(bitmapPath).into(receiptPhotoDetailsView);
-            valueTextView.setVisibility(View.INVISIBLE);
-            if(!tableCursor.getString(tableCursor.getColumnIndex(CardContract.Card.FAVORITED)).equals("yes")){
-                favoritedIconView.setVisibility(View.GONE);
-            }else{
-                favoritedIconView.setVisibility(View.VISIBLE);
+            Glide.with(this).load(bitmapPath).into(itemImageView);
+            valueTextView.setVisibility(View.GONE);
+            warrantyTextView.setVisibility(View.GONE);
+            if(tableCursor.getString(tableCursor.getColumnIndex(CardContract.Card.FAVORITED)) != null){
+                if(tableCursor.getString(tableCursor.getColumnIndex(CardContract.Card.FAVORITED)).equals("yes")){
+                    favoritedIconView.setVisibility(View.VISIBLE);
+                }else{
+                    favoritedIconView.setVisibility(View.GONE);
+                }
             }
         }
 

@@ -10,7 +10,7 @@
         android:id="@+id/textView7"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Jak chcesz zmienić zdjęcie ?"
+        android:text="Jak chcesz dodać zdjęcie ?"
         android:textAlignment="center"
         android:textSize="24dp" />
 

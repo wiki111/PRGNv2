@@ -32,6 +32,8 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -77,7 +79,9 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     private LinearLayout valRow;
     private LinearLayout dateRow;
     private TextView dateView;
-    private static final String COMMA_SEPERATED = "###,###.###";
+    private CheckBox processImgCB;
+
+
 
 
     private Uri activeUri;
@@ -125,6 +129,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
 
     private boolean update;
     private boolean changingItemImage;
+    private boolean processingOn;
 
 
     @Override
@@ -154,6 +159,18 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         valRow = (LinearLayout)findViewById(R.id.valRow);
         dateRow = (LinearLayout)findViewById(R.id.dateRow);
         dateView = (TextView)findViewById(R.id.dateTextView);
+        processImgCB = (CheckBox)findViewById(R.id.processImageCB);
+
+        processImgCB.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked){
+                    processingOn = true;
+                }else{
+                    processingOn = false;
+                }
+            }
+        });
 
         dscField.setText(" ");
         imgsToSave = new ArrayList<>();
@@ -161,6 +178,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         categories = new ArrayList<>();
         update = false;
         changingItemImage = false;
+        processingOn = true;
         itemImagePath = null;
 
         warrantySeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -235,9 +253,15 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                 }
 
             }else{
-                //TODO handle incoming card image
-                String path = saveImageInAppFolder(getRealPathFromURI(activeUri));
-                addImage(path);
+                if(changingItemImage){
+                    itemImagePath = getRealPathFromURI(activeUri);
+                    Glide.with(this).load(itemImagePath).into(itemPhotoView);
+                    changingItemImage = false;
+                }else{
+                    String path = saveImageInAppFolder(getRealPathFromURI(activeUri));
+                    addImage(path);
+                }
+
             }
         }else if(requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK){
             activeUri = mUri;
@@ -253,7 +277,15 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                     }
                 }
             }else{
-                //TODO handle incoming card photo
+                if(changingItemImage){
+                    itemImagePath = mCurrentPhotoPath;
+                    Glide.with(this).load(itemImagePath).into(itemPhotoView);
+                    changingItemImage = false;
+                }else{
+                    String path = saveImageInAppFolder(mCurrentPhotoPath);
+                    addImage(path);
+                }
+
             }
         }else if(requestCode == REQUEST_GET_RECEIPT){
             if(data != null){
@@ -348,6 +380,11 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             itemTable = CardContract.Card.TABLE_NAME;
             updateSelection = CardContract.Card._ID + " = ?";
             photosTable = null;
+            updatePhotoSelection = CardContract.Card_Photos.CARD_ID + " = ?";
+            photosTable = CardContract.Card_Photos.TABLE_NAME;
+            photoProjection = Constants.cardPhotosTableCols;
+            photoSelection = CardContract.Card_Photos.CARD_ID + " = ?";
+            photoColumn = CardContract.Card_Photos.PHOTO_PATH;
         }
     }
 
@@ -363,19 +400,15 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         cv.put(ReceiptContract.Receipt.NAME, nameField.getText().toString());
         cv.put(ReceiptContract.Receipt.CATEGORY, chosenCategory.toLowerCase());
         cv.put(ReceiptContract.Receipt.DATE, dateField.getText().toString());
-        String val = valueField.getText().toString();
-        Double value;
-        if(!val.isEmpty()){
-            value = Double.parseDouble(val);
-        }else{
-            value = 0.0d;
-        }
-        cv.put(ReceiptContract.Receipt.VALUE, String.format("%,.2f", value));
+        cv.put(ReceiptContract.Receipt.VALUE, valueField.getText().toString());
         cv.put(ReceiptContract.Receipt.IMAGE_PATH, itemImagePath);
         cv.put(ReceiptContract.Receipt.DESCRIPTION, dscField.getText().toString());
         cv.put(ReceiptContract.Receipt.WARRANTY, Integer.toString(warrantySeekBar.getProgress()));
         if(update){
             updateItem(itemId,cv);
+            if(processingOn){
+                processImage(getApplicationContext());
+            }
         }else {
             addItem(cv);
             processImage(getApplicationContext());
@@ -385,6 +418,17 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
 
     private void addCard(Boolean update){
         //TODO implement adding cards
+        ContentValues cv = new ContentValues();
+        cv.put(CardContract.Card.NAME, nameField.getText().toString());
+        cv.put(CardContract.Card.CATEGORY, chosenCategory.toLowerCase());
+        cv.put(CardContract.Card.EXPIRATION_DATE, dateField.getText().toString());
+        cv.put(CardContract.Card.IMAGE_PATH, itemImagePath);
+        cv.put(CardContract.Card.DESCRIPTION, dscField.getText().toString());
+        if(update){
+            updateItem(itemId, cv);
+        }else{
+            addItem(cv);
+        }
     }
 
     private void addItem(ContentValues itemData){
@@ -396,19 +440,17 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
 
             for (String path : imgsToSave) {
 
-                if(showReceipts){
-                    pathData.put(ReceiptContract.Receipt_Photos.PHOTO_PATH, path);
-                    pathData.put(ReceiptContract.Receipt_Photos.RECEIPT_ID, id.intValue());
-                }
+                    pathData.put(photoProjection[1], path);
+                    pathData.put(photoProjection[2], id.intValue());
 
                 db.insert(photosTable, null, pathData);
             }
 
             String confirmationText;
             if(showReceipts){
-                confirmationText = Integer.toString(R.string.toast_add_new_receipt_success);
+                confirmationText = getString(R.string.toast_add_new_receipt_success);
             }else{
-                confirmationText = Integer.toString(R.string.toast_add_new_card_success);
+                confirmationText = getString(R.string.toast_add_new_card_success);
             }
 
             toast = Toast.makeText(
@@ -519,10 +561,13 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     private void processImage(Context context){
         Bundle bundle = new Bundle();
         bundle.putString(Constants.ITEM_ID, itemId);
-        bundle.putStringArrayList(Constants.IMAGE_PATH, imgsToSave);
+        bundle.putStringArrayList(Constants.IMAGE_PATH, loadedImgs);
         mServiceIntent = new Intent(context, ImageProcessor.class);
         mServiceIntent.putExtras(bundle);
         context.startService(mServiceIntent);
+
+        toast = Toast.makeText(getApplicationContext(), "Pozyskuję informacje ze zdjęcia ... ", Toast.LENGTH_LONG);
+        toast.show();
 
         Intent result = new Intent(context, MainViewActivity.class);
         Bundle extras = new Bundle();
@@ -711,7 +756,12 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             }
         }else{
             data = extras.getStringArrayList(Constants.ITEM_DATA);
-            loadImages(data.get(8));
+            if(showReceipts){
+                loadImages(data.get(8));
+            }else{
+                loadImages(data.get(6));
+            }
+
         }
 
         setLayoutElementsContent(showReceipts, update, data);
@@ -734,25 +784,36 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                 addToDbBtn.setText("Aktualizuj");
                 valRow.setVisibility(View.VISIBLE);
                 dateRow.setVisibility(View.VISIBLE);
+                processingOn = false;
             }else{
                 nameField.setText(data.get(0));
                 setCategoryText(data.get(1));
                 dateField.setText(data.get(2));
                 itemImagePath = data.get(3);
+                Glide.with(this).load(itemImagePath).into(itemPhotoView);
                 isFavorited = data.get(4);
                 dscField.setText(data.get(5));
+                itemId = data.get(6);
                 addToDbBtn.setText("Aktualizuj");
                 dateView.setText("Data wygaśnięcia");
+                warrantySeekBar.setVisibility(View.GONE);
+                warrantyTextView.setVisibility(View.GONE);
+                valRow.setVisibility(View.GONE);
+                processImgCB.setVisibility(View.GONE);
             }
         }else{
             if(showReceipts){
                 addToDbBtn.setText("Dodaj paragon");
                 valRow.setVisibility(View.GONE);
                 dateRow.setVisibility(View.GONE);
+                processImgCB.setVisibility(View.GONE);
             }else {
                 dateView.setText("Data wygaśnięcia");
                 addToDbBtn.setText("Dodaj kartę");
                 valRow.setVisibility(View.GONE);
+                warrantySeekBar.setVisibility(View.GONE);
+                warrantyTextView.setVisibility(View.GONE);
+                processImgCB.setVisibility(View.GONE);
             }
         }
 
@@ -776,20 +837,18 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
 
             for (String path : imgsToSave) {
 
-                if(showReceipts){
-                    pathData.put(ReceiptContract.Receipt_Photos.PHOTO_PATH, path);
-                    pathData.put(ReceiptContract.Receipt_Photos.RECEIPT_ID, Integer.valueOf(id));
-                }
+                pathData.put(photoProjection[1], path);
+                pathData.put(photoProjection[2], Integer.valueOf(id));
 
                 db.insert(photosTable, null, pathData);
             }
 
-            toast = Toast.makeText(getApplicationContext(), R.string.toast_update_successful, Toast.LENGTH_SHORT);
+            toast = Toast.makeText(getApplicationContext(), getString(R.string.toast_update_successful), Toast.LENGTH_SHORT);
             toast.show();
 
         }catch (Exception e){
             //Wyświetlenie komunikatu błędu w wypadku jego wystąpienia
-            toast = Toast.makeText(getApplicationContext(), R.string.toast_add_new_failure + e.toString(), Toast.LENGTH_LONG);
+            toast = Toast.makeText(getApplicationContext(), getString(R.string.toast_add_new_failure) + e.toString(), Toast.LENGTH_LONG);
             toast.show();
         }
     }

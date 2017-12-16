@@ -12,7 +12,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class ReceiptDbHelper extends SQLiteOpenHelper {
 
     // Deklaracja wersji i nazwy bazy danych.
-    public static final int DATABASE_VERSION = 18;
+    public static final int DATABASE_VERSION = 22;
     public static final String DATABASE_NAME = "ParagonApp.db";
 
     // Konstruktor
@@ -28,6 +28,7 @@ public class ReceiptDbHelper extends SQLiteOpenHelper {
         db.execSQL(ReceiptContract.Receipt.SQL_CREATE_RECEIPTS);
         db.execSQL(CardContract.Card_Categories.SQL_CREATE_CARD_CATEGORIES);
         db.execSQL(CardContract.Card_Categories.SQL_INSERT_EMPTY_CARD_CATEGORY);
+        db.execSQL(CardContract.Card_Photos.SQL_CREATE_CARD_PHOTOS);
         db.execSQL(CardContract.Card.SQL_CREATE_CARDS);
     }
 
@@ -37,6 +38,7 @@ public class ReceiptDbHelper extends SQLiteOpenHelper {
         db.execSQL(ReceiptContract.Receipt_Photos.SQL_DELETE_RECEIPT_PHOTOS);
         db.execSQL(ReceiptContract.Receipt.SQL_DELETE_RECEIPTS);
         db.execSQL(CardContract.Card_Categories.SQL_DELETE_CARD_CATEGORIES);
+        db.execSQL(CardContract.Card_Photos.SQL_DELETE_CARD_PHOTOS);
         db.execSQL(CardContract.Card.SQL_DELETE_CARDS);
         onCreate(db);
     }

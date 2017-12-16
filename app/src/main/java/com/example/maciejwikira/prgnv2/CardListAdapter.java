@@ -47,9 +47,15 @@ public class CardListAdapter extends SimpleCursorAdapter {
 
         valueView.setVisibility(View.GONE);
 
-        Glide.with(context)
-                .load(cursor.getString(cursor.getColumnIndex(CardContract.Card.IMAGE_PATH)))
-                .into(imageView);
+        String path = cursor.getString(cursor.getColumnIndex(CardContract.Card.IMAGE_PATH));
+        if(path != null){
+            Glide.with(context)
+                    .load(path)
+                    .into(imageView);
+        }else{
+            imageView.setImageResource(R.drawable.ic_card);
+        }
+
 
 
         nameView.setText(cursor.getString(cursor.getColumnIndex(CardContract.Card.NAME)));
