@@ -88,7 +88,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:editable="true"
+                android:focusable="false"
                 android:ems="10"
                 android:inputType="textPersonName"
                 android:text="YYYY-MM-DD" />
@@ -115,6 +115,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:ems="10"
+                android:focusable="false"
                 android:inputType="textPersonName"
                 android:text="YYYY-MM-DD" />
         </LinearLayout>

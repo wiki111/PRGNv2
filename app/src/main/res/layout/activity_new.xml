@@ -159,6 +159,7 @@
                     android:layout_weight="1"
                     android:ems="10"
                     android:hint="yyyy-MM-dd"
+                    android:focusable="false"
                     android:inputType="date"
                     app:layout_constraintBaseline_toBaselineOf="@+id/dateTextView"
                     app:layout_constraintRight_toRightOf="parent" />

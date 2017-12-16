@@ -1,6 +1,7 @@
 package com.example.maciejwikira.prgnv2;
 
 import android.Manifest;
+import android.app.DialogFragment;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
@@ -59,7 +60,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 // Aktywność pozwala na dodanie nowego wpisu do bazy danych lub edycję wpisu.
-public class NewRecordActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
+public class NewRecordActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener, DatePickerFragment.onDateSetListener{
 
     static final int REQUEST_TAKE_PHOTO = 1;
     static final int REQUEST_GET_RECEIPT = 2;
@@ -80,9 +81,6 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     private LinearLayout dateRow;
     private TextView dateView;
     private CheckBox processImgCB;
-
-
-
 
     private Uri activeUri;
 
@@ -130,7 +128,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     private boolean update;
     private boolean changingItemImage;
     private boolean processingOn;
-
+    private boolean errorOccured;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -179,7 +177,19 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         update = false;
         changingItemImage = false;
         processingOn = true;
+        errorOccured = false;
         itemImagePath = null;
+
+        dateField.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DialogFragment newFragment = new DatePickerFragment();
+                Bundle arg = new Bundle();
+                arg.putString("Field", "new");
+                newFragment.setArguments(arg);
+                newFragment.show(getFragmentManager(), "datePicker");
+            }
+        });
 
         warrantySeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -208,6 +218,8 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         addToDbBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                    errorOccured = false;
+                    valRow.setBackgroundColor(getResources().getColor(R.color.white));
                     if(showReceipts){
                         addReceipt(update);
                     }else {
@@ -397,23 +409,42 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
 
     private void addReceipt(Boolean update){
         ContentValues cv = new ContentValues();
+        Double value;
+
         cv.put(ReceiptContract.Receipt.NAME, nameField.getText().toString());
         cv.put(ReceiptContract.Receipt.CATEGORY, chosenCategory.toLowerCase());
         cv.put(ReceiptContract.Receipt.DATE, dateField.getText().toString());
-        cv.put(ReceiptContract.Receipt.VALUE, valueField.getText().toString());
+
+        String val = valueField.getText().toString().replaceAll(",", ".");
+        value =  Double.parseDouble(val);
+
+        int integerPlaces = val.indexOf('.');
+        int decimalPlaces = val.length() - integerPlaces - 1;
+
+        if(decimalPlaces > 2){
+            value = 0d;
+            errorOccured = true;
+            valRow.setBackgroundColor(getResources().getColor(R.color.validation_problem_color));
+            toast = Toast.makeText(getApplicationContext(), "Podana wartość jest nieprawidłowa.", Toast.LENGTH_LONG);
+            toast.show();
+        }
+
+        cv.put(ReceiptContract.Receipt.VALUE, value);
         cv.put(ReceiptContract.Receipt.IMAGE_PATH, itemImagePath);
         cv.put(ReceiptContract.Receipt.DESCRIPTION, dscField.getText().toString());
         cv.put(ReceiptContract.Receipt.WARRANTY, Integer.toString(warrantySeekBar.getProgress()));
-        if(update){
-            updateItem(itemId,cv);
-            if(processingOn){
+
+        if(!errorOccured){
+            if(update){
+                updateItem(itemId,cv);
+                if(processingOn){
+                    processImage(getApplicationContext());
+                }
+            }else {
+                addItem(cv);
                 processImage(getApplicationContext());
             }
-        }else {
-            addItem(cv);
-            processImage(getApplicationContext());
         }
-
     }
 
     private void addCard(Boolean update){
@@ -881,6 +912,11 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         }catch (Exception e){
             return "";
         }
+    }
+
+    @Override
+    public void dateSet(String date, String field) {
+        dateField.setText(date);
     }
 }
 

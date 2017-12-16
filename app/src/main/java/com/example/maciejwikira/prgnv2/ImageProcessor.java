@@ -77,11 +77,16 @@ public class ImageProcessor extends IntentService {
         }
 
         ContentValues foundData = new ContentValues();
-        if(receiptValue == null){
-            foundData.put(ReceiptContract.Receipt.VALUE, "0.00");
-        }else{
-            foundData.put(ReceiptContract.Receipt.VALUE, receiptValue);
+
+        Double value;
+        try{
+            receiptValue = receiptValue.replaceAll(",", ".");
+            value = Double.parseDouble(receiptValue);
+        }catch (Exception e) {
+            value = 0d;
         }
+
+        foundData.put(ReceiptContract.Receipt.VALUE, value);
 
         if(receiptDate == null){
             foundData.put(ReceiptContract.Receipt.DATE, "");
@@ -279,11 +284,13 @@ public class ImageProcessor extends IntentService {
             lineMat = new Mat(imageForOcr, line);
 
             // Przetworzenie macierzy zawierającej linię tekstu na bitmapę
-            lineMap = Bitmap.createBitmap(lineMat.cols(), lineMat.rows(), Bitmap.Config.RGB_565);
-            Utils.matToBitmap(lineMat, lineMap);
+            if(lineMat.cols() > 0 && lineMat.width() > 0){
+                lineMap = Bitmap.createBitmap(lineMat.cols(), lineMat.rows(), Bitmap.Config.RGB_565);
+                Utils.matToBitmap(lineMat, lineMap);
+                // Rozpoznawanie tekstu
+                textRecognitionFunctions.searchInBitmap(lineMap);
+            }
 
-            // Rozpoznawanie tekstu
-            textRecognitionFunctions.searchInBitmap(lineMap);
 
         }
 

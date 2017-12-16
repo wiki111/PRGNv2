@@ -61,7 +61,11 @@ public class ReceiptListAdapter extends SimpleCursorAdapter{
         nameView.setText("Nazwa: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.NAME)));
         categoryView.setText("Kategoria: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.CATEGORY)));
         dateView.setText("Data: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.DATE)));
-        valueView.setText("Wartość: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.VALUE)));
+
+        Double value = cursor.getDouble(cursor.getColumnIndex(ReceiptContract.Receipt.VALUE));
+        String valueString = value.toString().replaceAll(",", ".");
+
+        valueView.setText("Wartość: " + valueString);
 
     }
 }

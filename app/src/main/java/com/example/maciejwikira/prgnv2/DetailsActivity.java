@@ -52,6 +52,7 @@ public class DetailsActivity extends AppCompatActivity {
     private String[] photoProjection;
     private String photoSelection;
     private String photoColumn;
+    private String valueString;
 
     private TextView nameTextView;
     private TextView categoryTextView;
@@ -289,7 +290,11 @@ public class DetailsActivity extends AppCompatActivity {
             nameTextView.setText("Nazwa : " + tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.NAME)));
             categoryTextView.setText("Kategoria : " + tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.CATEGORY)));
             dateTextView.setText("Data : " + tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.DATE)));
-            valueTextView.setText("Wartość : " +tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.VALUE)));
+
+            Double value = tableCursor.getDouble(tableCursor.getColumnIndex(ReceiptContract.Receipt.VALUE));
+            valueString = value.toString().replaceAll(",", ".");
+
+            valueTextView.setText("Wartość : " + valueString);
             descriptionTextView.setText("Opis : " + tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.DESCRIPTION)));
             warrantyTextView.setText("Czas gwarancji : " + tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.WARRANTY)));
             bitmapPath = tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH));
@@ -328,7 +333,7 @@ public class DetailsActivity extends AppCompatActivity {
         if(showReceipts){
             data.add(0, tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.NAME)));
             data.add(1, tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.CATEGORY)));
-            data.add(2, tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.VALUE)));
+            data.add(2, valueString);
             data.add(3, tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.DATE)));
             data.add(4, tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.IMAGE_PATH)));
             data.add(5, tableCursor.getString(tableCursor.getColumnIndex(ReceiptContract.Receipt.CONTENT)));
