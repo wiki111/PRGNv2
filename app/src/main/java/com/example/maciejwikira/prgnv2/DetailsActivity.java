@@ -353,6 +353,12 @@ public class DetailsActivity extends AppCompatActivity {
         return data;
     }
 
+    @Override
+    public void onBackPressed(){
+        Intent intent = new Intent(getApplicationContext(), MainViewActivity.class);
+        startActivity(intent);
+    }
+
     // Przy zakończeniu działania aktywności zamykany jest kursor oraz połączenie z bazą danych.
     @Override
     protected void onDestroy(){
