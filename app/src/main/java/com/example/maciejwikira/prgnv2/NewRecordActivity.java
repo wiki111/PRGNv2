@@ -415,21 +415,26 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         cv.put(ReceiptContract.Receipt.CATEGORY, chosenCategory.toLowerCase());
         cv.put(ReceiptContract.Receipt.DATE, dateField.getText().toString());
 
-        String val = valueField.getText().toString().replaceAll(",", ".");
-        value =  Double.parseDouble(val);
+        if(update){
+            String val = valueField.getText().toString().replaceAll(",", ".");
+            value =  Double.parseDouble(val);
 
-        int integerPlaces = val.indexOf('.');
-        int decimalPlaces = val.length() - integerPlaces - 1;
+            int integerPlaces = val.indexOf('.');
+            int decimalPlaces = val.length() - integerPlaces - 1;
 
-        if(decimalPlaces > 2){
-            value = 0d;
-            errorOccured = true;
-            valRow.setBackgroundColor(getResources().getColor(R.color.validation_problem_color));
-            toast = Toast.makeText(getApplicationContext(), "Podana wartość jest nieprawidłowa.", Toast.LENGTH_LONG);
-            toast.show();
+            if(decimalPlaces > 2){
+                errorOccured = true;
+                valRow.setBackgroundColor(getResources().getColor(R.color.validation_problem_color));
+                toast = Toast.makeText(getApplicationContext(), "Podana wartość jest nieprawidłowa.", Toast.LENGTH_LONG);
+                toast.show();
+            }else{
+                cv.put(ReceiptContract.Receipt.VALUE, value);
+            }
         }
 
-        cv.put(ReceiptContract.Receipt.VALUE, value);
+
+
+
         cv.put(ReceiptContract.Receipt.IMAGE_PATH, itemImagePath);
         cv.put(ReceiptContract.Receipt.DESCRIPTION, dscField.getText().toString());
         cv.put(ReceiptContract.Receipt.WARRANTY, Integer.toString(warrantySeekBar.getProgress()));

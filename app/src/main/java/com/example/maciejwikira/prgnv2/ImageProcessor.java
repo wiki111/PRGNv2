@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.ArrayAdapter;
+import android.widget.Toast;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -73,7 +74,12 @@ public class ImageProcessor extends IntentService {
         imgs = (ArrayList<String>) extras.get(Constants.IMAGE_PATH);
 
         for (String path : imgs) {
-            processImage(path);
+            try {
+                processImage(path);
+            }catch (Exception e){
+                Toast toast = Toast.makeText(getApplicationContext(), "Coś poszło nie tak. Spróbuj jeszcze raz ?", Toast.LENGTH_LONG);
+            }
+
         }
 
         ContentValues foundData = new ContentValues();
