@@ -123,13 +123,13 @@ public class MainViewActivity extends AppCompatActivity
         fabMedia.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-            Intent intent = new Intent(getApplicationContext(), NewRecordActivity.class);
-            Bundle extras = new Bundle();
-            extras.putBoolean(CARDS_OR_RECEIPTS, showReceipts);
-            extras.putString(CAMERA_OR_MEDIA, "media");
-            extras.putBoolean(Constants.UPDATE, false);
-            intent.putExtras(extras);
-            startActivityForResult(intent, Constants.RESULT_PROCESSING);
+                Intent intent = new Intent(getApplicationContext(), NewRecordActivity.class);
+                Bundle extras = new Bundle();
+                extras.putBoolean(CARDS_OR_RECEIPTS, showReceipts);
+                extras.putString(CAMERA_OR_MEDIA, "media");
+                extras.putBoolean(Constants.UPDATE, false);
+                intent.putExtras(extras);
+                startActivityForResult(intent, Constants.RESULT_PROCESSING);
             }
         });
 
@@ -137,13 +137,13 @@ public class MainViewActivity extends AppCompatActivity
         fabCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-            Intent intent = new Intent(getApplicationContext(), NewRecordActivity.class);
-            Bundle extras = new Bundle();
-            extras.putBoolean(CARDS_OR_RECEIPTS, showReceipts);
-            extras.putString(CAMERA_OR_MEDIA, "cam");
-            extras.putBoolean(Constants.UPDATE, false);
-            intent.putExtras(extras);
-            startActivityForResult(intent, Constants.RESULT_PROCESSING);
+                Intent intent = new Intent(getApplicationContext(), NewRecordActivity.class);
+                Bundle extras = new Bundle();
+                extras.putBoolean(CARDS_OR_RECEIPTS, showReceipts);
+                extras.putString(CAMERA_OR_MEDIA, "cam");
+                extras.putBoolean(Constants.UPDATE, false);
+                intent.putExtras(extras);
+                startActivityForResult(intent, Constants.RESULT_PROCESSING);
             }
         });
 
@@ -396,16 +396,23 @@ public class MainViewActivity extends AppCompatActivity
     }
 
     private void filterList(Bundle filterData){
-        boolean reset = filterData.getBoolean("Reset");
-        chosenCategory = filterData.getString("Chosen_Category");
+        boolean reset =
+                filterData.getBoolean("Reset");
+        chosenCategory =
+                filterData.getString("Chosen_Category");
         if(showReceipts){
-            chosenFromDate = filterData.getString("Chosen_From_Date");
-            chosenToDate = filterData.getString("Chosen_To_Date");
+            chosenFromDate =
+                    filterData.getString("Chosen_From_Date");
+            chosenToDate =
+                    filterData.getString("Chosen_To_Date");
         }
 
         if(!reset){
 
-            query = "SELECT * FROM " + itemTable + " WHERE ";
+            query =
+                    "SELECT * FROM "
+                    + itemTable
+                    + " WHERE ";
             String categoryPart = "";
             String datePart = "";
             boolean filterByCategory = false;
@@ -413,23 +420,35 @@ public class MainViewActivity extends AppCompatActivity
 
             if(!chosenCategory.equals("")){
                 filterByCategory = true;
-                categoryPart = tableCols[2] + " = '" + chosenCategory.toLowerCase() + "'";
+                categoryPart =
+                        tableCols[2]
+                        + " = '"
+                        + chosenCategory.toLowerCase()
+                        + "'";
             }
 
             if(showReceipts){
                 if(!chosenFromDate.equals("YYYY-MM-DD")) {
                     filterByDate = true;
-                    matcherFrom = datePattern.matcher(chosenFromDate);
-                    matcherTo = datePattern.matcher(chosenToDate);
+                    matcherFrom =
+                            datePattern.matcher(chosenFromDate);
+                    matcherTo =
+                            datePattern.matcher(chosenToDate);
                     if (matcherFrom.find()) {
                         if (matcherTo.find()) {
-                            datePart = ReceiptContract.Receipt.DATE +
-                                    " >= " + "'" + chosenFromDate + "'" + " AND " +
-                                    ReceiptContract.Receipt.DATE + " <= " +
-                                    "'" + chosenToDate + "'";
+                            datePart =
+                                    ReceiptContract.Receipt.DATE +
+                                    " >= " + "'"
+                                    + chosenFromDate
+                                    + "'" + " AND "
+                                    + ReceiptContract.Receipt.DATE
+                                    + " <= " + "'"
+                                    + chosenToDate + "'";
                         } else {
-                            datePart = ReceiptContract.Receipt.DATE +
-                                    " >= " + "'" + chosenFromDate + "'";
+                            datePart =
+                                    ReceiptContract.Receipt.DATE
+                                    + " >= " + "'"
+                                    + chosenFromDate + "'";
                         }
                     }
                 }

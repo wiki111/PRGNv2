@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -23,8 +24,10 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.view.ContextThemeWrapper;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -74,6 +77,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     private Button addToDbBtn;
     private Button addReceiptPhoto;
     private Button itemImageAddBtn;
+    private Button deletePhoto;
     private SeekBar warrantySeekBar;
     private TextView warrantyTextView;
     private ImageView itemPhotoView;
@@ -158,6 +162,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         dateRow = (LinearLayout)findViewById(R.id.dateRow);
         dateView = (TextView)findViewById(R.id.dateTextView);
         processImgCB = (CheckBox)findViewById(R.id.processImageCB);
+        deletePhoto = (Button)findViewById(R.id.deletePhoto);
 
         processImgCB.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -233,6 +238,14 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             public void onClick(View v) {
                 showChangePhotoPopup(v);
                 changingItemImage = true;
+            }
+        });
+
+        deletePhoto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int id = viewPager.getCurrentItem();
+                deleteWarning(loadedImgs.get(viewPager.getCurrentItem()), viewPager.getCurrentItem());
             }
         });
 
@@ -411,12 +424,22 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         ContentValues cv = new ContentValues();
         Double value;
 
-        cv.put(ReceiptContract.Receipt.NAME, nameField.getText().toString());
-        cv.put(ReceiptContract.Receipt.CATEGORY, chosenCategory.toLowerCase());
-        cv.put(ReceiptContract.Receipt.DATE, dateField.getText().toString());
+        cv.put(
+            ReceiptContract.Receipt.NAME,
+            nameField.getText().toString());
+        cv.put(
+            ReceiptContract.Receipt.CATEGORY,
+            chosenCategory.toLowerCase());
+        cv.put(
+            ReceiptContract.Receipt.DATE,
+            dateField.getText().toString());
 
         if(update){
-            String val = valueField.getText().toString().replaceAll(",", ".");
+            String val =
+                valueField
+                .getText()
+                .toString()
+                .replaceAll(",", ".");
             value =  Double.parseDouble(val);
 
             int integerPlaces = val.indexOf('.');
@@ -424,20 +447,32 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
 
             if(decimalPlaces > 2){
                 errorOccured = true;
-                valRow.setBackgroundColor(getResources().getColor(R.color.validation_problem_color));
-                toast = Toast.makeText(getApplicationContext(), "Podana wartość jest nieprawidłowa.", Toast.LENGTH_LONG);
+                valRow
+                    .setBackgroundColor(
+                        getResources()
+                        .getColor(R.color.validation_problem_color));
+                toast =
+                    Toast.makeText(
+                        getApplicationContext(),
+                        "Podana wartość jest nieprawidłowa.",
+                        Toast.LENGTH_LONG);
                 toast.show();
             }else{
-                cv.put(ReceiptContract.Receipt.VALUE, value);
+                cv.put(
+                    ReceiptContract.Receipt.VALUE,
+                    value);
             }
         }
 
-
-
-
-        cv.put(ReceiptContract.Receipt.IMAGE_PATH, itemImagePath);
-        cv.put(ReceiptContract.Receipt.DESCRIPTION, dscField.getText().toString());
-        cv.put(ReceiptContract.Receipt.WARRANTY, Integer.toString(warrantySeekBar.getProgress()));
+        cv.put(
+            ReceiptContract.Receipt.IMAGE_PATH,
+            itemImagePath);
+        cv.put(
+            ReceiptContract.Receipt.DESCRIPTION,
+            dscField.getText().toString());
+        cv.put(
+            ReceiptContract.Receipt.WARRANTY,
+            Integer.toString(warrantySeekBar.getProgress()));
 
         if(!errorOccured){
             if(update){
@@ -453,7 +488,6 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     }
 
     private void addCard(Boolean update){
-        //TODO implement adding cards
         ContentValues cv = new ContentValues();
         cv.put(CardContract.Card.NAME, nameField.getText().toString());
         cv.put(CardContract.Card.CATEGORY, chosenCategory.toLowerCase());
@@ -476,17 +510,23 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
 
             for (String path : imgsToSave) {
 
-                    pathData.put(photoProjection[1], path);
-                    pathData.put(photoProjection[2], id.intValue());
+                    pathData.put(
+                        photoProjection[1],
+                        path);
+                    pathData.put(
+                        photoProjection[2],
+                        id.intValue());
 
                 db.insert(photosTable, null, pathData);
             }
 
             String confirmationText;
             if(showReceipts){
-                confirmationText = getString(R.string.toast_add_new_receipt_success);
+                confirmationText =
+                    getString(R.string.toast_add_new_receipt_success);
             }else{
-                confirmationText = getString(R.string.toast_add_new_card_success);
+                confirmationText =
+                    getString(R.string.toast_add_new_card_success);
             }
 
             toast = Toast.makeText(
@@ -797,9 +837,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             }else{
                 loadImages(data.get(6));
             }
-
         }
-
         setLayoutElementsContent(showReceipts, update, data);
     }
 
@@ -811,12 +849,16 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                 valueField.setText(data.get(2));
                 dateField.setText(data.get(3));
                 itemImagePath = data.get(4);
-                Glide.with(this).load(itemImagePath).into(itemPhotoView);
+                Glide
+                    .with(this)
+                    .load(itemImagePath)
+                    .into(itemPhotoView);
                 textFromImage = data.get(5);
                 isFavorited = data.get(6);
                 dscField.setText(data.get(7));
                 itemId = data.get(8);
-                warrantySeekBar.setProgress(Integer.parseInt(data.get(9)));
+                warrantySeekBar
+                    .setProgress(Integer.parseInt(data.get(9)));
                 addToDbBtn.setText("Aktualizuj");
                 valRow.setVisibility(View.VISIBLE);
                 dateRow.setVisibility(View.VISIBLE);
@@ -826,7 +868,10 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                 setCategoryText(data.get(1));
                 dateField.setText(data.get(2));
                 itemImagePath = data.get(3);
-                Glide.with(this).load(itemImagePath).into(itemPhotoView);
+                Glide
+                    .with(this)
+                    .load(itemImagePath)
+                    .into(itemPhotoView);
                 isFavorited = data.get(4);
                 dscField.setText(data.get(5));
                 itemId = data.get(6);
@@ -852,7 +897,6 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                 processImgCB.setVisibility(View.GONE);
             }
         }
-
     }
 
     private void setCategoryText(String text){
@@ -890,13 +934,26 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     }
 
     private void loadImages(String itemId){
-
         String[] selectionArgs = new String[]{itemId};
-        Cursor photoCursor = db.query(photosTable, photoProjection, photoSelection, selectionArgs, null , null, null);
+        Cursor photoCursor
+            = db.query(
+                photosTable,
+                photoProjection,
+                photoSelection,
+                selectionArgs,
+                null,
+                null,
+                null);
         while (photoCursor.moveToNext()){
-            loadedImgs.add(photoCursor.getString(photoCursor.getColumnIndex(photoColumn)));
+            loadedImgs.add(
+                photoCursor.getString(
+                    photoCursor.getColumnIndex(photoColumn)));
         }
-        viewPagerImageAdapter = new ViewPagerImageAdapter(getApplicationContext(), loadedImgs, showReceipts);
+        viewPagerImageAdapter
+            = new ViewPagerImageAdapter(
+                    getApplicationContext(),
+                    loadedImgs,
+                    showReceipts);
         viewPager.setAdapter(viewPagerImageAdapter);
     }
 
@@ -922,6 +979,70 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     @Override
     public void dateSet(String date, String field) {
         dateField.setText(date);
+    }
+
+    private void deleteWarning(String path, int id){
+
+        final String photoPath = path;
+        final int photoId = id;
+
+        // Wyświetlenie okna z prośbą o potwierdzenie.
+        AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(NewRecordActivity.this, R.style.myDialog));
+
+        builder.setMessage("Czy na pewno chcesz skasować to zdjęcie ?").setTitle("Usuwanie zdjęcia");
+
+        final String[] selArgs = new String[]{ path };
+
+        builder.setPositiveButton("Tak", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                deletePhoto(photoPath, photoId);
+            }
+        });
+
+        builder.setNegativeButton("Nie", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private void deletePhoto(String path, int id){
+        String sel;
+        if(showReceipts){
+            sel = ReceiptContract.Receipt_Photos.PHOTO_PATH + " = ?";
+        }else{
+            sel = CardContract.Card_Photos.PHOTO_PATH + " = ? ";
+        }
+
+        String[] selArgs = new String[]{path};
+
+        try{
+            loadedImgs.remove(id);
+        }catch(Exception e){
+            toast = Toast.makeText(getApplicationContext(), "Smth went wrong. + id = " + Integer.toString(id), Toast.LENGTH_SHORT);
+            toast.show();
+        }
+
+        try{
+            imgsToSave.remove(imgsToSave.indexOf(path));
+        }catch (Exception e){
+            //do nothing
+        }
+
+
+        db.delete(photosTable, sel, selArgs);
+
+        try{
+            new File(path).delete();
+        }catch (Exception e){
+            toast = Toast.makeText(getApplicationContext(), "Nie znaleziono pliku zdjęcia do skasowania.", Toast.LENGTH_SHORT);
+            toast.show();
+        }
+
+        viewPagerImageAdapter = new ViewPagerImageAdapter(getApplicationContext(), loadedImgs, showReceipts);
+        viewPager.setAdapter(viewPagerImageAdapter);
     }
 }
 
