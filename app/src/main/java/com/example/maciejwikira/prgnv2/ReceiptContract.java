@@ -13,7 +13,7 @@ public final class ReceiptContract {
 
     // Tabela danych paragonów
     public static class Receipt implements BaseColumns {
-        public static final String TABLE_NAME = "paragons";
+        public static final String TABLE_NAME = "receipts";
         public static final String NAME = "name";
         public static final String CATEGORY = "category";
         public static final String DATE = "date";

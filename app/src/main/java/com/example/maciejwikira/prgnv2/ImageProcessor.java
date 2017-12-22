@@ -212,6 +212,7 @@ public class ImageProcessor extends IntentService {
         double threshold = 0;
         Mat hist = new Mat();
         Imgproc.threshold(horProj, hist, threshold, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C);
+        //Mat hist = horProj.clone();
 
         Utils.matToBitmap(hist, testBitmap);
 
@@ -232,7 +233,7 @@ public class ImageProcessor extends IntentService {
 
             if(!isSpace){
 
-                if(hist.get(i,0)[0] > 0){
+                if((hist.get(i,0)[0] > 0)){
                     isSpace = true;
                     count = 1;
                     y = i;
@@ -276,11 +277,22 @@ public class ImageProcessor extends IntentService {
             }
 
             // Definicja punktu końcowego prostokąta ograniczającego linię tekstu
-            p4 = new Point(modifiedImage.cols(), ycoords.get(i));
+            p4 = new Point(
+                    modifiedImage.cols(),
+                    ycoords.get(i));
 
-            Core.rectangle(modifiedImage, p1, p4, new Scalar(0,255,0), 5);
+            Core.rectangle(
+                    modifiedImage,
+                    p1,
+                    p4,
+                    new Scalar(0,255,0),
+                    5);
 
-            testBitmap = Bitmap.createBitmap(modifiedImage.cols(), modifiedImage.rows(), Bitmap.Config.RGB_565);
+            testBitmap
+                    = Bitmap.createBitmap(
+                            modifiedImage.cols(),
+                            modifiedImage.rows(),
+                            Bitmap.Config.RGB_565);
             Utils.matToBitmap(modifiedImage, testBitmap);
 
             // Zapisanie prostokąta ograniczającego linię tekstu
@@ -291,19 +303,21 @@ public class ImageProcessor extends IntentService {
 
             // Przetworzenie macierzy zawierającej linię tekstu na bitmapę
             if(lineMat.cols() > 0 && lineMat.width() > 0){
-                lineMap = Bitmap.createBitmap(lineMat.cols(), lineMat.rows(), Bitmap.Config.RGB_565);
+                lineMap
+                        = Bitmap.createBitmap(
+                                lineMat.cols(),
+                                lineMat.rows(),
+                                Bitmap.Config.RGB_565);
                 Utils.matToBitmap(lineMat, lineMap);
                 // Rozpoznawanie tekstu
                 textRecognitionFunctions.searchInBitmap(lineMap);
             }
-
-
         }
 
         // Pobranie danych z obiektu rozpoznającego tekst na obrazie
         textFromImage += textRecognitionFunctions.getPrgnText();
         if(textRecognitionFunctions.getReceiptValue() != null)
-            receiptValue = textRecognitionFunctions.getReceiptValue();
+             receiptValue = textRecognitionFunctions.getReceiptValue();
 
         if(textRecognitionFunctions.getReceiptDate() != null)
             receiptDate = textRecognitionFunctions.getReceiptDate();

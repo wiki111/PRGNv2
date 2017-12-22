@@ -77,13 +77,16 @@ public class TextRecognitionFunctions {
     public void searchInBitmap(Bitmap bitmap){
 
         // Inicjalizacja obiektu rozpoznającego tekst
-        TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();
+        TextRecognizer textRecognizer
+                = new TextRecognizer.Builder(context).build();
 
         // Inicjalizacja obszaru rozpoznawania
-        Frame frame = new Frame.Builder().setBitmap(bitmap).build();
+        Frame frame
+                = new Frame.Builder().setBitmap(bitmap).build();
 
         // Zapisanie sczytanego tekstu
-        SparseArray<TextBlock> items = textRecognizer.detect(frame);
+        SparseArray<TextBlock> items
+                = textRecognizer.detect(frame);
         prgnText += "\n";
         for(int i = 0; i < items.size(); i++){
             TextBlock item = items.valueAt(i);
