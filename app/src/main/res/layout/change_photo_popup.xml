@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/common_action_bar_splitter"
+    android:background="@color/white"
     android:orientation="vertical"
     android:padding="10dp">
 
@@ -12,6 +12,7 @@
         android:layout_height="wrap_content"
         android:text="Jak chcesz dodać zdjęcie ?"
         android:textAlignment="center"
+        android:textColor="@color/colorPrimaryDark"
         android:textSize="24dp" />
 
     <LinearLayout
@@ -23,15 +24,21 @@
             android:id="@+id/fromGallery"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_margin="5dp"
             android:layout_weight="1"
-            android:text="Galeria" />
+            android:background="@color/colorPrimaryDark"
+            android:text="Galeria"
+            android:textColor="@color/white" />
 
         <Button
             android:id="@+id/fromCamera"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_margin="5dp"
             android:layout_weight="1"
-            android:text="Aparat" />
+            android:background="@color/colorPrimaryDark"
+            android:text="Aparat"
+            android:textColor="@color/white" />
     </LinearLayout>
 
 </LinearLayout>

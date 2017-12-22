@@ -17,25 +17,29 @@
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
         app:layout_constraintBottom_toTopOf="@+id/addToDBButton"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        android:layout_marginTop="8dp"
         app:layout_constraintTop_toBottomOf="@+id/view_pager">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             tools:layout_editor_absoluteX="8dp"
-            tools:layout_editor_absoluteY="0dp">
+            tools:layout_editor_absoluteY="0dp"
+            android:orientation="vertical">
 
             <CheckBox
                 android:id="@+id/processImageCB"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_margin="3dp"
+                android:background="@color/colorPrimaryTransparent"
+                android:padding="3dp"
                 android:text="Wyszukaj informacje na zdjęciach."
+                android:textColor="@color/colorPrimaryDark"
                 android:textSize="18sp"
                 tools:layout_editor_absoluteX="274dp"
                 tools:layout_editor_absoluteY="120dp" />
@@ -44,8 +48,10 @@
                 android:id="@+id/nameRow"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_margin="5dp"
-                android:orientation="horizontal">
+                android:layout_margin="3dp"
+                android:background="@color/colorPrimaryTransparent"
+                android:orientation="horizontal"
+                android:padding="3dp">
 
                 <TextView
                     android:id="@+id/nameTextView"
@@ -55,6 +61,7 @@
                     android:elevation="0dp"
                     android:gravity="center_vertical"
                     android:text="Nazwa"
+                    android:textColor="@color/colorPrimaryDark"
                     android:textSize="24sp"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/pickedImageView" />
@@ -77,40 +84,63 @@
             <LinearLayout
                 android:id="@+id/catRow"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_margin="5dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="3dp"
                 android:layout_weight="1"
-                android:orientation="horizontal">
+                android:background="@color/colorPrimaryTransparent"
+                android:orientation="vertical"
+                android:padding="3dp">
 
                 <TextView
                     android:id="@+id/catTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:text="Kategoria"
+                    android:textColor="@color/colorPrimaryDark"
                     android:textSize="24sp"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/nameTextView" />
 
-                <Spinner
-                    android:id="@+id/catSpinner"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="5dp"
                     android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    app:layout_constraintHorizontal_bias="0.0"
-                    app:layout_constraintLeft_toRightOf="@+id/catTextView"
-                    app:layout_constraintRight_toRightOf="parent"
-                    tools:layout_editor_absoluteY="295dp" />
+                    android:orientation="horizontal">
+
+                    <ImageButton
+                        android:id="@+id/addCatBtn"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:adjustViewBounds="true"
+                        app:srcCompat="@drawable/ic_add_box" />
+
+                    <Spinner
+                        android:id="@+id/catSpinner"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center_vertical"
+                        app:layout_constraintHorizontal_bias="0.0"
+                        app:layout_constraintLeft_toRightOf="@+id/catTextView"
+                        app:layout_constraintRight_toRightOf="parent"
+                        tools:layout_editor_absoluteY="295dp" />
+                </LinearLayout>
+
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/valRow"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_margin="5dp"
-                android:orientation="horizontal">
+                android:layout_margin="3dp"
+                android:background="@color/colorPrimaryTransparent"
+                android:orientation="horizontal"
+                android:padding="3dp">
 
                 <TextView
                     android:id="@+id/valTextView"
@@ -119,6 +149,7 @@
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:text="Wartość"
+                    android:textColor="@color/colorPrimaryDark"
                     android:textSize="24sp"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/dateTextView" />
@@ -138,8 +169,10 @@
                 android:id="@+id/dateRow"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_margin="5dp"
-                android:orientation="horizontal">
+                android:layout_margin="3dp"
+                android:background="@color/colorPrimaryTransparent"
+                android:orientation="horizontal"
+                android:padding="3dp">
 
                 <TextView
                     android:id="@+id/dateTextView"
@@ -148,6 +181,7 @@
                     android:layout_weight="1"
                     android:gravity="center_vertical"
                     android:text="Data"
+                    android:textColor="@color/colorPrimaryDark"
                     android:textSize="24sp"
                     app:layout_constraintLeft_toLeftOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/catTextView" />
@@ -158,8 +192,8 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:ems="10"
-                    android:hint="yyyy-MM-dd"
                     android:focusable="false"
+                    android:hint="yyyy-MM-dd"
                     android:inputType="date"
                     app:layout_constraintBaseline_toBaselineOf="@+id/dateTextView"
                     app:layout_constraintRight_toRightOf="parent" />
@@ -169,14 +203,17 @@
                 android:id="@+id/dscRow"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_margin="5dp"
-                android:orientation="vertical">
+                android:layout_margin="3dp"
+                android:background="@color/colorPrimaryTransparent"
+                android:orientation="vertical"
+                android:padding="3dp">
 
                 <TextView
                     android:id="@+id/textView5"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Opis : "
+                    android:textColor="@color/colorPrimaryDark"
                     android:textSize="24dp" />
 
                 <EditText
@@ -191,8 +228,10 @@
                 android:id="@+id/addItemPhotoRow"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_margin="5dp"
+                android:layout_margin="3dp"
+                android:background="@color/colorPrimaryTransparent"
                 android:orientation="horizontal"
+                android:padding="3dp"
                 tools:layout_editor_absoluteX="8dp"
                 tools:layout_editor_absoluteY="8dp">
 
@@ -226,14 +265,17 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_margin="5dp"
-                android:orientation="vertical">
+                android:layout_margin="3dp"
+                android:background="@color/colorPrimaryTransparent"
+                android:orientation="vertical"
+                android:padding="3dp">
 
                 <TextView
                     android:id="@+id/warrantyTextView"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Czas gwarancji"
+                    android:textColor="@color/colorPrimaryDark"
                     android:textSize="24sp" />
 
                 <SeekBar
@@ -249,20 +291,27 @@
         </LinearLayout>
     </ScrollView>
 
-    <Button
-        android:id="@+id/addToDBButton"
-        android:layout_width="0dp"
-        android:layout_height="50dp"
+    <ImageView
+        android:id="@+id/left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/linlay"
+        app:layout_constraintLeft_toLeftOf="@+id/view_pager"
+        app:layout_constraintTop_toTopOf="@+id/view_pager"
+        app:srcCompat="@drawable/ic_keyboard_arrow_left" />
+
+    <ImageView
+        android:id="@+id/right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
-        android:layout_marginStart="8dp"
-        android:text="Dodaj Paragon"
-        android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent" />
+        android:layout_marginTop="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/linlay"
+        app:layout_constraintRight_toRightOf="@+id/view_pager"
+        app:layout_constraintTop_toTopOf="@+id/view_pager"
+        app:srcCompat="@drawable/ic_keyboard_arrow_right" />
 
     <android.support.v4.view.ViewPager
         android:id="@+id/view_pager"
@@ -273,23 +322,28 @@
         android:layout_marginRight="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="16dp"
+        android:background="@color/colorPrimaryTransparent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+    </android.support.v4.view.ViewPager>
 
     <LinearLayout
         android:id="@+id/linlay"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
         android:layout_marginLeft="8dp"
-        android:layout_marginRight="0dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="@+id/view_pager"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="@+id/view_pager"
-        app:layout_constraintRight_toRightOf="@+id/view_pager"
-        tools:layout_editor_absoluteY="107dp">
+        app:layout_constraintRight_toRightOf="@+id/view_pager">
 
         <Button
             android:id="@+id/addParagonPhotoBtn"
@@ -298,7 +352,7 @@
             android:layout_marginLeft="5dp"
             android:layout_marginRight="5dp"
             android:layout_weight="1"
-            android:background="@color/choosePointsViewCircleBackground"
+            android:background="@color/colorPrimaryTransparent2"
             android:text="Dodaj zdjęcie"
             android:textColor="@color/common_google_signin_btn_text_dark_default" />
 
@@ -309,10 +363,41 @@
             android:layout_marginLeft="5dp"
             android:layout_marginRight="5dp"
             android:layout_weight="1"
-            android:background="@color/choosePointsViewCircleBackground"
+            android:background="@color/colorPrimaryTransparent2"
             android:text="Usuń zdjęcie"
             android:textColor="@color/common_google_signin_btn_text_dark_default" />
 
     </LinearLayout>
+
+    <Button
+        android:id="@+id/addToDBButton"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:background="@color/colorPrimaryDark"
+        android:text="Dodaj Paragon"
+        android:textColor="@color/common_google_signin_btn_text_dark_pressed"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
+
+    <RelativeLayout
+        android:id="@+id/dim"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/dim"
+        android:elevation="19dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/newRecMainLayout"
+        app:layout_constraintLeft_toLeftOf="@+id/newRecMainLayout"
+        app:layout_constraintRight_toRightOf="@+id/newRecMainLayout"
+        app:layout_constraintTop_toTopOf="@+id/newRecMainLayout">
+
+    </RelativeLayout>
 
 </android.support.constraint.ConstraintLayout>

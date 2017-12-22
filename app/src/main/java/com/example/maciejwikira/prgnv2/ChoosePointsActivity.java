@@ -21,6 +21,7 @@ import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import org.opencv.android.Utils;
@@ -153,95 +154,15 @@ public class ChoosePointsActivity extends AppCompatActivity {
         getPointsBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                // Zapisanie punktów wierzchołków czworokąta.
-                Map<Integer, PointF> points = cpv.getPoints();
-
-                // Zapisanie wymiarów wyświetlanej bitmapy.
-                Drawable drawable = sourceImageView.getDrawable();
-                int bitmapWidth = drawable.getIntrinsicWidth();
-                int bitmapHeight = drawable.getIntrinsicHeight();
-
-                // Zapisanie oryginalnego obrazu jako macierzy.
-                Mat originalImage = Highgui.imread(originalPath);
-                Imgproc.cvtColor(originalImage, originalImage, Imgproc.COLOR_BGR2RGB);
-
-                // Zapisanie stosunku wymiarów oryginalnej bitmapy do wymiarów wyświetlanego obrazu.
-                float xRatio = (float) originalImage.cols() / (bitmapWidth - padding / 2);
-                float yRatio = (float) originalImage.rows() / (bitmapHeight - padding / 2);
-
-                // Mapowanie punktów na oryginalny obraz.
-                float x1 = (points.get(0).x) * xRatio;
-                float x2 = (points.get(1).x) * xRatio;
-                float x3 = (points.get(2).x) * xRatio;
-                float x4 = (points.get(3).x) * xRatio;
-                float y1 = (points.get(0).y) * yRatio;
-                float y2 = (points.get(1).y) * yRatio;
-                float y3 = (points.get(2).y + padding) * yRatio;
-                float y4 = (points.get(3).y + padding) * yRatio;
-
-                // Zapisanie punktów do listy.
-                ArrayList<Point> rect = new ArrayList<Point>();
-                Point tl = new Point((double) x1, (double) y1);
-                Point tr = new Point((double) x2, (double) y2);
-                Point bl = new Point((double) x3, (double) y3);
-                Point br = new Point((double) x4, (double) y4);
-                rect.add(tl);
-                rect.add(tr);
-                rect.add(bl);
-                rect.add(br);
-
-                // Obliczenie długości najszerszego boku czworokąta.
-                Double widthA = Math.sqrt(Math.pow((br.x - bl.x), 2) + Math.pow((br.y - bl.y), 2));
-                Double widthB = Math.sqrt(Math.pow((tr.x - tl.x), 2) + Math.pow((tr.y - tl.y), 2));
-                Double maxWidth = getMax(widthA, widthB);
-
-                // Obliczenie długości najwyższego boku czworokąta.
-                Double heightA = Math.sqrt(Math.pow((tr.x - br.x), 2) + Math.pow((tr.y - br.y), 2));
-                Double heightB = Math.sqrt(Math.pow((tl.x - bl.x), 2) + Math.pow((tl.y - bl.y), 2));
-                Double maxHeight = getMax(heightA, heightB);
-
-                // Macierz wskazanych punktów.
-                Mat src = Converters.vector_Point2f_to_Mat(rect);
-                // Macierz docelowych punktów.
-                Mat dst = Converters.vector_Point2f_to_Mat(Arrays.asList(new Point[]{
-                        new Point(0,0),
-                        new Point(maxWidth, 0),
-                        new Point(0, maxHeight),
-                        new Point(maxWidth, maxHeight)
-                }));
-
-                // Rozmiar poprawionego obrazu.
-                Size size = new Size(maxWidth, maxHeight);
-
-                // Macierz przechowująca poprawiony obraz.
-                Mat corrected = new Mat(size, originalImage.type());
-
-                // Mapowanie wskazanych punktów na docelowe.
-                Mat transformation = Imgproc.getPerspectiveTransform(src, dst);
-
-                // Korekcja perspektywy i zapisanie poprawionego obrazu do macierzy.
-                Imgproc.warpPerspective(originalImage, corrected, transformation, corrected.size());
-
-                // Zamiana macierzy w bitmapę.
-                Bitmap bitMap = Bitmap.createBitmap(corrected.cols(),
-                        corrected.rows(),Bitmap.Config.RGB_565);
-                Utils.matToBitmap(corrected, bitMap);
-
-                // Zapisanie bitmapy w pamięci urządzenia
-                saveImage(bitMap);
-
-                // Przekazanie informacji zwrotnej zawierającej ścieżkę do poprawionego
-                // obrazu oraz jego Uri.
-                Intent intent = new Intent(getApplicationContext(), NewRecordActivity.class);
-                Bundle extras = new Bundle();
-                extras.putString(Constants.IMAGE_PATH, path);
-                extras.putString(Constants.IMAGE_URI, uri.toString());
-                intent.putExtras(extras);
-                setResult(NewRecordActivity.REQUEST_GET_RECEIPT, intent);
-
-                // Zakończenie działania aktywności.
-                finish();
+                ProgressBar pb = (ProgressBar)findViewById(R.id.progressBar);
+                getPointsBtn.setVisibility(View.GONE);
+                pb.setVisibility(View.VISIBLE);
+                AsyncTask.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        processResult();
+                    }
+                });
             }
         });
     }
@@ -348,5 +269,96 @@ public class ChoosePointsActivity extends AppCompatActivity {
         sourceImageView = null;
         original = null;
         super.onDestroy();
+    }
+
+    private void processResult(){
+        // Zapisanie punktów wierzchołków czworokąta.
+        Map<Integer, PointF> points = cpv.getPoints();
+
+        // Zapisanie wymiarów wyświetlanej bitmapy.
+        Drawable drawable = sourceImageView.getDrawable();
+        int bitmapWidth = drawable.getIntrinsicWidth();
+        int bitmapHeight = drawable.getIntrinsicHeight();
+
+        // Zapisanie oryginalnego obrazu jako macierzy.
+        Mat originalImage = Highgui.imread(originalPath);
+        Imgproc.cvtColor(originalImage, originalImage, Imgproc.COLOR_BGR2RGB);
+
+        // Zapisanie stosunku wymiarów oryginalnej bitmapy do wymiarów wyświetlanego obrazu.
+        float xRatio = (float) originalImage.cols() / (bitmapWidth - padding / 2);
+        float yRatio = (float) originalImage.rows() / (bitmapHeight - padding / 2);
+
+        // Mapowanie punktów na oryginalny obraz.
+        float x1 = (points.get(0).x) * xRatio;
+        float x2 = (points.get(1).x) * xRatio;
+        float x3 = (points.get(2).x) * xRatio;
+        float x4 = (points.get(3).x) * xRatio;
+        float y1 = (points.get(0).y) * yRatio;
+        float y2 = (points.get(1).y) * yRatio;
+        float y3 = (points.get(2).y + padding) * yRatio;
+        float y4 = (points.get(3).y + padding) * yRatio;
+
+        // Zapisanie punktów do listy.
+        ArrayList<Point> rect = new ArrayList<Point>();
+        Point tl = new Point((double) x1, (double) y1);
+        Point tr = new Point((double) x2, (double) y2);
+        Point bl = new Point((double) x3, (double) y3);
+        Point br = new Point((double) x4, (double) y4);
+        rect.add(tl);
+        rect.add(tr);
+        rect.add(bl);
+        rect.add(br);
+
+        // Obliczenie długości najszerszego boku czworokąta.
+        Double widthA = Math.sqrt(Math.pow((br.x - bl.x), 2) + Math.pow((br.y - bl.y), 2));
+        Double widthB = Math.sqrt(Math.pow((tr.x - tl.x), 2) + Math.pow((tr.y - tl.y), 2));
+        Double maxWidth = getMax(widthA, widthB);
+
+        // Obliczenie długości najwyższego boku czworokąta.
+        Double heightA = Math.sqrt(Math.pow((tr.x - br.x), 2) + Math.pow((tr.y - br.y), 2));
+        Double heightB = Math.sqrt(Math.pow((tl.x - bl.x), 2) + Math.pow((tl.y - bl.y), 2));
+        Double maxHeight = getMax(heightA, heightB);
+
+        // Macierz wskazanych punktów.
+        Mat src = Converters.vector_Point2f_to_Mat(rect);
+        // Macierz docelowych punktów.
+        Mat dst = Converters.vector_Point2f_to_Mat(Arrays.asList(new Point[]{
+                new Point(0,0),
+                new Point(maxWidth, 0),
+                new Point(0, maxHeight),
+                new Point(maxWidth, maxHeight)
+        }));
+
+        // Rozmiar poprawionego obrazu.
+        Size size = new Size(maxWidth, maxHeight);
+
+        // Macierz przechowująca poprawiony obraz.
+        Mat corrected = new Mat(size, originalImage.type());
+
+        // Mapowanie wskazanych punktów na docelowe.
+        Mat transformation = Imgproc.getPerspectiveTransform(src, dst);
+
+        // Korekcja perspektywy i zapisanie poprawionego obrazu do macierzy.
+        Imgproc.warpPerspective(originalImage, corrected, transformation, corrected.size());
+
+        // Zamiana macierzy w bitmapę.
+        Bitmap bitMap = Bitmap.createBitmap(corrected.cols(),
+                corrected.rows(),Bitmap.Config.RGB_565);
+        Utils.matToBitmap(corrected, bitMap);
+
+        // Zapisanie bitmapy w pamięci urządzenia
+        saveImage(bitMap);
+
+        // Przekazanie informacji zwrotnej zawierającej ścieżkę do poprawionego
+        // obrazu oraz jego Uri.
+        Intent intent = new Intent(getApplicationContext(), NewRecordActivity.class);
+        Bundle extras = new Bundle();
+        extras.putString(Constants.IMAGE_PATH, path);
+        extras.putString(Constants.IMAGE_URI, uri.toString());
+        intent.putExtras(extras);
+        setResult(NewRecordActivity.REQUEST_GET_RECEIPT, intent);
+
+        // Zakończenie działania aktywności.
+        finish();
     }
 }

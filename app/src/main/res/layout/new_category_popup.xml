@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_gravity="center_vertical|center_horizontal"
-    android:background="@color/bottom_background_color"
+    android:background="@color/white"
     android:orientation="vertical"
     android:padding="10dp">
 
@@ -12,6 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Nazwa nowej kategorii : "
+        android:textColor="@color/colorPrimaryDark"
         android:textSize="24dp" />
 
     <EditText
@@ -27,5 +29,7 @@
         android:id="@+id/addNewCatBtn"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Dodaj" />
+        android:background="@color/colorPrimaryDark"
+        android:text="Dodaj"
+        android:textColor="@color/white" />
 </LinearLayout>

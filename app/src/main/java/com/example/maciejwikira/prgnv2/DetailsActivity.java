@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.media.Image;
 import android.provider.ContactsContract;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
@@ -14,6 +15,7 @@ import android.os.Bundle;
 import android.support.v7.view.ContextThemeWrapper;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -61,6 +63,9 @@ public class DetailsActivity extends AppCompatActivity {
     private TextView descriptionTextView;
     private TextView warrantyTextView;
 
+    private ImageView left;
+    private ImageView right;
+
     private ImageView receiptPhotoDetailsView;
     private ImageView favoritedIconView;
     private ImageView itemImageView;
@@ -100,9 +105,6 @@ public class DetailsActivity extends AppCompatActivity {
 
         imgs = new ArrayList<>();
 
-        viewPagerImageAdapter = new ViewPagerImageAdapter(getApplicationContext(), imgs, showReceipts);
-        viewPager.setAdapter(viewPagerImageAdapter);
-
         tableCursor.moveToFirst();
 
         nameTextView = (TextView) findViewById(R.id.nameTextView);
@@ -113,6 +115,10 @@ public class DetailsActivity extends AppCompatActivity {
         favoritedIconView = (ImageView)findViewById(R.id.favoritedIconView);
         warrantyTextView = (TextView)findViewById(R.id.warrantyTextView);
         itemImageView = (ImageView)findViewById(R.id.itemImageView);
+        left = (ImageView)findViewById(R.id.left);
+        right = (ImageView)findViewById(R.id.right);
+
+        setViewPagerAdapter(imgs);
 
         // Ustawienie zawartości elementów interfejsu.
         setViewContents();
@@ -134,7 +140,7 @@ public class DetailsActivity extends AppCompatActivity {
         */
 
         // Przejście do edycji wpisu.
-        Button goToEditButton = (Button)findViewById(R.id.goToEditButton);
+        ImageButton goToEditButton = (ImageButton)findViewById(R.id.goToEditButton);
         goToEditButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -154,7 +160,7 @@ public class DetailsActivity extends AppCompatActivity {
         });
 
         // Dodanie wpisu do ulubionych.
-        Button favoriteButton = (Button)findViewById(R.id.favoriteButton);
+        ImageButton favoriteButton = (ImageButton)findViewById(R.id.favoriteButton);
         favoriteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -171,7 +177,7 @@ public class DetailsActivity extends AppCompatActivity {
         });
 
         // Usunięcie wpisu.
-        Button deleteButton = (Button)findViewById(R.id.deleteButton);
+        ImageButton deleteButton = (ImageButton)findViewById(R.id.deleteButton);
         deleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -180,7 +186,7 @@ public class DetailsActivity extends AppCompatActivity {
         });
 
         // Usunięcie wpisu z ulubionych.
-        Button unfavoriteButton = (Button)findViewById(R.id.unfavoriteButton);
+        ImageButton unfavoriteButton = (ImageButton)findViewById(R.id.unfavoriteButton);
         unfavoriteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -193,6 +199,30 @@ public class DetailsActivity extends AppCompatActivity {
                 toast.show();
 
                 favoritedIconView.setVisibility(View.INVISIBLE);
+            }
+        });
+
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+
+                right.setVisibility(View.VISIBLE);
+                left.setVisibility(View.VISIBLE);
+
+                if(position == viewPagerImageAdapter.getCount() - 1){
+                    right.setVisibility(View.INVISIBLE);
+                }else if(position == 0){
+                    left.setVisibility(View.INVISIBLE);
+                }
+            }
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
             }
         });
 
@@ -375,8 +405,21 @@ public class DetailsActivity extends AppCompatActivity {
         while (photoCursor.moveToNext()){
             imgs.add(photoCursor.getString(photoCursor.getColumnIndex(photoColumn)));
         }
-        viewPagerImageAdapter = new ViewPagerImageAdapter(getApplicationContext(), imgs, showReceipts);
-        viewPager.setAdapter(viewPagerImageAdapter);
+        setViewPagerAdapter(imgs);
     }
 
+    private void setViewPagerAdapter(ArrayList<String> imgs){
+
+        viewPagerImageAdapter = new ViewPagerImageAdapter(getApplicationContext(), imgs, showReceipts);
+        viewPager.setAdapter(viewPagerImageAdapter);
+
+        if(viewPagerImageAdapter.getCount() == 1){
+            left.setVisibility(View.INVISIBLE);
+            right.setVisibility(View.INVISIBLE);
+        }else{
+            left.setVisibility(View.INVISIBLE);
+            right.setVisibility(View.VISIBLE);
+        }
+
+    }
 }

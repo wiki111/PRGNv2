@@ -39,10 +39,12 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -50,6 +52,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.bitmap.BitmapDrawableDecoder;
+import com.google.android.gms.common.api.Releasable;
 import com.google.android.gms.vision.text.Line;
 
 import org.opencv.android.OpenCVLoader;
@@ -78,13 +81,17 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     private Button addReceiptPhoto;
     private Button itemImageAddBtn;
     private Button deletePhoto;
+    private ImageButton addCatBtn;
     private SeekBar warrantySeekBar;
     private TextView warrantyTextView;
     private ImageView itemPhotoView;
+    private ImageView left, right;
     private LinearLayout valRow;
     private LinearLayout dateRow;
     private TextView dateView;
     private CheckBox processImgCB;
+    private RelativeLayout dim;
+
 
     private Uri activeUri;
 
@@ -139,6 +146,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new);
 
+
         initOpenCV();
         requestWritePerm();
 
@@ -163,6 +171,10 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         dateView = (TextView)findViewById(R.id.dateTextView);
         processImgCB = (CheckBox)findViewById(R.id.processImageCB);
         deletePhoto = (Button)findViewById(R.id.deletePhoto);
+        left = (ImageView)findViewById(R.id.left);
+        right = (ImageView)findViewById(R.id.right);
+        dim = (RelativeLayout) findViewById(R.id.dim);
+        addCatBtn = (ImageButton)findViewById(R.id.addCatBtn);
 
         processImgCB.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -244,13 +256,48 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         deletePhoto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int id = viewPager.getCurrentItem();
-                deleteWarning(loadedImgs.get(viewPager.getCurrentItem()), viewPager.getCurrentItem());
+                try{
+                    deleteWarning(loadedImgs.get(viewPager.getCurrentItem()), viewPager.getCurrentItem());
+                }catch (Exception e){
+                    toast = Toast.makeText(getApplicationContext(), "Co niby próbujesz usunąć ? Tu nie ma żadnego zdjęcia.", Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+
             }
         });
 
-        viewPagerImageAdapter = new ViewPagerImageAdapter(context, imgsToSave, showReceipts);
-        viewPager.setAdapter(viewPagerImageAdapter);
+        setViewPagerAdapter(imgsToSave);
+
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+
+                right.setVisibility(View.VISIBLE);
+                left.setVisibility(View.VISIBLE);
+
+                if(position == viewPagerImageAdapter.getCount() - 1){
+                    right.setVisibility(View.INVISIBLE);
+                }else if(position == 0){
+                    left.setVisibility(View.INVISIBLE);
+                }
+            }
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+
+        addCatBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showNewCatPopup(v);
+            }
+        });
 
         mDbHelper = new ReceiptDbHelper(this);
         db = mDbHelper.getWritableDatabase();
@@ -416,8 +463,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
     private void addImage(String path){
         imgsToSave.add(path);
         loadedImgs.add(path);
-        viewPagerImageAdapter = new ViewPagerImageAdapter(getApplicationContext(), loadedImgs, showReceipts);
-        viewPager.setAdapter(viewPagerImageAdapter);
+        setViewPagerAdapter(loadedImgs);
     }
 
     private void addReceipt(Boolean update){
@@ -593,7 +639,6 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                     )
             );
         }
-        categories.add(categories.size(), "Dodaj nową kategorię");
         catAdapter = new ArrayAdapter<>(
                 getApplicationContext(),
                 R.layout.category_spinner_item,
@@ -701,9 +746,11 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         boolean focusable = true;
         final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
         popupWindow.showAtLocation(mainLayout, Gravity.CENTER, 0, 0);
+        dim.setVisibility(View.VISIBLE);
         popupView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+
                 popupWindow.dismiss();
                 return true;
             }
@@ -719,7 +766,6 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                 ContentValues newCategoryValue = new ContentValues();
                 newCategoryValue.put(projection[1],  chosenCategory);
                 try{
-
                     if(checkCategory(db, newCategoryValue)){
                         toast = Toast.makeText(getApplicationContext(), R.string.toast_add_category_successful, Toast.LENGTH_SHORT);
                         categories.add(1, newCatName.getText().toString().toLowerCase());
@@ -730,12 +776,19 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                         toast = Toast.makeText(getApplicationContext(), "Kategoria istnieje.", Toast.LENGTH_SHORT);
                     }
                     toast.show();
-
+                    dim.setVisibility(View.GONE);
                     popupWindow.dismiss();
                 }catch (Exception e){
                     toast = Toast.makeText(getApplicationContext(), R.string.toast_add_new_failure, Toast.LENGTH_SHORT);
                     toast.show();
                 }
+            }
+        });
+
+        popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                dim.setVisibility(View.GONE);
             }
         });
     }
@@ -750,9 +803,11 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
         boolean focusable = true;
         final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
         popupWindow.showAtLocation(mainLayout, Gravity.CENTER, 0, 0);
+        dim.setVisibility(View.VISIBLE);
         popupView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+                //dim.setVisibility(View.GONE);
                 popupWindow.dismiss();
                 return true;
             }
@@ -763,6 +818,7 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             @Override
             public void onClick(View v) {
                 openGallery();
+                //dim.setVisibility(View.GONE);
                 popupWindow.dismiss();
             }
         });
@@ -772,7 +828,15 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             @Override
             public void onClick(View v) {
                 takePhoto();
+                //dim.setVisibility(View.GONE);
                 popupWindow.dismiss();
+            }
+        });
+
+        popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                dim.setVisibility(View.GONE);
             }
         });
     }
@@ -949,12 +1013,8 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
                 photoCursor.getString(
                     photoCursor.getColumnIndex(photoColumn)));
         }
-        viewPagerImageAdapter
-            = new ViewPagerImageAdapter(
-                    getApplicationContext(),
-                    loadedImgs,
-                    showReceipts);
-        viewPager.setAdapter(viewPagerImageAdapter);
+
+        setViewPagerAdapter(loadedImgs);
     }
 
     private String saveImageInAppFolder(String path){
@@ -1041,9 +1101,24 @@ public class NewRecordActivity extends AppCompatActivity implements AdapterView.
             toast.show();
         }
 
-        viewPagerImageAdapter = new ViewPagerImageAdapter(getApplicationContext(), loadedImgs, showReceipts);
-        viewPager.setAdapter(viewPagerImageAdapter);
+        setViewPagerAdapter(loadedImgs);
     }
+
+    private void setViewPagerAdapter(ArrayList<String> imgs){
+
+        viewPagerImageAdapter = new ViewPagerImageAdapter(getApplicationContext(), imgs, showReceipts);
+        viewPager.setAdapter(viewPagerImageAdapter);
+
+        if(viewPagerImageAdapter.getCount() == 1 || viewPagerImageAdapter.getCount() == 0){
+            left.setVisibility(View.INVISIBLE);
+            right.setVisibility(View.INVISIBLE);
+        }else{
+            left.setVisibility(View.INVISIBLE);
+            right.setVisibility(View.VISIBLE);
+        }
+
+    }
+
 }
 
 

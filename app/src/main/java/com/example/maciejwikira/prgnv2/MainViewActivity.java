@@ -33,6 +33,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -67,6 +68,7 @@ public class MainViewActivity extends AppCompatActivity
     private FloatingActionMenu fabMenu;
 
     private EditText editFromDate, editToDate;
+    private RelativeLayout dim;
 
     private ListView listView;
     private CardListAdapter cardListAdapter;
@@ -164,6 +166,7 @@ public class MainViewActivity extends AppCompatActivity
         FixedImageReceiver fixedImageReceiver = new FixedImageReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(fixedImageReceiver, intentFilter);
 
+        dim = (RelativeLayout)findViewById(R.id.dimMain);
     }
 
     @Override
@@ -511,6 +514,7 @@ public class MainViewActivity extends AppCompatActivity
         int height = LinearLayout.LayoutParams.WRAP_CONTENT;
         boolean focusable = true;
         final PopupWindow popupWindow = new PopupWindow(popupView, width, height, focusable);
+        dim.setVisibility(View.VISIBLE);
         popupWindow.showAtLocation(popupView, Gravity.CENTER, 0, 0);
         popupView.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -604,6 +608,13 @@ public class MainViewActivity extends AppCompatActivity
         }finally {
             db.close();
         }
+
+        popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
+            @Override
+            public void onDismiss() {
+                dim.setVisibility(View.GONE);
+            }
+        });
     }
 
     public void dateSet(String date, String field) {

@@ -35,6 +35,7 @@
         android:layout_marginBottom="11dp"
         android:layout_marginLeft="11dp"
         android:layout_marginRight="11dp"
+        app:menu_shadowColor="@color/colorPrimaryTransparent3"
         fab:menu_animationDelayPerItem="55"
         fab:menu_backgroundColor="@android:color/transparent"
         fab:menu_buttonSpacing="0dp"
@@ -60,7 +61,6 @@
         fab:menu_labels_textColor="#f2f1f1"
         fab:menu_labels_textSize="15sp"
         fab:menu_openDirection="up"
-        fab:menu_shadowColor="#66aff198"
         fab:menu_shadowRadius="4dp"
         fab:menu_shadowXOffset="1dp"
         fab:menu_shadowYOffset="4dp"
@@ -71,19 +71,33 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_menu_gallery"
+            app:fab_colorNormal="#de539aaf"
             fab:fab_label="Media"
-            fab:fab_size="mini"
-            app:fab_colorNormal="#de539aaf"/>
+            fab:fab_size="mini" />
 
         <com.github.clans.fab.FloatingActionButton
             android:id="@+id/material_design_floating_action_menu_item2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/ic_menu_camera"
+            app:fab_colorNormal="#de539aaf"
             fab:fab_label="Zdjęcie"
-            fab:fab_size="mini"
-            app:fab_colorNormal="#de539aaf"/>
+            fab:fab_size="mini" />
 
     </com.github.clans.fab.FloatingActionMenu>
+
+    <RelativeLayout
+        android:id="@+id/dimMain"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/dim"
+        android:elevation="19dp"
+        android:visibility="gone"
+        fab:layout_constraintBottom_toBottomOf="@+id/mainLayout"
+        fab:layout_constraintLeft_toLeftOf="@+id/mainLayout"
+        fab:layout_constraintRight_toRightOf="@+id/mainLayout"
+        fab:layout_constraintTop_toTopOf="@id/mainLayout">
+
+    </RelativeLayout>
 
 </android.support.design.widget.CoordinatorLayout>

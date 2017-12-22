@@ -2,6 +2,8 @@ package com.example.maciejwikira.prgnv2;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.icu.math.BigDecimal;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.LayoutInflater;
@@ -57,6 +59,7 @@ public class ReceiptListAdapter extends SimpleCursorAdapter{
             imageView.setImageResource(R.drawable.ic_receipt);
         }
 
+
         // Ustawienie zawartości pól interfejsu
         nameView.setText("Nazwa: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.NAME)));
         categoryView.setText("Kategoria: " + cursor.getString(cursor.getColumnIndex(ReceiptContract.Receipt.CATEGORY)));
@@ -66,6 +69,5 @@ public class ReceiptListAdapter extends SimpleCursorAdapter{
         String valueString = value.toString().replaceAll(",", ".");
 
         valueView.setText("Wartość: " + valueString);
-
     }
 }

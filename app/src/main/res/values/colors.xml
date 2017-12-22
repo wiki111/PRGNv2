@@ -18,4 +18,8 @@
     <color name="view_divider_color_2">#DADADA</color>
     <color name="validation_problem_color">#6eff0000</color>
     <color name="white">#ffffff</color>
+    <color name="colorPrimaryTransparent">#10156594</color>
+    <color name="colorPrimaryTransparent2">#c1156594</color>
+    <color name="dim">#b6000000</color>
+    <color name="colorPrimaryTransparent3">#5f2ea2e6</color>
 </resources>
