@@ -53,6 +53,10 @@ public final class ReceiptContract {
         public static final String SQL_INSERT_EMPTY_CATEGORY = "INSERT INTO " + Categories.TABLE_NAME
                 + " (" + Categories.CATEGORY_NAME + ") " + "VALUES ('')";
 
+        public static final String INSERT_CATEGORIES = "INSERT INTO " +
+                Categories.TABLE_NAME + " (" + Categories.CATEGORY_NAME + ") " + "VALUES " +
+                "('Meble'), ('Elektronika'), ('Odzież'), ('Instrumenty'), ('Sprzęt')";
+
         public static final String SQL_DELETE_CATEGORIES = "DROP TABLE IF EXISTS " + Categories.TABLE_NAME;
     }
 

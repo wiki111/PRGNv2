@@ -393,16 +393,23 @@ public class MainViewActivity extends AppCompatActivity
 
         }catch (Exception e){
             //Wyświetlenie komunikatu błędu w wypadku jego wystąpienia
-            toast = Toast.makeText(context, R.string.toast_add_new_failure + e.toString(), Toast.LENGTH_LONG);
+            toast = Toast.makeText(context, getString(R.string.toast_add_new_failure), Toast.LENGTH_LONG);
             toast.show();
         }
     }
 
     private void filterList(Bundle filterData){
+
+        //Pobranie informacji o resecie filtrowania
         boolean reset =
                 filterData.getBoolean("Reset");
+
+        //Pobranie informacji o wybranej kategorii
         chosenCategory =
                 filterData.getString("Chosen_Category");
+
+        //Jeżeli filtrowane są paragony pobierane są
+        //daty ograniczające okres czasowy
         if(showReceipts){
             chosenFromDate =
                     filterData.getString("Chosen_From_Date");
@@ -416,6 +423,8 @@ public class MainViewActivity extends AppCompatActivity
                     "SELECT * FROM "
                     + itemTable
                     + " WHERE ";
+
+
             String categoryPart = "";
             String datePart = "";
             boolean filterByCategory = false;
@@ -431,7 +440,7 @@ public class MainViewActivity extends AppCompatActivity
             }
 
             if(showReceipts){
-                if(!chosenFromDate.equals("YYYY-MM-DD")) {
+                if(!chosenFromDate.equals("YYYY-MM-DD") || !chosenToDate.equals("YYYY-MM-DD")) {
                     filterByDate = true;
                     matcherFrom =
                             datePattern.matcher(chosenFromDate);
@@ -453,6 +462,11 @@ public class MainViewActivity extends AppCompatActivity
                                     + " >= " + "'"
                                     + chosenFromDate + "'";
                         }
+                    } else if(matcherTo.find()){
+                        datePart =
+                                ReceiptContract.Receipt.DATE
+                                        + " <= " + "'"
+                                        + chosenToDate + "'";
                     }
                 }
             }
@@ -468,9 +482,9 @@ public class MainViewActivity extends AppCompatActivity
             if(!filterByCategory && filterByDate){
                 query = query + datePart;
             }
-
-            populateList(listView, query);
-
+            if(filterByCategory || filterByDate){
+                populateList(listView, query);
+            }
         }else{
             query = null;
             populateList(listView, null);

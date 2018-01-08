@@ -47,7 +47,8 @@
 
         <activity
             android:name=".DisplayPhotoActivity"
-            android:theme="@style/AppTheme.PopUpStyle" />
+            android:theme="@style/AppTheme.PopUpStyle"
+            android:configChanges="orientation"/>
 
         <service
             android:name=".ImageProcessor"

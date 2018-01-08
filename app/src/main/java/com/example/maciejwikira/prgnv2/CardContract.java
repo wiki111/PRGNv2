@@ -61,6 +61,11 @@ public final class CardContract {
                 Card_Categories.TABLE_NAME + " (" + Card_Categories.CATEGORY_NAME + ") " + "VALUES " +
                 "('')";
 
+        public static final String INSERT_CATEGORIES = "INSERT INTO " +
+                Card_Categories.TABLE_NAME + " (" + Card_Categories.CATEGORY_NAME + ") " + "VALUES " +
+                "('Bonusy'), ('Rabaty'), ('Promocje'), ('Oferty specjalne'), ('Vouchery')";
+
+
         // Polecenie usuwające tabelę.
         public static final String SQL_DELETE_CARD_CATEGORIES = "DROP TABLE IF EXISTS " +
                 Card_Categories.TABLE_NAME;
@@ -84,6 +89,7 @@ public final class CardContract {
 
         public static final String SQL_DELETE_CARD_PHOTOS =
                 "DROP TABLE IF EXISTS " + Card_Photos.TABLE_NAME;
+
     }
 
 }

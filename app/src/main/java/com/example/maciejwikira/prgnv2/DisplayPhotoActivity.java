@@ -26,13 +26,7 @@ public class DisplayPhotoActivity extends AppCompatActivity {
         image = (ImageView)findViewById(R.id.imageView2);
         Intent intent = getIntent();
         Bundle bundle = intent.getExtras();
-        //Bitmap bmp = BitmapFactory.decodeFile(bundle.getString("BitmapPath"));
         Boolean showReceipts = bundle.getBoolean(MainViewActivity.CARDS_OR_RECEIPTS);
-
-        // Karty wyświetlane są w horyzontalnej orientacji ekranu.
-        if(!showReceipts){
-            this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        }
 
         Glide.with(this).load(bundle.getString("BitmapPath")).into(image);
 

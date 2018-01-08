@@ -12,9 +12,12 @@
         android:layout_height="150dp"
         android:layout_gravity="center_vertical|center_horizontal"
         android:layout_marginBottom="13dp"
-        android:layout_marginRight="25dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="0dp"
         android:layout_marginTop="13dp"
         android:layout_weight="1"
+        android:background="@color/colorPrimaryTransparent"
+        android:padding="8dp"
         app:srcCompat="@drawable/ic_receipt" />
 
     <LinearLayout
