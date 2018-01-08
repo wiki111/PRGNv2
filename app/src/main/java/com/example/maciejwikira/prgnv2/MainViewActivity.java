@@ -417,19 +417,23 @@ public class MainViewActivity extends AppCompatActivity
                     filterData.getString("Chosen_To_Date");
         }
 
+        //Jeżeli nie nastąpił reset
         if(!reset){
 
+            //Podstawowa forma zapytania
             query =
                     "SELECT * FROM "
                     + itemTable
                     + " WHERE ";
 
-
+            //Inicjalizacja zmiennych
             String categoryPart = "";
             String datePart = "";
             boolean filterByCategory = false;
             boolean filterByDate = false;
 
+            //Jeżeli wybrana została kategoria konstruowany
+            //jest fragment zapytania jej dotyczący
             if(!chosenCategory.equals("")){
                 filterByCategory = true;
                 categoryPart =
@@ -439,13 +443,23 @@ public class MainViewActivity extends AppCompatActivity
                         + "'";
             }
 
+            //Jeżeli filtrowane są paragony
             if(showReceipts){
-                if(!chosenFromDate.equals("YYYY-MM-DD") || !chosenToDate.equals("YYYY-MM-DD")) {
+
+                //Jeżeli wybrana została data początkowa lub
+                //końcowa
+                if(!chosenFromDate.equals("YYYY-MM-DD")
+                        || !chosenToDate.equals("YYYY-MM-DD")) {
                     filterByDate = true;
                     matcherFrom =
                             datePattern.matcher(chosenFromDate);
                     matcherTo =
                             datePattern.matcher(chosenToDate);
+
+                    //W zależności od tego czy wybrana została zarówno
+                    //końcowa jak i początkowa data, czy została wybrana
+                    //tylko jedna z nich konstruowany jest odpowiedni fragment
+                    //zapytania.
                     if (matcherFrom.find()) {
                         if (matcherTo.find()) {
                             datePart =
@@ -471,6 +485,10 @@ public class MainViewActivity extends AppCompatActivity
                 }
             }
 
+            //W zależności od podanych parametrów filtrowania
+            //konstruowane jest zapytanie z użyciem zbudowanych
+            //uprzednio fragmentów.
+
             if(filterByCategory){
                 query = query + categoryPart;
             }
@@ -482,6 +500,10 @@ public class MainViewActivity extends AppCompatActivity
             if(!filterByCategory && filterByDate){
                 query = query + datePart;
             }
+
+            //Jeżeli zostały podane jakiekolwiek parametry filtrowania
+            //zawartość listy jest aktualizowana. W przeciwnym wypadku nic
+            //się nie dzieje.
             if(filterByCategory || filterByDate){
                 populateList(listView, query);
             }
